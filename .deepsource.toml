@@ -1,0 +1,9 @@
+version = 1
+
+test_patterns = [
+  "**/*.dart"
+]
+
+[[analyzers]]
+name = "dart"
+enabled = true
