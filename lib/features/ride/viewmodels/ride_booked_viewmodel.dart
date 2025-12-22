@@ -37,7 +37,7 @@ class RideBookedViewModel extends ChangeNotifier {
   StreamSubscription<DocumentSnapshot>? _rideStream;
 
   RideStage? _lastFetchedStage;
-  VoidCallback? onRideCancelled;
+  Function(bool isDriver)? onRideCancelled;
 
   bool _isCameraLocked = true;
   Timer? _cameraUnlockTimer;
@@ -80,7 +80,7 @@ class RideBookedViewModel extends ChangeNotifier {
         .snapshots()
         .listen((snapshot) {
           if (!snapshot.exists || snapshot.data() == null) {
-            _handleCancellation();
+            _handleCancellation(isDriver: false);
             return;
           }
 
@@ -88,7 +88,8 @@ class RideBookedViewModel extends ChangeNotifier {
           final status = data['status'];
 
           if (status == 'cancelled') {
-            _handleCancellation();
+            final String? cancelledBy = data['cancelledBy'];
+            _handleCancellation(isDriver: cancelledBy == 'driver');
             return;
           }
 
@@ -157,7 +158,7 @@ class RideBookedViewModel extends ChangeNotifier {
     }
   }
 
-  void _handleCancellation() {
+  void _handleCancellation({required bool isDriver}) {
     _rideStream?.cancel();
     _rideStream = null;
 
@@ -166,7 +167,7 @@ class RideBookedViewModel extends ChangeNotifier {
 
     notifyListeners();
 
-    onRideCancelled?.call();
+    onRideCancelled?.call(isDriver);
   }
 
   void _setStaticMarkers() {
@@ -283,7 +284,7 @@ class RideBookedViewModel extends ChangeNotifier {
     await FirebaseFirestore.instance
         .collection('rideRequests')
         .doc(rideId)
-        .update({'status': 'cancelled'});
+        .update({'status': 'cancelled', 'cancelledBy': 'user'});
   }
 
   Future<void> triggerSOS() async {

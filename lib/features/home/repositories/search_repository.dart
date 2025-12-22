@@ -10,7 +10,7 @@ class SearchRepository {
 
     try {
       final url = Uri.parse(
-        'https://nominatim.openstreetmap.org/search?q=$query+india&format=json&limit=5',
+        'https://nominatim.openstreetmap.org/search?q=$query&format=json&limit=5&countrycodes=in',
       );
 
       final response = await http.get(

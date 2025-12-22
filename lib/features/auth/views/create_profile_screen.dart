@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rubo/features/language/viewmodels/language_vm.dart';
 import '../../../core/services/user_preferences.dart';
 import '../../navigation/views/main_navigator.dart';
+import 'location_disclosure_screen.dart';
 
 class CreateProfileScreen extends StatefulWidget {
   final String phoneNumber;
@@ -117,7 +118,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
         Navigator.pop(context);
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => const MainNavigator()),
+          MaterialPageRoute(builder: (_) => const LocationDisclosureScreen()),
           (route) => false,
         );
       }

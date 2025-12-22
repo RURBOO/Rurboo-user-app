@@ -53,7 +53,7 @@ class _RideBookedScreenState extends State<RideBookedScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       vm.init();
 
-      vm.onRideCancelled = () {
+      vm.onRideCancelled = (bool isDriver) {
         if (!mounted) return;
 
         Navigator.pushAndRemoveUntil(
@@ -62,12 +62,21 @@ class _RideBookedScreenState extends State<RideBookedScreen> {
           (r) => false,
         );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Ride was cancelled by the driver."),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (isDriver) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Ride was cancelled by the driver."),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Ride cancelled."),
+              backgroundColor: Colors.grey,
+            ),
+          );
+        }
       };
     });
   }

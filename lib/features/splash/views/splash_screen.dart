@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../core/services/user_preferences.dart';
+import '../../auth/views/location_disclosure_screen.dart';
 import '../../language/views/language_selection_screen.dart';
 import '../../navigation/views/main_navigator.dart';
 import '../../ride/views/ride_summary_screen.dart';
@@ -54,6 +56,14 @@ class _SplashScreenState extends State<SplashScreen>
       return;
     }
 
+    final permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      if (!mounted) return;
+      _navigateTo(const LocationDisclosureScreen());
+      return;
+    }
+
     try {
       final query = await FirebaseFirestore.instance
           .collection('rideRequests')
@@ -77,6 +87,29 @@ class _SplashScreenState extends State<SplashScreen>
         final rideId = doc.id;
 
         final status = data['status'] as String?;
+        final Timestamp? createdAt = data['createdAt'];
+
+        if (status == 'pending' && createdAt != null) {
+          final diffMinutes = DateTime.now()
+              .difference(createdAt.toDate())
+              .inMinutes;
+
+          if (diffMinutes > 15) {
+            debugPrint("🧟 Zombie ride detected. Auto-cancelling: $rideId");
+
+            await FirebaseFirestore.instance
+                .collection('rideRequests')
+                .doc(rideId)
+                .update({
+                  'status': 'cancelled',
+                  'cancelReason': 'timeout_startup',
+                });
+
+            if (!mounted) return;
+            _navigateTo(const MainNavigator());
+            return;
+          }
+        }
 
         if (status == null) {
           _navigateTo(const MainNavigator());

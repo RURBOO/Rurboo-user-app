@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rubo/features/profile/views/settings_screen.dart';
+import 'package:rubo/features/profile/views/support_screen.dart';
+import 'package:rubo/features/profile/views/user_delete_account_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../viewmodels/profile_viewmodel.dart';
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -95,13 +100,18 @@ class _ProfileScreenBody extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: Icon(Icons.edit_outlined, color: Colors.grey[700]),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Edit Profile feature coming soon!"),
+            icon: const Icon(Icons.edit),
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      EditProfileScreen(currentName: vm.userName ?? ""),
                 ),
               );
+              if (result == true) {
+                vm.fetchUserProfile();
+              }
             },
           ),
         ],
@@ -115,40 +125,47 @@ class _ProfileScreenBody extends StatelessWidget {
       child: Column(
         children: [
           _buildMenuItem(
-            icon: Icons.history,
-            title: 'Ride History',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Already on the History tab!")),
-              );
-            },
-          ),
-          _buildMenuItem(
-            icon: Icons.account_balance_wallet_outlined,
-            title: 'Payments',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Payments feature coming soon!")),
-              );
-            },
-          ),
-          _buildMenuItem(
             icon: Icons.help_outline,
             title: 'Help & Support',
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Help feature coming soon!")),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SupportScreen()),
               );
             },
           ),
+
           _buildMenuItem(
             icon: Icons.settings_outlined,
             title: 'Settings',
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Settings feature coming soon!")),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
               );
             },
+          ),
+          _buildMenuItem(
+            icon: Icons.privacy_tip_outlined,
+            title: 'Privacy Policy',
+            onTap: () =>
+                _launchURL(context, 'https://your-website.com/privacy'),
+          ),
+          _buildMenuItem(
+            icon: Icons.description_outlined,
+            title: 'Terms of Service',
+            onTap: () => _launchURL(context, 'https://your-website.com/terms'),
+          ),
+          _buildMenuItem(
+            icon: Icons.delete_forever,
+            title: 'Delete Account',
+            color: Colors.red,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const UserDeleteAccountScreen(),
+              ),
+            ),
           ),
           _buildMenuItem(
             icon: Icons.logout,
@@ -193,6 +210,21 @@ class _ProfileScreenBody extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _launchURL(BuildContext context, String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    try {
+      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+        throw 'Could not launch $url';
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Could not open link")));
+      }
+    }
   }
 
   void _showLogoutConfirmation(BuildContext context, ProfileViewModel vm) {

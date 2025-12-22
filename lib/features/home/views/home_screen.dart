@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -45,80 +46,49 @@ class HomeBody extends StatelessWidget {
       return Scaffold(
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(30),
+            padding: const EdgeInsets.all(32),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(
-                  Icons.location_disabled,
-                  size: 60,
-                  color: Colors.red,
+                  Icons.location_off_rounded,
+                  size: 80,
+                  color: Colors.redAccent,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 const Text(
                   "Location Required",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 const Text(
-                  "We need your precise location to book rides. "
+                  "To book a ride, we need your precise location.\n"
                   "Please enable GPS and allow location permissions.",
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
-                const SizedBox(height: 30),
-                ElevatedButton.icon(
-                  onPressed: () => vm.init(context),
-                  icon: const Icon(Icons.refresh),
-                  label: const Text("Retry"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => Geolocator.openAppSettings(),
-                  child: const Text("Open Settings"),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
+                const SizedBox(height: 32),
 
-    if (vm.permissionDenied) {
-      return Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.location_off, size: 80, color: Colors.grey[400]),
-                const SizedBox(height: 20),
-                const Text(
-                  "Location Permission Required",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  "To book a ride, we need to access your location.",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: () => vm.init(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => vm.init(context),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text("Try Again"),
                   ),
-                  child: const Text("Allow Location"),
                 ),
+
+                const SizedBox(height: 16),
+
                 TextButton(
-                  onPressed: () => Geolocator.openAppSettings(),
-                  child: const Text("Open Settings"),
+                  onPressed: () {
+                    openAppSettings();
+                  },
+                  child: const Text("Open Phone Settings"),
                 ),
               ],
             ),

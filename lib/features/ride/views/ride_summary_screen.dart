@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../navigation/views/main_navigator.dart';
 
 class RideSummaryScreen extends StatefulWidget {
@@ -130,7 +131,30 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
         title: const Text("Ride Summary"),
         centerTitle: true,
         automaticallyImplyLeading: false,
+        actions: [
+          TextButton.icon(
+            icon: const Icon(Icons.flag, color: Colors.red),
+            label: const Text("Report", style: TextStyle(color: Colors.red)),
+            onPressed: () async {
+              final Uri emailLaunch = Uri(
+                scheme: 'mailto',
+                path: 'support@rubo.com',
+                query: Uri.encodeFull(
+                  'subject=Report Ride ${widget.rideId}'
+                  '&body=Ride ID: ${widget.rideId}\n'
+                  'Driver: ${widget.driverName}\n\n'
+                  'Describe the issue below:\n',
+                ),
+              );
+
+              if (await canLaunchUrl(emailLaunch)) {
+                await launchUrl(emailLaunch);
+              }
+            },
+          ),
+        ],
       ),
+
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),

@@ -59,6 +59,12 @@ class HomeViewModel extends ChangeNotifier {
   Future<void> init(BuildContext context) async {
     if (_initialized) return;
     _initialized = true;
+
+    loadingLocation = true;
+    _hasLocationError = false;
+    permissionDenied = false;
+    notifyListeners();
+
     final userId = await UserPreferences.getUserId();
 
     if (userId != null) {
@@ -78,64 +84,31 @@ class HomeViewModel extends ChangeNotifier {
       }
     }
 
-    loadingLocation = true;
-    permissionDenied = false;
-    _hasLocationError = false;
-    notifyListeners();
+    final latLng = await repo.getCurrentLocation();
 
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
+    if (latLng == null) {
       loadingLocation = false;
-      permissionDenied = false;
       _hasLocationError = true;
       notifyListeners();
       return;
     }
 
-    LocationPermission permission = await Geolocator.checkPermission();
-
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      loadingLocation = false;
-      permissionDenied = true;
-      notifyListeners();
-      return;
-    }
+    currentLocation = latLng;
 
     try {
-      final pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+      final address = await searchRepo.reverseGeocode(currentLocation!);
+      pickup = LocationResult(address: address, coordinates: currentLocation);
+    } catch (_) {
+      pickup = LocationResult(
+        address: "Current Location",
+        coordinates: currentLocation,
       );
+    }
 
-      currentLocation = LatLng(pos.latitude, pos.longitude);
-
-      try {
-        final address = await searchRepo.reverseGeocode(currentLocation!);
-        pickup = LocationResult(address: address, coordinates: currentLocation);
-      } catch (_) {
-        pickup = LocationResult(
-          address: "Unknown Location",
-          coordinates: currentLocation,
-        );
-      }
-
-      if (mapController != null) {
-        mapController!.animateCamera(
-          CameraUpdate.newLatLngZoom(currentLocation!, 15),
-        );
-      }
-    } catch (e) {
-      debugPrint("Location fetch failed: $e");
-
-      loadingLocation = false;
-      _hasLocationError = true;
-      permissionDenied = false;
-      notifyListeners();
-      return;
+    if (mapController != null) {
+      mapController!.animateCamera(
+        CameraUpdate.newLatLngZoom(currentLocation!, 15),
+      );
     }
 
     recentDestinations = await repo.loadDestinations();

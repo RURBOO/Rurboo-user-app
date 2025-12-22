@@ -7,6 +7,7 @@ import 'package:rubo/features/language/viewmodels/language_vm.dart';
 import '../../../core/services/user_preferences.dart';
 import '../../navigation/views/main_navigator.dart';
 import 'create_profile_screen.dart';
+import 'location_disclosure_screen.dart';
 
 class OtpScreen extends StatefulWidget {
   final String phone;
@@ -34,10 +35,14 @@ class _OtpScreenState extends State<OtpScreen> {
 
   int seconds = 30;
   Timer? _timer;
+  late String _verificationId;
+  int? _resendToken;
 
   @override
   void initState() {
     super.initState();
+
+    _verificationId = widget.verificationId;
     _startTimer();
     _translateTexts();
   }
@@ -85,17 +90,19 @@ class _OtpScreenState extends State<OtpScreen> {
     );
 
     try {
-      final credential = PhoneAuthProvider.credential(
-        verificationId: widget.verificationId,
+      final PhoneAuthCredential credential = PhoneAuthProvider.credential(
+        verificationId: _verificationId,
         smsCode: otp,
       );
 
-      final userCred = await FirebaseAuth.instance.signInWithCredential(
-        credential,
-      );
+      final UserCredential userCred = await FirebaseAuth.instance
+          .signInWithCredential(credential);
+
+      if (userCred.user == null) {
+        throw Exception("User is null after OTP verification");
+      }
 
       final uid = userCred.user!.uid;
-
       await UserPreferences.saveUserId(uid);
 
       final userDoc = await FirebaseFirestore.instance
@@ -109,7 +116,7 @@ class _OtpScreenState extends State<OtpScreen> {
       if (userDoc.exists) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => const MainNavigator()),
+          MaterialPageRoute(builder: (_) => const LocationDisclosureScreen()),
           (_) => false,
         );
       } else {
@@ -120,13 +127,65 @@ class _OtpScreenState extends State<OtpScreen> {
           ),
         );
       }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        debugPrint("Firebase OTP Error: ${e.code}");
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e.code == 'invalid-verification-code'
+                  ? "Invalid OTP"
+                  : "Authentication failed: ${e.code}",
+            ),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Invalid OTP")));
+        debugPrint("OTP Error: $e");
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("OTP verification failed")),
+        );
       }
+    }
+  }
+
+  Future<void> _resendOtp() async {
+    setState(() {
+      seconds = 30;
+    });
+    _startTimer();
+
+    try {
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: widget.phone,
+        forceResendingToken: _resendToken,
+        verificationCompleted: (PhoneAuthCredential credential) {},
+        verificationFailed: (FirebaseAuthException e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Resend failed: ${e.message}")),
+          );
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          _verificationId = verificationId;
+          _resendToken = resendToken;
+
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text("OTP Resent")));
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          _verificationId = verificationId;
+        },
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Failed to resend OTP")));
     }
   }
 
@@ -180,9 +239,7 @@ class _OtpScreenState extends State<OtpScreen> {
                       textAlign: TextAlign.center,
                       decoration: InputDecoration(
                         counterText: "",
-                        contentPadding: const EdgeInsets.all(
-                          8,
-                        ),
+                        contentPadding: const EdgeInsets.all(8),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -200,10 +257,19 @@ class _OtpScreenState extends State<OtpScreen> {
               ),
 
               const SizedBox(height: 20),
-              Text(
-                "$resend ${seconds}s",
-                style: const TextStyle(color: Colors.grey),
-              ),
+              seconds == 0
+                  ? TextButton(
+                      onPressed: _resendOtp,
+                      child: const Text(
+                        "Resend OTP",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    )
+                  : Text(
+                      "Resend OTP in ${seconds}s",
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+
               const Spacer(),
               ElevatedButton(
                 onPressed: _verifyOtp,
