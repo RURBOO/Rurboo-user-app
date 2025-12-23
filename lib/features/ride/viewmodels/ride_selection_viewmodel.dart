@@ -1,7 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../../core/utils/fare_calc.dart';
 import '../models/ride_options.dart';
 import '../../home/models/location_result.dart';
 import '../repositories/ride_selection_repository.dart';
@@ -35,13 +36,8 @@ class RideSelectionViewModel extends ChangeNotifier {
 
   void setMapController(GoogleMapController c) {
     mapController = c;
-
-    if (pickup.coordinates != null && destination.coordinates != null) {
-      if (routePoints.isNotEmpty) {
-        _fitCameraToRoute(routePoints);
-      } else {
-        _fitCameraToRoute([pickup.coordinates!, destination.coordinates!]);
-      }
+    if (routePoints.isNotEmpty) {
+      _fitCameraToRoute(routePoints);
     }
   }
 
@@ -75,12 +71,22 @@ class RideSelectionViewModel extends ChangeNotifier {
 
     _setPolyline(routePoints);
 
-    if (_distanceKm > 60) {
-      isOutstationRide = true;
-    } else {
-      isOutstationRide = false;
-      final rates = await repo.fetchRideRates();
-      _createProfessionalRideOptions(rates);
+    isOutstationRide = _distanceKm > 60;
+
+    if (!isOutstationRide) {
+      Map<String, dynamic>? rates;
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('config')
+            .doc('rates')
+            .get();
+        rates = doc.data();
+      } catch (e) {
+        debugPrint("⚠️ Using offline fare rates");
+        rates = null;
+      }
+
+      _createRideOptions(rates);
     }
 
     loading = false;
@@ -91,6 +97,50 @@ class RideSelectionViewModel extends ChangeNotifier {
     }
   }
 
+  void _createRideOptions(Map<String, dynamic>? rates) {
+    final FareResult bike = calculateFare(
+      vehicleType: VehicleType.bike,
+      distanceKm: _distanceKm,
+      firestoreRates: rates,
+    );
+
+    final FareResult auto = calculateFare(
+      vehicleType: VehicleType.auto,
+      distanceKm: _distanceKm,
+      firestoreRates: rates,
+    );
+
+    final FareResult car = calculateFare(
+      vehicleType: VehicleType.car,
+      distanceKm: _distanceKm,
+      firestoreRates: rates,
+    );
+
+    rideOptions = [
+      RideOption(
+        name: "Bike Taxi",
+        description: "Fastest • ₹${bike.totalFare.toInt()}",
+        eta: "${_durationMins.toInt()} min",
+        fare: bike.totalFare,
+        icon: Icons.two_wheeler,
+      ),
+      RideOption(
+        name: "Auto Rickshaw",
+        description: "3 seats • ₹${auto.totalFare.toInt()}",
+        eta: "${_durationMins.toInt()} min",
+        fare: auto.totalFare,
+        icon: Icons.electric_rickshaw,
+      ),
+      RideOption(
+        name: "Cab",
+        description: "Comfort • ₹${car.totalFare.toInt()}",
+        eta: "${_durationMins.toInt()} min",
+        fare: car.totalFare,
+        icon: Icons.local_taxi,
+      ),
+    ];
+  }
+
   Future<bool> bookRide(Future<void> Function() action) async {
     if (_isBooking) return false;
 
@@ -99,7 +149,6 @@ class RideSelectionViewModel extends ChangeNotifier {
 
     try {
       await action();
-
       _isBooking = false;
       notifyListeners();
       return true;
@@ -118,7 +167,7 @@ class RideSelectionViewModel extends ChangeNotifier {
     double maxLat = points.first.latitude;
     double maxLng = points.first.longitude;
 
-    for (var p in points) {
+    for (final p in points) {
       if (p.latitude < minLat) minLat = p.latitude;
       if (p.latitude > maxLat) maxLat = p.latitude;
       if (p.longitude < minLng) minLng = p.longitude;
@@ -126,94 +175,16 @@ class RideSelectionViewModel extends ChangeNotifier {
     }
 
     Future.delayed(const Duration(milliseconds: 300), () {
-      try {
-        mapController!.animateCamera(
-          CameraUpdate.newLatLngBounds(
-            LatLngBounds(
-              southwest: LatLng(minLat, minLng),
-              northeast: LatLng(maxLat, maxLng),
-            ),
-            100.0,
+      mapController?.animateCamera(
+        CameraUpdate.newLatLngBounds(
+          LatLngBounds(
+            southwest: LatLng(minLat, minLng),
+            northeast: LatLng(maxLat, maxLng),
           ),
-        );
-      } catch (e) {
-        debugPrint("Camera Zoom Error: $e");
-      }
+          100,
+        ),
+      );
     });
-  }
-
-  void _createProfessionalRideOptions(Map<String, dynamic> rates) {
-    final now = TimeOfDay.now();
-    final double currentHour = now.hour + (now.minute / 60.0);
-
-    final bool isNight = currentHour < 6.0 || currentHour >= 22.0;
-
-    if (kDebugMode) {
-      print("Logic Check: Hour=$currentHour | Is Night? $isNight");
-    }
-
-    double getRate(String vehicleType, String key, double fallback) {
-      try {
-        if (rates[vehicleType] != null && rates[vehicleType] is Map) {
-          final val = rates[vehicleType][key];
-          if (val is num) return val.toDouble();
-          if (val is String) return double.tryParse(val) ?? fallback;
-        }
-      } catch (e) {
-        if (kDebugMode) {
-          print("Error parsing rate for $vehicleType/$key");
-        }
-      }
-      return fallback;
-    }
-
-    double carBase, carPerKm;
-    double autoBase, autoPerKm;
-    double bikeBase, bikePerKm;
-
-    if (isNight) {
-      carBase = getRate('car', 'night_base_fare', 80.0);
-      carPerKm = getRate('car', 'night_per_km', 16.0);
-
-      autoBase = getRate('auto', 'night_base_fare', 60.0);
-      autoPerKm = getRate('auto', 'night_per_km', 12.0);
-
-      bikeBase = getRate('bike', 'night_base_fare', 40.0);
-      bikePerKm = getRate('bike', 'night_per_km', 8.0);
-    } else {
-      carBase = getRate('car', 'base_fare', 100.0);
-      carPerKm = getRate('car', 'per_km', 15.0);
-
-      autoBase = getRate('auto', 'base_fare', 50.0);
-      autoPerKm = getRate('auto', 'per_km', 10.0);
-
-      bikeBase = getRate('bike', 'base_fare', 30.0);
-      bikePerKm = getRate('bike', 'per_km', 6.0);
-    }
-
-    rideOptions = [
-      RideOption(
-        name: "Bike Taxi",
-        description: isNight ? "Night Fare" : "1 person",
-        eta: "${_durationMins.toInt()} min",
-        fare: (bikeBase + (_distanceKm * bikePerKm)).roundToDouble(),
-        icon: Icons.two_wheeler,
-      ),
-      RideOption(
-        name: "Auto Rickshaw",
-        description: isNight ? "Night Fare" : "3 people",
-        eta: "${_durationMins.toInt()} min",
-        fare: (autoBase + (_distanceKm * autoPerKm)).roundToDouble(),
-        icon: Icons.electric_rickshaw,
-      ),
-      RideOption(
-        name: "Cab",
-        description: isNight ? "Night Fare" : "4 people",
-        eta: "${_durationMins.toInt()} min",
-        fare: (carBase + (_distanceKm * carPerKm)).roundToDouble(),
-        icon: Icons.local_taxi,
-      ),
-    ];
   }
 
   void _setMarkers() {

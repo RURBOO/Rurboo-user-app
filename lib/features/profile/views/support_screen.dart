@@ -7,95 +7,82 @@ class SupportScreen extends StatelessWidget {
   Future<void> _launch(BuildContext context, Uri uri) async {
     try {
       if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        await launchUrl(uri);
       } else {
-        if (context.mounted) {
+        if (context.mounted)
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Cannot perform this action on this device."),
-            ),
+            const SnackBar(content: Text("Cannot perform action")),
           );
-        }
       }
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Error: $e")));
-      }
+      debugPrint("Error: $e");
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Help & Support"),
+        title: const Text("Support"),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 1,
       ),
-      body: ListView(
-        children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 20, 20, 10),
-            child: Text(
-              "How can we help you?",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Need help?",
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-          ),
+            const SizedBox(height: 8),
+            const Text(
+              "Contact our support team 24/7",
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
 
-          ListTile(
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.email_outlined, color: Colors.blue),
+              child: ListTile(
+                leading: const Icon(Icons.email_outlined, color: Colors.blue),
+                title: const Text('Email Support'),
+                subtitle: const Text('support@rubo.com'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => _launch(
+                  context,
+                  Uri(
+                    scheme: 'mailto',
+                    path: 'support@rubo.com',
+                    query: 'subject=Support Request',
+                  ),
+                ),
+              ),
             ),
-            title: const Text("Email Support"),
-            subtitle: const Text("support@rubo.com"),
-            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-            onTap: () => _launch(
-              context,
-              Uri(scheme: 'mailto', path: 'support@rubo.com'),
-            ),
-          ),
-          const Divider(height: 1, indent: 70),
+            const SizedBox(height: 16),
 
-          ListTile(
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.phone_outlined, color: Colors.green),
-            ),
-            title: const Text("Call Customer Care"),
-            subtitle: const Text("+91 12345 67890"),
-            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-            onTap: () =>
-                _launch(context, Uri(scheme: 'tel', path: '+911234567890')),
-          ),
-          const Divider(height: 1, indent: 70),
-
-          ListTile(
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.purple.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+              child: ListTile(
+                leading: const Icon(Icons.phone_in_talk, color: Colors.green),
+                title: const Text('Call Helpline'),
+                subtitle: const Text('+91 12345 67890'),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () =>
+                    _launch(context, Uri(scheme: 'tel', path: '+911234567890')),
               ),
-              child: const Icon(Icons.language, color: Colors.purple),
             ),
-            title: const Text("Visit Website / FAQs"),
-            subtitle: const Text("www.rubo.com/help"),
-            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-            onTap: () => _launch(context, Uri.parse('https://www.google.com')),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../viewmodels/search_location_viewmodel.dart';
 import '../repositories/search_repository.dart';
+import '../models/location_result.dart';
 
 class SearchLocationScreen extends StatelessWidget {
   final bool isDestination;
@@ -39,10 +40,6 @@ class _SearchLocationBody extends StatelessWidget {
         ? "Set Destination"
         : "Set Pickup Location";
 
-    final activeController = vm.isDestinationMode
-        ? vm.destinationController
-        : vm.pickupController;
-
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
@@ -58,7 +55,12 @@ class _SearchLocationBody extends StatelessWidget {
 
           Expanded(
             child: vm.suggestions.isEmpty
-                ? const Center(child: Text("Search to see results"))
+                ? const Center(
+                    child: Text(
+                      "Search to see results",
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                  )
                 : ListView.builder(
                     itemCount: vm.suggestions.length,
                     itemBuilder: (context, index) {
@@ -68,9 +70,11 @@ class _SearchLocationBody extends StatelessWidget {
                         leading: const Icon(Icons.location_on_outlined),
                         title: Text(place.address),
                         onTap: () async {
-                          final result = await vm.selectPlace(place.placeId!);
+                          final LocationResult? result = await vm.selectPlace(
+                            place.placeId!,
+                          );
 
-                          if (result != null) {
+                          if (result != null && context.mounted) {
                             Navigator.pop(context, result);
                           }
                         },
@@ -98,13 +102,15 @@ class _SearchLocationBody extends StatelessWidget {
             controller: vm.pickupController,
             readOnly: vm.isDestinationMode,
             focusNode: vm.pickupFocus,
-            onChanged: !vm.isDestinationMode ? vm.onTextChanged : null,
+            onChanged: vm.isDestinationMode ? null : vm.onTextChanged,
             decoration: const InputDecoration(
               hintText: "Pickup location",
               border: InputBorder.none,
             ),
           ),
+
           const Divider(),
+
           TextField(
             controller: vm.destinationController,
             readOnly: !vm.isDestinationMode,

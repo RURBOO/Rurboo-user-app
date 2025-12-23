@@ -118,6 +118,22 @@ class HomeViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setPickupLocation(LocationResult loc) async {
+    pickup = loc;
+
+    _updateMarkers();
+
+    if (destination != null) {
+      await _drawRoute();
+    } else {
+      if (loc.coordinates != null && mapController != null) {
+        mapController!.animateCamera(CameraUpdate.newLatLng(loc.coordinates!));
+      }
+    }
+
+    notifyListeners();
+  }
+
   Future<void> selectDestination(LocationResult loc) async {
     destination = loc;
 

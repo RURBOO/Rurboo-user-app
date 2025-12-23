@@ -124,30 +124,53 @@ class HomeBody extends StatelessWidget {
             top: 50,
             left: 16,
             right: 16,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: const [
-                  BoxShadow(color: Colors.black26, blurRadius: 8),
-                ],
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.my_location, color: Colors.black54),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      vm.pickup?.address ?? "Current Location",
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+            child: GestureDetector(
+              onTap: () => _openSearch(context, isDestination: false),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black26, blurRadius: 8),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.circle, color: Colors.green, size: 14),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            "Pickup From",
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            vm.pickup?.address ?? "Current Location",
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
+                    const Icon(Icons.search, color: Colors.grey),
+                  ],
+                ),
               ),
             ),
           ),
@@ -202,7 +225,7 @@ class HomeBody extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             GestureDetector(
-              onTap: () => _openSearchForDestination(context),
+              onTap: () => _openSearch(context, isDestination: true),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 15,
@@ -327,13 +350,17 @@ class HomeBody extends StatelessWidget {
     );
   }
 
-  Future<void> _openSearchForDestination(BuildContext context) async {
+  Future<void> _openSearch(
+    BuildContext context, {
+    required bool isDestination,
+  }) async {
     final vm = Provider.of<HomeViewModel>(context, listen: false);
+
     final result = await Navigator.push<LocationResult?>(
       context,
       MaterialPageRoute(
         builder: (_) => SearchLocationScreen(
-          isDestination: true,
+          isDestination: isDestination,
           existingPickupAddress: vm.pickupAddress,
           existingDestinationAddress: vm.destinationAddress,
         ),
@@ -341,7 +368,11 @@ class HomeBody extends StatelessWidget {
     );
 
     if (result != null) {
-      await vm.selectDestination(result);
+      if (isDestination) {
+        await vm.selectDestination(result);
+      } else {
+        await vm.setPickupLocation(result);
+      }
     }
   }
 }
