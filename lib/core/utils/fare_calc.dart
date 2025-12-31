@@ -17,12 +17,12 @@ FareResult calculateFare({
   required double distanceKm,
   Map<String, dynamic>? firestoreRates,
 }) {
-  double baseFare = 0;
-  double perKmRate = 0;
+  double baseFare;
+  double perKmRate;
 
-  double defaultBase = 0;
-  double defaultPerKm = 0;
-  String jsonKey = 'car';
+  double defaultBase;
+  double defaultPerKm;
+  String jsonKey;
 
   switch (vehicleType) {
     case VehicleType.bike:
@@ -53,22 +53,24 @@ FareResult calculateFare({
     perKmRate = defaultPerKm;
   }
 
-  double commPercent = 20;
+  double commissionPercent = 20;
   if (firestoreRates != null && firestoreRates['commission_percent'] != null) {
-    commPercent = (firestoreRates['commission_percent'] as num).toDouble();
+    commissionPercent = (firestoreRates['commission_percent'] as num)
+        .toDouble();
   }
 
-  double fare;
-  double includedKm = 2;
+  const double includedKm = 2;
 
+  double fare;
   if (distanceKm <= includedKm) {
     fare = baseFare;
   } else {
-    fare = baseFare + ((distanceKm - includedKm) * perKmRate);
+    final double extraKm = distanceKm - includedKm;
+    fare = baseFare + (extraKm * perKmRate);
   }
 
-  double platformCommission = fare * (commPercent / 100);
-  double driverEarning = fare - platformCommission;
+  final double platformCommission = fare * (commissionPercent / 100);
+  final double driverEarning = fare - platformCommission;
 
   return FareResult(
     totalFare: fare.roundToDouble(),
