@@ -52,7 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            activeColor: Colors.black,
+            activeThumbColor: Colors.black,
             title: const Text("Push Notifications"),
             subtitle: const Text("Receive updates about your ride"),
             value: _pushNotifications,
@@ -63,7 +63,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            activeColor: Colors.black,
+            activeThumbColor: Colors.black,
             title: const Text("Promotional Emails"),
             value: _promoEmails,
             onChanged: (val) {

@@ -152,9 +152,9 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
   Widget build(BuildContext context) {
     final vm = Provider.of<SearchingDriverViewModel>(context);
 
-    return PopScope(
+     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -343,7 +343,7 @@ class _RippleAnimationState extends State<RippleAnimation>
       height: maxSize * value,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.amber.withOpacity(0.3 * (1 - value)),
+        color: Colors.amber.withValues(alpha: 0.3 * (1 - value)),
       ),
     );
   }

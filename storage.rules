@@ -1,0 +1,43 @@
+rules_version = '2';
+
+// Craft rules based on data in your Firestore database
+// allow write: if firestore.get(
+//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user is uploading their own file
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // PROFILE IMAGES
+    // Path: profile_images/{userId}/image.jpg
+    match /profile_images/{userId}/{fileName} {
+      allow read: if isAuthenticated(); // Anyone can see profile pics
+      allow write: if isOwner(userId); // Only owner can upload
+    }
+
+    // VEHICLE IMAGES (For Drivers)
+    match /vehicle_images/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+    }
+    
+    // CHAT IMAGES/FILES
+    match /chats/{chatId}/{fileName} {
+      // Allow if user is a participant (simplified for now to auth users)
+      allow read, write: if isAuthenticated();
+    }
+
+    // DEFAULT
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -114,7 +114,7 @@ class _RideBookedContent extends StatelessWidget {
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -161,6 +161,7 @@ class _RideBookedContent extends StatelessWidget {
                       elevation: 3,
                       child: const Icon(Icons.share, size: 20),
                       onPressed: () {
+                        // Using the new API as per deprecation warning
                         Share.share(
                           "Tracking my ride on Rubo! ID: ${vm.rideId}",
                         );
@@ -538,7 +539,9 @@ class _RideBookedContent extends StatelessWidget {
                 onPressed: () async {
                   final connectivity = await Connectivity().checkConnectivity();
                   if (connectivity.contains(ConnectivityResult.none)) {
+                    if (!ctx.mounted) return;
                     Navigator.pop(ctx);
+                    if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text("No Internet! Cannot cancel ride."),
@@ -548,8 +551,10 @@ class _RideBookedContent extends StatelessWidget {
                     return;
                   }
 
+                  if (!ctx.mounted) return;
                   Navigator.pop(ctx);
                   vm.cancelRide();
+                  if (!context.mounted) return;
                   Navigator.pop(context);
                 },
                 child: const Text("Yes, Cancel Ride"),

@@ -1,4 +1,4 @@
-package com.example.rubo
+package com.rurboo.app
 
 import io.flutter.embedding.android.FlutterActivity
 

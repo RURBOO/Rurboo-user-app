@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../../../core/services/user_preferences.dart';
@@ -44,16 +43,17 @@ class HomeViewModel extends ChangeNotifier {
   String? get pickupAddress => pickup?.address;
   String? get destinationAddress => destination?.address;
 
-  void onMapCreated(GoogleMapController controller) {
+  void onMapCreated(GoogleMapController controller) async {
     mapController = controller;
     if (_mapStyle == null) {
-      rootBundle.loadString('assets/map_styles/clean_map.json').then((string) {
-        _mapStyle = string;
-        mapController?.setMapStyle(_mapStyle);
-      });
-    } else {
-      mapController?.setMapStyle(_mapStyle);
+      try {
+        _mapStyle = await rootBundle.loadString('assets/map_styles/clean_map.json');
+      } catch (e) {
+        debugPrint('Map style loading error: $e');
+      }
     }
+    // Note: setMapStyle is deprecated. Use GoogleMap.style parameter instead
+    // This will be handled in the GoogleMap widget in home_screen.dart
   }
 
   Future<void> init(BuildContext context) async {

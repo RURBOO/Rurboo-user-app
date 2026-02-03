@@ -116,7 +116,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       child: Image.asset(item['image']!, fit: BoxFit.cover),
                     ),
                     Positioned.fill(
-                      child: Container(color: Colors.black.withOpacity(0.45)),
+                      child: Container(color: Colors.black.withValues(alpha: 0.45)),
                     ),
                     Positioned(
                       bottom: 140,

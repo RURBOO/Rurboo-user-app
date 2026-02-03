@@ -9,10 +9,11 @@ class SupportScreen extends StatelessWidget {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       } else {
-        if (context.mounted)
+        if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Cannot perform action")),
           );
+        }
       }
     } catch (e) {
       debugPrint("Error: $e");

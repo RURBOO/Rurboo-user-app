@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import '../../../core/services/user_preferences.dart';
 import '../models/ride_history_model.dart';
 

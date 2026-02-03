@@ -330,6 +330,7 @@ class RideSelectionBody extends StatelessWidget {
   ) async {
     final connectivity = await Connectivity().checkConnectivity();
     if (connectivity.contains(ConnectivityResult.none)) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("No Internet Connection"),
@@ -339,6 +340,7 @@ class RideSelectionBody extends StatelessWidget {
       return;
     }
 
+    if (!context.mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -368,6 +370,9 @@ class RideSelectionBody extends StatelessWidget {
 
       final parent = context
           .findAncestorWidgetOfExactType<RideSelectionScreen>();
+      if (parent == null) {
+        throw Exception("Parent widget not found");
+      }
       final String otp = (1000 + Random().nextInt(9000)).toString();
 
       String rideName = vm.selectedRide!.name.toLowerCase();
@@ -383,8 +388,8 @@ class RideSelectionBody extends StatelessWidget {
         'userId': userId,
         'userName': userData['name'] ?? 'User',
         'userPhone': userData['phoneNumber'] ?? '',
-        'pickupAddress': parent?.pickupText,
-        'destinationAddress': parent?.destinationText,
+        'pickupAddress': parent.pickupText,
+        'destinationAddress': parent.destinationText,
         'pickupGeo': pickupGeo.data,
         'pickupCoords': GeoPoint(
           vm.pickup.coordinates!.latitude,
@@ -416,9 +421,9 @@ class RideSelectionBody extends StatelessWidget {
             builder: (_) => SearchingDriverScreen(
               rideId: ref.id,
               pickupLatLng: vm.pickup.coordinates!,
-              pickupAddress: parent?.pickupText ?? "",
+              pickupAddress: parent.pickupText,
               destinationLatLng: vm.destination.coordinates!,
-              destinationAddress: parent?.destinationText ?? "",
+              destinationAddress: parent.destinationText,
             ),
           ),
           (route) => false,

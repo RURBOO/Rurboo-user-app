@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rubo/features/language/viewmodels/language_vm.dart';
 import '../../../core/services/user_preferences.dart';
-import '../../navigation/views/main_navigator.dart';
 import 'location_disclosure_screen.dart';
 
 class CreateProfileScreen extends StatefulWidget {

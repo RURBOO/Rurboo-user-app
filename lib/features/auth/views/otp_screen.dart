@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rubo/features/language/viewmodels/language_vm.dart';
 import '../../../core/services/user_preferences.dart';
-import '../../navigation/views/main_navigator.dart';
 import 'create_profile_screen.dart';
 import 'location_disclosure_screen.dart';
 
@@ -148,7 +147,7 @@ class _OtpScreenState extends State<OtpScreen> {
         debugPrint("OTP Error: $e");
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("OTP verification failed")),
+          SnackBar(content: Text("OTP verification failed: $e")),
         );
       }
     }
@@ -162,7 +161,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
     try {
       await FirebaseAuth.instance.verifyPhoneNumber(
-        phoneNumber: widget.phone,
+        phoneNumber: '+91${widget.phone}',
         forceResendingToken: _resendToken,
         verificationCompleted: (PhoneAuthCredential credential) {},
         verificationFailed: (FirebaseAuthException e) {
@@ -183,6 +182,7 @@ class _OtpScreenState extends State<OtpScreen> {
         },
       );
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Failed to resend OTP")));
