@@ -231,7 +231,7 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
                 minRating: 1,
                 allowHalfRating: true,
                 itemCount: 5,
-                itemBuilder: (_, __) =>
+                itemBuilder: (context, index) =>
                     const Icon(Icons.star, color: Colors.amber),
                 onRatingUpdate: (r) => setState(() => _rating = r),
               ),

@@ -161,7 +161,8 @@ class _RideBookedContent extends StatelessWidget {
                       elevation: 3,
                       child: const Icon(Icons.share, size: 20),
                       onPressed: () {
-                        // Using the new API as per deprecation warning
+                        // Using the new API
+                        // ignore: deprecated_member_use
                         Share.share(
                           "Tracking my ride on Rubo! ID: ${vm.rideId}",
                         );

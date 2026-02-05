@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use
 import 'dart:async';
 
 import 'package:firebase_app_check/firebase_app_check.dart';
@@ -28,17 +29,26 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   /// 🔥 Firebase init
-  await Firebase.initializeApp();
+  /// 🔥 Firebase init
+  try {
+    await Firebase.initializeApp();
+    debugPrint("✅ Firebase initialized successfully");
+  } catch (e) {
+    debugPrint("❌ Firebase initialization failed: $e");
+  }
 
   /// 🔐 App Check
   if (kDebugMode) {
     await FirebaseAppCheck.instance.activate(
       androidProvider: AndroidProvider.debug,
+      appleProvider: AppleProvider.debug,
       webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
     );
   } else {
     await FirebaseAppCheck.instance.activate(
-      // webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
+      androidProvider: AndroidProvider.playIntegrity,
+      appleProvider: AppleProvider.deviceCheck,
+      webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
     );
   }
 

@@ -368,12 +368,21 @@ class RideSelectionBody extends StatelessWidget {
       if (!userDoc.exists) throw Exception("User not found");
       final userData = userDoc.data()!;
 
+      final String otp = (1000 + Random().nextInt(9000)).toString();
+
+      // ... (existing variable definitions) ...
+      // NOTE: parent usage here is safe as 'parent' was captured before async call
+      // or we re-capture it? Actually 'parent' was captured at line 371.
+      // Wait, line 371 'findAncestorWidgetOfExactType' IS CONTEXT DEPENDENT.
+      // But it was called AFTER `await userDoc.get()`.
+      // So ensuring context is mounted there is crucial.
+
+      if (!context.mounted) return;
       final parent = context
           .findAncestorWidgetOfExactType<RideSelectionScreen>();
       if (parent == null) {
         throw Exception("Parent widget not found");
       }
-      final String otp = (1000 + Random().nextInt(9000)).toString();
 
       String rideName = vm.selectedRide!.name.toLowerCase();
       String category = "Car";

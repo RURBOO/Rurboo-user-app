@@ -42,7 +42,7 @@ class _HistoryScreenBody extends StatelessWidget {
           if (vm.isLoading) {
             return ListView.builder(
               itemCount: 6,
-              itemBuilder: (_, __) => const SkeletonRideCard(),
+              itemBuilder: (context, index) => const SkeletonRideCard(),
             );
           }
 

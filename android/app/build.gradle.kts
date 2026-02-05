@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -7,6 +9,20 @@ plugins {
 }
 
 android {
+
+signingConfigs {
+    create("release") {
+        val props = Properties()
+        props.load(rootProject.file("key.properties").inputStream())
+
+        keyAlias = props["keyAlias"] as String
+        keyPassword = props["keyPassword"] as String
+        storeFile = file(props["storeFile"] as String)
+        storePassword = props["storePassword"] as String
+    }
+}
+
+
     namespace = "com.rurboo.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
@@ -32,12 +48,17 @@ android {
     }
 
     buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
-        }
+    release {
+        signingConfig = signingConfigs.getByName("release")
+        isMinifyEnabled = true
+        isShrinkResources = true
+        proguardFiles(
+            getDefaultProguardFile("proguard-android-optimize.txt"),
+            "proguard-rules.pro"
+        )
     }
+}
+
 }
 
 flutter {
@@ -47,10 +68,12 @@ flutter {
 dependencies {
     // Import the BoM for the Firebase platform
     // The BoM (Bill of Materials) manages the versions of all Firebase libraries for you.
-    implementation(platform("com.google.firebase:firebase-bom:32.8.1"))
+    implementation(platform("com.google.firebase:firebase-bom:34.8.0"))
 
     // Add the dependencies for the Firebase products you want to use.
     // When using the BoM, you don't specify versions in Firebase library dependencies.
+    implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-appcheck-debug")
 }

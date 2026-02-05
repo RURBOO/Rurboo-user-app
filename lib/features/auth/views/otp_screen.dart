@@ -182,7 +182,7 @@ class _OtpScreenState extends State<OtpScreen> {
         },
       );
     } catch (e) {
-      if (!context.mounted) return;
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Failed to resend OTP")));

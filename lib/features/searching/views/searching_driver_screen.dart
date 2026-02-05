@@ -326,7 +326,7 @@ class _RippleAnimationState extends State<RippleAnimation>
     return ClipRect(
       child: AnimatedBuilder(
         animation: _controller,
-        builder: (_, __) {
+        builder: (context, child) {
           return Stack(
             alignment: Alignment.center,
             children: [_circle(80), _circle(110), _circle(140), widget.child],
