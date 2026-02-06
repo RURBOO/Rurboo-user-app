@@ -24,6 +24,7 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
   double _rating = 5.0;
   final TextEditingController _commentController = TextEditingController();
   bool _isSubmitting = false;
+  bool _feltSafe = true; // Added Safety Feedback Variable
 
   double _displayFare = 0.0;
   bool _loadingFare = true;
@@ -102,6 +103,7 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
         transaction.update(rideRef, {
           'rating': _rating,
           'review': _commentController.text.trim(),
+          'feltSafe': _feltSafe,
           'status': 'closed',
         });
       });
@@ -219,7 +221,38 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
                 ),
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 24),
+              
+              // Safety Question
+              Container(
+                decoration: BoxDecoration(
+                   color: _feltSafe ? Colors.green[50] : Colors.red[50],
+                   borderRadius: BorderRadius.circular(12),
+                   border: Border.all(color: _feltSafe ? Colors.green.shade200 : Colors.red.shade200),
+                ),
+                child: SwitchListTile(
+                   title: const Text("Did you feel safe during this ride?", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                   value: _feltSafe,
+                   activeTrackColor: Colors.green,
+                   activeThumbColor: Colors.green,
+                   inactiveThumbColor: Colors.red,
+                   inactiveTrackColor: Colors.red[200],
+                   onChanged: (val) {
+                      setState(() => _feltSafe = val);
+                      if (!val) {
+                         ScaffoldMessenger.of(context).showSnackBar(
+                             const SnackBar(content: Text("We are sorry! Use the Report button to tell us more.")),
+                         );
+                      }
+                   },
+                   secondary: Icon(
+                       _feltSafe ? Icons.security : Icons.warning_amber_rounded,
+                       color: _feltSafe ? Colors.green : Colors.red,
+                   ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
               const Text(
                 "Rate your Driver",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),

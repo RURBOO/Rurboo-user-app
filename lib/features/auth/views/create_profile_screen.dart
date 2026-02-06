@@ -20,9 +20,24 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
 
   final nameController = TextEditingController();
   final emergencyController = TextEditingController();
-
+  
+  // New Safety Fields
+  final ageController = TextEditingController();
+  final guardianNameController = TextEditingController();
+  final guardianPhoneController = TextEditingController();
+  
   String gender = "";
+  String? userCategory;
   bool whatsappUpdates = false;
+
+  bool _isGuardianRequired() {
+    int age = int.tryParse(ageController.text) ?? 18;
+    // Rule: Guardian mandatory if Age < 18 OR Category is Child
+    // Exception: Student >= 18 does not need guardian
+    if (userCategory == 'Child') return true;
+    if (age < 18) return true;
+    return false;
+  }
 
   String title = "Create your profile";
   String subtitle = "Please create your account.";
@@ -101,9 +116,14 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
         'phoneNumber': widget.phoneNumber,
         'name': nameController.text.trim(),
         'gender': gender,
+        'age': int.tryParse(ageController.text) ?? 18,
+        'userCategory': userCategory ?? 'Adult',
+        'guardianName': _isGuardianRequired() ? guardianNameController.text.trim() : null,
+        'guardianPhone': _isGuardianRequired() ? guardianPhoneController.text.trim() : null,
         'emergencyContact': emergencyController.text.trim(),
         'createdAt': FieldValue.serverTimestamp(),
         'whatsappUpdates': whatsappUpdates,
+        'safetyModeEnabled': (gender == 'Woman' || userCategory == 'Child'), // Auto-enable for safety
       };
 
       await FirebaseFirestore.instance
@@ -177,63 +197,134 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                           decoration: InputDecoration(
                             labelText: fullNameLbl,
                             border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.person_outline),
                           ),
                           validator: (v) {
-                            if (v == null || v.isEmpty) {
-                              return "Enter your full name";
-                            }
-                            if (v.trim().split(' ').length < 2) {
-                              return "Enter First and Last name";
-                            }
+                            if (v == null || v.isEmpty) return "Enter full name";
+                            if (v.trim().split(' ').length < 2) return "Enter First and Last name";
                             return null;
                           },
                         ),
-
                         const SizedBox(height: 20),
-                        Text(
-                          genderLbl,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
 
+                        // --- AGE & GENDER ROW ---
                         Row(
-                          children: ["Male", "Female", "Other"].map((g) {
-                            final selected = gender == g;
-                            return Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: TextFormField(
+                                controller: ageController,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(3),
+                                ],
+                                decoration: const InputDecoration(
+                                  labelText: "Age",
+                                  border: OutlineInputBorder(),
+                                  prefixIcon: Icon(Icons.calendar_today),
                                 ),
-                                child: OutlinedButton(
-                                  onPressed: () => setState(() => gender = g),
-                                  style: OutlinedButton.styleFrom(
-                                    backgroundColor: selected
-                                        ? Colors.yellow[100]
-                                        : Colors.white,
-                                    side: BorderSide(
-                                      color: selected
-                                          ? Colors.orange
-                                          : Colors.grey.shade300,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    g,
-                                    style: TextStyle(
-                                      color: selected
-                                          ? Colors.orange
-                                          : Colors.black,
-                                    ),
-                                  ),
-                                ),
+                                onChanged: (v) => setState(() {}),
+                                validator: (v) {
+                                  if (v == null || v.isEmpty) return "Required";
+                                  int? age = int.tryParse(v);
+                                  if (age == null || age < 5 || age > 100) return "Invalid";
+                                  return null;
+                                },
                               ),
-                            );
-                          }).toList(),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              flex: 3,
+                              child: DropdownButtonFormField<String>(
+                                initialValue: gender.isEmpty ? null : gender, // Use initialValue to fix deprecation
+                                decoration: InputDecoration(
+                                  labelText: genderLbl,
+                                  border: const OutlineInputBorder(),
+                                ),
+                                items: ["Male", "Woman", "Other"].map((g) => 
+                                  DropdownMenuItem(value: g, child: Text(g))).toList(),
+                                onChanged: (v) => setState(() => gender = v!),
+                                validator: (v) => v == null ? "Required" : null,
+                              ),
+                            ),
+                          ],
                         ),
 
                         const SizedBox(height: 20),
+
+                        // --- USER CATEGORY ---
+                        DropdownButtonFormField<String>(
+                          initialValue: userCategory, // Use initialValue to fix deprecation
+                          decoration: const InputDecoration(
+                            labelText: "Category",
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.category_outlined),
+                          ),
+                          items: ["Adult", "Woman", "Student", "Child"].map((c) => 
+                            DropdownMenuItem(value: c, child: Text(c))).toList(),
+                          onChanged: (v) => setState(() => userCategory = v!),
+                          validator: (v) => v == null ? "Required" : null,
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // --- GUARDIAN DETAILS (Conditional) ---
+                        if (_isGuardianRequired()) ...[
+                           Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Row(
+                                  children: [
+                                    Icon(Icons.shield, color: Colors.orange, size: 20),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      "Guardian Details Required",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold, 
+                                        color: Colors.orange,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                TextFormField(
+                                  controller: guardianNameController,
+                                  decoration: const InputDecoration(
+                                    labelText: "Guardian Name",
+                                    border: OutlineInputBorder(),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                  ),
+                                  validator: (v) => _isGuardianRequired() && (v == null || v.isEmpty) 
+                                      ? "Required" : null,
+                                ),
+                                const SizedBox(height: 16),
+                                TextFormField(
+                                  controller: guardianPhoneController,
+                                  keyboardType: TextInputType.phone,
+                                  inputFormatters: [LengthLimitingTextInputFormatter(10)],
+                                  decoration: const InputDecoration(
+                                    labelText: "Guardian Phone",
+                                    border: OutlineInputBorder(),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                  ),
+                                  validator: (v) => _isGuardianRequired() && (v == null || v.length != 10) 
+                                      ? "Valid phone required" : null,
+                                ),
+                              ],
+                            ),
+                           ),
+                           const SizedBox(height: 20),
+                        ],
 
                         TextFormField(
                           controller: emergencyController,
@@ -245,26 +336,21 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                           decoration: InputDecoration(
                             labelText: emergencyLbl,
                             border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.contact_emergency),
                           ),
                           validator: (v) {
-                            if (v == null || v.isEmpty) {
-                              return "Enter emergency contact number";
-                            }
-                            if (v.length != 10) {
-                              return "Enter valid 10-digit number";
-                            }
+                            if (v == null || v.isEmpty) return "Enter emergency contact";
+                            if (v.length != 10) return "Enter valid 10-digit number";
                             return null;
                           },
                         ),
-
+                        // ... Checkbox and Button ...
                         const SizedBox(height: 20),
-
                         Row(
                           children: [
                             Checkbox(
                               value: whatsappUpdates,
-                              onChanged: (v) =>
-                                  setState(() => whatsappUpdates = v!),
+                              onChanged: (v) => setState(() => whatsappUpdates = v!),
                             ),
                             Expanded(child: Text(whatsappLbl)),
                           ],
@@ -278,8 +364,11 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                             backgroundColor: Colors.black,
                             foregroundColor: Colors.white,
                             minimumSize: const Size(double.infinity, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                          child: Text(proceed),
+                          child: Text(proceed, style: const TextStyle(fontSize: 16)),
                         ),
                       ],
                     ),

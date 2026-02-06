@@ -39,15 +39,31 @@ class LocationService {
     }
 
     try {
+      debugPrint("📍 Requesting location (High Accuracy)...");
       Position position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
           timeLimit: Duration(seconds: 8),
         ),
       );
+      debugPrint("✅ Location found: ${position.latitude}, ${position.longitude}");
       return LatLng(position.latitude, position.longitude);
     } catch (e) {
-      return null;
+      debugPrint("⚠️ High accuracy location failed: $e");
+      try {
+        debugPrint("📍 Retrying with Balanced Accuracy (Medium)...");
+        Position position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.medium,
+            timeLimit: Duration(seconds: 5),
+          ),
+        );
+        debugPrint("✅ Location found (Balanced): ${position.latitude}, ${position.longitude}");
+        return LatLng(position.latitude, position.longitude);
+      } catch (e2) {
+        debugPrint("❌ Location retrieval failed completely: $e2");
+        return null;
+      }
     }
   }
 }

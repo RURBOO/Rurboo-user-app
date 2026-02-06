@@ -50,9 +50,17 @@ class SearchLocationViewModel extends ChangeNotifier {
 
   Future<LocationResult?> selectPlace(String placeId) async {
     try {
-      final selected = suggestions.firstWhere((p) => p.placeId == placeId);
-      return selected;
+      loading = true;
+      notifyListeners();
+
+      final result = await repo.getPlaceDetails(placeId);
+
+      loading = false;
+      notifyListeners();
+      return result;
     } catch (e) {
+      loading = false;
+      notifyListeners();
       return null;
     }
   }

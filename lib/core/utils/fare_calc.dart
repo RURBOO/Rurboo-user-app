@@ -22,44 +22,63 @@ FareResult calculateFare({
 
   double defaultBase;
   double defaultPerKm;
-  String jsonKey;
+  // String jsonKey;
 
+  // ==========================================
+  // 🧮 LOGIC START (Start Editing Here)
+  // ==========================================
+
+  // 1. Set Rates based on Vehicle Type
   switch (vehicleType) {
     case VehicleType.bike:
-      defaultBase = 40;
-      defaultPerKm = 9;
-      jsonKey = 'bike';
+      // Bike Rates
+      defaultBase = 40; // Flat fare for first 2 km
+      defaultPerKm = 9; // Cost per km after 2 km
+      // jsonKey = 'bike';
       break;
 
     case VehicleType.auto:
+      // Auto Rates
       defaultBase = 80;
       defaultPerKm = 16;
-      jsonKey = 'auto';
+      // jsonKey = 'auto';
       break;
 
     case VehicleType.car:
-      defaultBase = 120;
-      defaultPerKm = 22;
-      jsonKey = 'car';
+      // Car Rates (Updated)
+      defaultBase = 150; // Base fare increased to 150
+      defaultPerKm = 25; // Rate per km increased to 25
+      // jsonKey = 'car';
       break;
   }
 
+  // 2. Check if Firestore (Online) rates are available
+  // FIXME: User reported wrong fare logic. Forcing hardcoded values for now.
+  /*
   if (firestoreRates != null && firestoreRates[jsonKey] != null) {
     final data = firestoreRates[jsonKey];
     baseFare = (data['base_fare'] as num?)?.toDouble() ?? defaultBase;
     perKmRate = (data['per_km'] as num?)?.toDouble() ?? defaultPerKm;
   } else {
+    // Fallback to the defaults we set above
     baseFare = defaultBase;
     perKmRate = defaultPerKm;
   }
+  */
+    baseFare = defaultBase;
+    perKmRate = defaultPerKm;
 
+  // 3. Set Platform Commission (Default 20%)
   double commissionPercent = 20;
   if (firestoreRates != null && firestoreRates['commission_percent'] != null) {
-    commissionPercent = (firestoreRates['commission_percent'] as num)
-        .toDouble();
+    commissionPercent = (firestoreRates['commission_percent'] as num).toDouble();
   }
 
-  const double includedKm = 2;
+  // 4. Calculate Final Fare
+  // Formula:
+  // If distance < 2km: Only Base Fare
+  // If distance > 2km: Base Fare + ((Total Distance - 2) * Per Km Rate)
+  const double includedKm = 2; // First 2 km are free/included in base fare
 
   double fare;
   if (distanceKm <= includedKm) {
@@ -69,6 +88,28 @@ FareResult calculateFare({
     fare = baseFare + (extraKm * perKmRate);
   }
 
+  // 6. Night Charge Logic (10 PM to 5 AM)
+  // Logic: +10 for Bike, +20 for Auto, +40 for Car
+  final now = DateTime.now();
+  final hour = now.hour;
+  double nightCharge = 0;
+
+  if (hour >= 22 || hour < 5) {
+    switch (vehicleType) {
+      case VehicleType.bike:
+        nightCharge = 10;
+        break;
+      case VehicleType.auto:
+        nightCharge = 20;
+        break;
+      case VehicleType.car:
+        nightCharge = 40;
+        break;
+    }
+  }
+  fare += nightCharge;
+
+  // 7. Split Earnings
   final double platformCommission = fare * (commissionPercent / 100);
   final double driverEarning = fare - platformCommission;
 

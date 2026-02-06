@@ -60,9 +60,18 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
       },
       verificationFailed: (FirebaseAuthException e) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Error: ${e.message}")));
+        String msg = "Verification failed";
+        if (e.code == 'invalid-phone-number') {
+          msg = "Invalid phone number format.";
+        } else if (e.code == 'quota-exceeded') {
+          msg = "SMS quota exceeded. Please try again later.";
+        } else if (e.code == 'billing-not-enabled') {
+          msg = "Firebase billing not enabled (dev error).";
+        } else {
+          msg = "Error: ${e.message}";
+        }
+        debugPrint("🔥 Phone Auth Error: ${e.code} - ${e.message}");
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
       },
       codeSent: (String verificationId, int? resendToken) {
         Navigator.pop(context);

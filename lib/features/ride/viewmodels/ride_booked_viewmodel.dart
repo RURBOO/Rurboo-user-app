@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../home/services/polyline_service.dart';
 import '../models/ride_booking.dart';
@@ -52,16 +53,46 @@ class RideBookedViewModel extends ChangeNotifier {
     this.rideDetails,
   });
 
+  // Safety Fields
+  String? guardianPhone;
+  List<Map<String, dynamic>> trustedContacts = [];
+  bool safetyModeEnabled = false;
+  bool _hasAutoShared = false;
+
   void setMapController(GoogleMapController c) {
     mapController = c;
   }
 
   void init() {
     _setStaticMarkers();
-
     _fetchPolyline(pickupLatLng, destinationLatLng, 'initial_route');
-
     _listenToRide();
+    _fetchSafetySettings();
+  }
+
+  Future<void> _fetchSafetySettings() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        guardianPhone = data['guardianPhone'];
+        safetyModeEnabled = data['safetyModeEnabled'] ?? false;
+        
+        if (data['trustedContacts'] != null) {
+          trustedContacts = List<Map<String, dynamic>>.from(data['trustedContacts']);
+        }
+        
+        // Check for Auto-Share immediately if ride is already active
+        if (stage == RideStage.arriving || stage == RideStage.inProgress) {
+          _checkForAutoShare();
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching safety settings: $e");
+    }
   }
 
   void onUserPanMap() {
@@ -131,6 +162,9 @@ class RideBookedViewModel extends ChangeNotifier {
 
           if (stageChanged || _lastFetchedStage != stage) {
             _handleStageChangeRoute();
+            if (newStage == RideStage.arriving || newStage == RideStage.inProgress) {
+               _checkForAutoShare();
+            }
           }
 
           notifyListeners();
@@ -288,23 +322,64 @@ class RideBookedViewModel extends ChangeNotifier {
   }
 
   Future<void> triggerSOS() async {
-    if (kIsSosTestMode) {
-      debugPrint("SOS TEST MODE TRIGGERED for ride $rideId");
-
-      await FirebaseFirestore.instance.collection('sos_logs').add({
-        'rideId': rideId,
-        'userId': 'TEST_USER',
-        'timestamp': FieldValue.serverTimestamp(),
-        'mode': 'test',
-      });
-
-      return;
+    debugPrint("🚨 SOS TRIGGERED 🚨");
+    
+    // 1. Alert Trusted Contacts (via SMS)
+    final String message = "🆘 SOS! I feel unsafe. Track me: https://rurboo.app/track?id=$rideId";
+    
+    String? phone = guardianPhone;
+    if (phone == null && trustedContacts.isNotEmpty) {
+      phone = trustedContacts.first['phone'];
+    }
+    
+    if (phone != null) {
+        final Uri smsUri = Uri(
+          scheme: 'sms',
+          path: phone,
+          queryParameters: {'body': message},
+        );
+        if (await canLaunchUrl(smsUri)) {
+          await launchUrl(smsUri);
+        }
     }
 
-    final Uri uri = Uri(scheme: 'tel', path: '112');
+    // 2. Call Police (112)
+    final Uri policeUri = Uri(scheme: 'tel', path: '112');
+    if (await canLaunchUrl(policeUri)) {
+      await launchUrl(policeUri);
+    }
+  }
 
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+  void _checkForAutoShare() {
+     if (_hasAutoShared) return;
+     if (safetyModeEnabled) {
+       _hasAutoShared = true;
+       shareRideToGuardian(auto: true);
+     }
+  }
+
+  Future<void> shareRideToGuardian({bool auto = false}) async {
+    final String message = "Trip Started! 🚗 Tracking Link: https://rurboo.app/track?id=$rideId";
+    
+    String? phone = guardianPhone;
+    if (phone == null && trustedContacts.isNotEmpty) {
+      phone = trustedContacts.first['phone'];
+    }
+
+    if (phone != null) {
+      if (auto) {
+        debugPrint("🔄 Auto-Sharing Ride with $phone");
+        // Simulated auto-share notification
+      } else {
+         final Uri smsUri = Uri(
+          scheme: 'sms',
+          path: phone,
+          queryParameters: {'body': message},
+        );
+        if (await canLaunchUrl(smsUri)) {
+          await launchUrl(smsUri);
+        }
+      }
     }
   }
 

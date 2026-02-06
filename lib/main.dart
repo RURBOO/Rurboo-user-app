@@ -22,52 +22,84 @@ import 'features/home/services/location_service.dart';
 import 'features/home/services/recent_places_service.dart';
 import 'features/home/services/polyline_service.dart';
 
+// DEEP LINK
+import 'core/services/deep_link_service.dart';
+import 'core/services/notification_service.dart';
+
 // SPLASH
 import 'features/splash/views/splash_screen.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  /// 🔥 Firebase init
-  /// 🔥 Firebase init
+  // ===============================
+  // 🔥 FIREBASE INITIALIZATION
+  // ===============================
   try {
     await Firebase.initializeApp();
-    debugPrint("✅ Firebase initialized successfully");
+    debugPrint('✅ Firebase initialized');
+  } catch (e, stack) {
+    debugPrint('❌ Firebase init failed: $e');
+    debugPrintStack(stackTrace: stack);
+  }
+
+  // ===============================
+  // 🔐 FIREBASE APP CHECK
+  // ===============================
+  try {
+    if (kDebugMode) {
+      // 🔹 DEV MODE (no enforcement)
+      await FirebaseAppCheck.instance.activate(
+        androidProvider: AndroidProvider.debug,
+      );
+      debugPrint('🟢 App Check: DEBUG provider active');
+    } /* else {
+      // 🔹 PRODUCTION (Play Integrity)
+      await FirebaseAppCheck.instance.activate(
+        androidProvider: AndroidProvider.playIntegrity,
+      );
+      debugPrint('🔐 App Check: Play Integrity active');
+    } */
+
+    // ✅ VERY IMPORTANT: prevents token expiry issues
+    await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
   } catch (e) {
-    debugPrint("❌ Firebase initialization failed: $e");
+    debugPrint('⚠️ App Check init issue (non-fatal): $e');
   }
 
-  /// 🔐 App Check
-  if (kDebugMode) {
-    await FirebaseAppCheck.instance.activate(
-      androidProvider: AndroidProvider.debug,
-      appleProvider: AppleProvider.debug,
-      webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
-    );
-  } else {
-    await FirebaseAppCheck.instance.activate(
-      androidProvider: AndroidProvider.playIntegrity,
-      appleProvider: AppleProvider.deviceCheck,
-      webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
-    );
+  // ===============================
+  // 🌱 ENV VARIABLES
+  // ===============================
+  try {
+    await dotenv.load();
+    debugPrint('🌱 ENV loaded');
+  } catch (e) {
+    debugPrint('⚠️ ENV load failed: $e');
   }
 
-  /// 🌱 ENV
-  await dotenv.load();
+  // ===============================
+  // 🔔 NOTIFICATIONS
+  // ===============================
+  try {
+    await NotificationService().init();
+  } catch (e) {
+    debugPrint('⚠️ Notification init failed: $e');
+  }
 
+  // ===============================
+  // 🚀 RUN APP
+  // ===============================
   runApp(
     MultiProvider(
       providers: [
-        // ===============================
-        // SERVICES (LOWEST LAYER)
-        // ===============================
+        // SERVICES
         Provider<LanguageService>(
           create: (_) => LanguageService(),
         ),
 
-        // ===============================
         // VIEW MODELS
-        // ===============================
         ChangeNotifierProvider<LanguageViewModel>(
           create: (context) =>
               LanguageViewModel(context.read<LanguageService>()),
@@ -88,13 +120,30 @@ Future<void> main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+// ===============================
+// 🧱 ROOT APP
+// ===============================
+
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize Deep Link Service
+    DeepLinkService().init(navigatorKey);
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Rurboo',
+      navigatorKey: navigatorKey, // 👈 KEY ADDED
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: false,

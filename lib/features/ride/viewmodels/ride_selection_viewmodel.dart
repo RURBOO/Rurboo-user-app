@@ -34,6 +34,13 @@ class RideSelectionViewModel extends ChangeNotifier {
   bool _isBooking = false;
   bool get isBooking => _isBooking;
 
+  DateTime? scheduledTime;
+
+  void setScheduledTime(DateTime? date) {
+    scheduledTime = date;
+    notifyListeners();
+  }
+
   void setMapController(GoogleMapController c) {
     mapController = c;
     if (routePoints.isNotEmpty) {
@@ -71,7 +78,7 @@ class RideSelectionViewModel extends ChangeNotifier {
 
     _setPolyline(routePoints);
 
-    isOutstationRide = _distanceKm > 60;
+    isOutstationRide = _distanceKm > 100;
 
     if (!isOutstationRide) {
       Map<String, dynamic>? rates;

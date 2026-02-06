@@ -4,13 +4,15 @@ import 'package:rubo/features/language/viewmodels/language_vm.dart';
 import 'package:rubo/features/onboarding/views/onboarding_screen.dart';
 
 class LanguageSelectionScreen extends StatelessWidget {
-  const LanguageSelectionScreen({super.key});
+  final bool fromProfile;
+  const LanguageSelectionScreen({super.key, this.fromProfile = false});
 
   @override
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageViewModel>(context, listen: false);
 
     return Scaffold(
+      appBar: fromProfile ? AppBar(elevation: 0, backgroundColor: Colors.transparent, iconTheme: const IconThemeData(color: Colors.black)) : null,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -26,10 +28,14 @@ class LanguageSelectionScreen extends StatelessWidget {
               ElevatedButton(
                 onPressed: () {
                   lang.setLanguage('en');
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-                  );
+                  if (fromProfile) {
+                    Navigator.pop(context);
+                  } else {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
@@ -42,10 +48,14 @@ class LanguageSelectionScreen extends StatelessWidget {
               ElevatedButton(
                 onPressed: () {
                   lang.setLanguage('hi');
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-                  );
+                  if (fromProfile) {
+                    Navigator.pop(context);
+                  } else {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),

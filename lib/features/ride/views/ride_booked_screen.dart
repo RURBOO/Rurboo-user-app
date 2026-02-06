@@ -10,6 +10,8 @@ import '../repositories/ride_booked_repository.dart';
 import '../../home/services/polyline_service.dart';
 import '../models/ride_booking.dart';
 import 'ride_summary_screen.dart';
+import '../../safety/services/sos_service.dart';
+import '../../chat/views/chat_screen.dart';
 
 class RideBookedScreen extends StatefulWidget {
   final LatLng pickupLatLng;
@@ -152,36 +154,71 @@ class _RideBookedContent extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // Old share button removed
                     const SizedBox(),
 
-                    FloatingActionButton.small(
-                      heroTag: 'share_btn',
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                      elevation: 3,
-                      child: const Icon(Icons.share, size: 20),
-                      onPressed: () {
-                        // Using the new API
-                        // ignore: deprecated_member_use
-                        Share.share(
-                          "Tracking my ride on Rubo! ID: ${vm.rideId}",
-                        );
-                      },
-                    ),
+                    // Share moved to floating action button
+                    const SizedBox(),
                   ],
                 ),
               ),
             ),
 
+            // Top Right: Safety Shield
             Positioned(
-              top: 100,
+              top: 50,
               right: 16,
               child: FloatingActionButton.small(
+                heroTag: 'safety_shield',
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.indigo,
+                elevation: 4,
+                onPressed: () => _showSafetyShield(context, vm),
+                child: const Icon(Icons.shield_moon),
+              ),
+            ),
+
+            // Top Right (Below Shield): Share Button
+            Positioned(
+              top: 110,
+              right: 16,
+              child: FloatingActionButton.small(
+                heroTag: 'share_btn',
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                elevation: 3,
+                child: const Icon(Icons.share, size: 20),
+                onPressed: () {
+                   // ignore: deprecated_member_use
+                   Share.share(
+                     "Track my ride live on Rurboo! 🚗📍\nhttps://rurboo.app/track?id=${vm.rideId}",
+                   );
+                },
+              ),
+            ),
+
+            // Bottom Right (Above Panel): SOS Button (Pulsing/Prominent)
+            Positioned(
+              bottom: MediaQuery.of(context).size.height * 0.50 + 20,
+              left: 16,
+              child: FloatingActionButton(
                 heroTag: 'sos_btn',
-                backgroundColor: Colors.red,
+                backgroundColor: Colors.red[700],
                 foregroundColor: Colors.white,
-                onPressed: () => vm.triggerSOS(),
-                child: const Icon(Icons.sos),
+                elevation: 6,
+                onPressed: () => SOSService().showSOSDialog(
+                    context: context, 
+                    rideId: vm.rideId,
+                    guardianPhone: vm.guardianPhone,
+                    trustedContacts: vm.trustedContacts,
+                ),
+                child: const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.sos, size: 24),
+                    Text("SOS", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                  ],
+                ),
               ),
             ),
 
@@ -242,14 +279,41 @@ class _RideBookedContent extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    vm.rideDetails?.driverName ??
-                                        "Connecting...",
+                                    vm.rideDetails?.driverName ?? "Connecting...",
                                     style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  // Chat Button
+                                  if (vm.rideDetails?.driverName != null)
+                                    GestureDetector(
+                                      onTap: () {
+                                         Navigator.push(context, MaterialPageRoute(
+                                           builder: (_) => ChatScreen(
+                                             rideId: vm.rideId,
+                                             driverName: vm.rideDetails?.driverName ?? "Driver",
+                                           ),
+                                         ));
+                                      },
+                                      child: Container(
+                                         margin: const EdgeInsets.only(top: 4),
+                                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                         decoration: BoxDecoration(
+                                           color: Colors.blue.withValues(alpha: 0.1),
+                                           borderRadius: BorderRadius.circular(20),
+                                         ),
+                                         child: Row(
+                                           mainAxisSize: MainAxisSize.min,
+                                           children: const [
+                                             Icon(Icons.chat_bubble_outline, size: 14, color: Colors.blue),
+                                             SizedBox(width: 4),
+                                             Text("Chat", style: TextStyle(color: Colors.blue, fontSize: 12, fontWeight: FontWeight.bold)),
+                                           ],
+                                         ),
+                                      ),
+                                    ),
+                                  const SizedBox(height: 6),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 8,
@@ -577,4 +641,92 @@ class _RideBookedContent extends StatelessWidget {
       ),
     );
   }
+}
+
+void _showSafetyShield(BuildContext context, RideBookedViewModel vm) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.shield_moon, color: Colors.indigo, size: 28),
+                SizedBox(width: 12),
+                Text(
+                  "Safety Shield",
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "Your safety is our priority",
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+
+            // 1. Share Ride
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Colors.green,
+                child: Icon(Icons.share, color: Colors.white, size: 20),
+              ),
+              title: const Text("Share Trip Details"),
+              subtitle: const Text("Send live tracking link"),
+              onTap: () {
+                Navigator.pop(ctx);
+                // ignore: deprecated_member_use
+                Share.share(
+                    "Track my ride live on Rurboo! 🚗📍\nhttps://rurboo.app/track?id=${vm.rideId}");
+              },
+            ),
+            const Divider(),
+
+            // 2. Call Guardian
+            if (vm.guardianPhone != null || vm.trustedContacts.isNotEmpty)
+              ListTile(
+                leading: const CircleAvatar(
+                   backgroundColor: Colors.indigo,
+                   child: Icon(Icons.contact_phone, color: Colors.white, size: 20),
+                ),
+                title: Text("Call ${vm.guardianPhone != null ? 'Guardian' : 'Contact'}"),
+                onTap: () {
+                  Navigator.pop(ctx); 
+                  SOSService().showSOSDialog(
+                    context: context, 
+                    rideId: vm.rideId,
+                    guardianPhone: vm.guardianPhone,
+                    trustedContacts: vm.trustedContacts,
+                  );
+                },
+              ),
+
+            // 3. Emergency 112
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Colors.red,
+                child: Icon(Icons.local_police, color: Colors.white, size: 20),
+              ),
+              title: const Text("Emergency Call"),
+              onTap: () {
+                 Navigator.pop(ctx);
+                 SOSService().showSOSDialog(
+                    context: context, 
+                    rideId: vm.rideId,
+                    guardianPhone: vm.guardianPhone,
+                    trustedContacts: vm.trustedContacts,
+                 );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
 }

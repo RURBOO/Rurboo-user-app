@@ -116,6 +116,25 @@ class RideSelectionBody extends StatelessWidget {
                 children: [
                   _locationPreview(parent.pickupText, parent.destinationText),
 
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, bottom: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        const Icon(Icons.directions, size: 16, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Text(
+                          "Total Distance: ${parent.distanceKm.toStringAsFixed(1)} km",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                   const SizedBox(height: 12),
 
                   if (vm.isOutstationRide)
@@ -247,45 +266,114 @@ class RideSelectionBody extends StatelessWidget {
 
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
-        onPressed: isButtonDisabled
-            ? null
-            : () async {
-                await vm.bookRide(() async {
-                  await _bookRide(context, vm);
-                });
-              },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: yellow,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: vm.isBooking
-            ? const SizedBox(
-                height: 22,
-                width: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-            : Text(
-                vm.isOutstationRide
-                    ? "Beyond Service Limit"
-                    : (vm.selectedRide == null
-                          ? "Select a Ride"
-                          : "Book ${vm.selectedRide!.name}"),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Schedule Button
+          if (!vm.isOutstationRide && !vm.isBooking)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: TextButton.icon(
+                 icon: Icon(Icons.calendar_today, 
+                   color: vm.scheduledTime != null ? Colors.green : Colors.grey[700], size: 20),
+                 label: Text(
+                   vm.scheduledTime == null 
+                     ? "Schedule for Later" 
+                     : "Scheduled: ${_formatDate(vm.scheduledTime!)}",
+                   style: TextStyle(
+                     color: vm.scheduledTime != null ? Colors.green : Colors.grey[700],
+                     fontWeight: FontWeight.w600,
+                   ),
+                 ),
+                 onPressed: () => _pickDateTime(context, vm),
               ),
+            ),
+
+          ElevatedButton(
+            onPressed: isButtonDisabled
+                ? null
+                : () async {
+                    await vm.bookRide(() async {
+                      await _bookRide(context, vm);
+                    });
+                  },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: yellow,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: vm.isBooking
+                ? const SizedBox(
+                    height: 22,
+                    width: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(
+                    vm.isOutstationRide
+                        ? "Beyond Service Limit"
+                        : (vm.selectedRide == null
+                              ? "Select a Ride"
+                              : vm.scheduledTime != null 
+                                  ? "Schedule ${vm.selectedRide!.name}"
+                                  : "Book ${vm.selectedRide!.name}"),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 17,
+                    ),
+                  ),
+          ),
+        ],
       ),
     );
+  }
+
+  Future<void> _pickDateTime(BuildContext context, RideSelectionViewModel vm) async {
+    final now = DateTime.now();
+    final firstDate = now.add(const Duration(minutes: 15)); // Min start time
+    
+    final date = await showDatePicker(
+      context: context,
+      initialDate: firstDate,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 7)),
+    );
+
+    if (date == null) return;
+
+    if (!context.mounted) return;
+    
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(firstDate),
+    );
+
+    if (time == null) return;
+
+    final selected = DateTime(
+      date.year, date.month, date.day, time.hour, time.minute
+    );
+
+    if (selected.isBefore(now)) {
+       if (context.mounted) {
+         ScaffoldMessenger.of(context).showSnackBar(
+           const SnackBar(content: Text("Please select a future time")),
+         );
+       }
+       return;
+    }
+
+    vm.setScheduledTime(selected);
+  }
+
+  String _formatDate(DateTime d) {
+    return "${d.day}/${d.month} ${d.hour}:${d.minute.toString().padLeft(2,'0')}";
   }
 
   Widget _outstationMessage() =>
@@ -413,7 +501,8 @@ class RideSelectionBody extends StatelessWidget {
         'vehicleCategory': category,
         'paymentMethod': vm.selectedPayment,
         'otp': otp,
-        'status': 'pending',
+        'status': vm.scheduledTime != null ? 'scheduled' : 'pending',
+        'scheduledTime': vm.scheduledTime != null ? Timestamp.fromDate(vm.scheduledTime!) : null,
         'createdAt': FieldValue.serverTimestamp(),
       };
 
