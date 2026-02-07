@@ -6,6 +6,8 @@ class RideOption {
   final String eta;
   final double fare;
   final IconData icon;
+  final Color? iconColor; // Colored icon support
+  final int seats; // Number of passenger seats
 
   RideOption({
     required this.name,
@@ -13,5 +15,7 @@ class RideOption {
     required this.eta,
     required this.fare,
     required this.icon,
+    this.iconColor,
+    required this.seats,
   });
 }

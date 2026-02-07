@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
+
+import '../../language/viewmodels/language_vm.dart';
 import '../../navigation/views/main_navigator.dart';
 import '../viewmodels/ride_booked_viewmodel.dart';
 import '../repositories/ride_booked_repository.dart';
@@ -11,7 +13,10 @@ import '../../home/services/polyline_service.dart';
 import '../models/ride_booking.dart';
 import 'ride_summary_screen.dart';
 import '../../safety/services/sos_service.dart';
-import '../../chat/views/chat_screen.dart';
+
+import '../../voice/viewmodels/voice_agent_viewmodel.dart';
+import '../../../core/theme/app_colors.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class RideBookedScreen extends StatefulWidget {
   final LatLng pickupLatLng;
@@ -66,21 +71,73 @@ class _RideBookedScreenState extends State<RideBookedScreen> {
 
         if (isDriver) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Ride was cancelled by the driver."),
+            SnackBar(
+              content: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('ride_cancelled_driver')),
               backgroundColor: Colors.red,
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Ride cancelled."),
+            SnackBar(
+              content: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('ride_cancelled_user')),
               backgroundColor: Colors.grey,
             ),
           );
         }
       };
+      
+      // Voice announcements only - no command handling
+      // Listen for Ride Stage Changes using VM listener
+      vm.addListener(_onRideStageChange);
     });
+  }
+  
+  RideStage? _lastStage;
+  
+  void _onRideStageChange() {
+    if (!mounted) return;
+    if (vm.stage == _lastStage) return;
+    
+    _lastStage = vm.stage;
+    final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
+    
+    // Announce ride updates with comprehensive information
+    if (vm.stage == RideStage.arriving) {
+       // Driver found - announce with ETA
+       final eta = vm.eta; // e.g., "5 min"
+       voice.speak("Driver mil gya hai. Driver ${vm.rideDetails?.driverName ?? ''} gaadi number ${vm.rideDetails?.carNumber ?? ''} se aa rahe hain. Vo aapke paas $eta mein pahuch jayenge.");
+       
+       // Check for Proactive Safety Alert on Arrival/Start
+       _triggerSafetyVoiceCheck(vm, voice);
+    } else if (vm.stage == RideStage.inProgress) {
+       // Ride started - announce with destination ETA
+       final eta = vm.eta; // e.g., "15 min"
+       voice.speak("Aapki ride start ho gyi hai. Aap lagbhag $eta mein apne destination par pahuch jayenge. Safe journey.");
+    } else if (vm.stage == RideStage.completed) {
+       // Ride completed - thank you message
+       voice.speak("Aapki yatra puri ho gyi. रुर-बू par safar karne ke liye shukriya.");
+    }
+  }
+  
+  void _triggerSafetyVoiceCheck(RideBookedViewModel vm, VoiceAgentViewModel voice) {
+     final now = DateTime.now();
+     final hour = now.hour;
+     final bool isNight = hour >= 22 || hour <= 5; // 10 PM to 5 AM
+     
+     if (isNight && (vm.userCategory == 'Woman' || vm.userCategory == 'Child')) {
+        // We delay slightly so it doesn't overlap with "Driver Arriving"
+        Future.delayed(const Duration(seconds: 4), () {
+           if (mounted && vm.stage == RideStage.arriving) {
+             voice.speak("Aapki ride safety mode me hai. Guardian ko update bhej diya gaya hai.");
+           }
+        });
+     }
+  }
+
+  @override
+  void dispose() {
+    vm.removeListener(_onRideStageChange); // Clean up
+    super.dispose();
   }
 
   @override
@@ -119,12 +176,12 @@ class _RideBookedContent extends StatelessWidget {
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Please complete or cancel the ride to exit"),
-            duration: Duration(seconds: 2),
-          ),
-        );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('exit_warning')),
+              duration: const Duration(seconds: 2),
+            ),
+          );
       },
       child: Scaffold(
         body: Stack(
@@ -191,7 +248,7 @@ class _RideBookedContent extends StatelessWidget {
                 onPressed: () {
                    // ignore: deprecated_member_use
                    Share.share(
-                     "Track my ride live on Rurboo! 🚗📍\nhttps://rurboo.app/track?id=${vm.rideId}",
+                     "${Provider.of<LanguageViewModel>(context, listen: false).getText('share_msg_text')}\nhttps://rurboo.app/track?id=${vm.rideId}",
                    );
                 },
               ),
@@ -216,293 +273,214 @@ class _RideBookedContent extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.sos, size: 24),
-                    Text("SOS", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                    Text("SOS", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)), // SOS is universal usually, but checking AppStrings... yes 'sos' exists
                   ],
                 ),
               ),
             ),
 
+            // Bottom Sheet
             Align(
               alignment: Alignment.bottomCenter,
               child: Container(
                 constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.50,
+                  maxHeight: MediaQuery.of(context).size.height * 0.55,
                 ),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 15,
-                      spreadRadius: 2,
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 30,
+                      spreadRadius: 5,
+                      offset: const Offset(0, -5),
                     ),
                   ],
                 ),
                 child: SingleChildScrollView(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        // Drag Handle
                         Container(
                           width: 40,
-                          height: 5,
+                          height: 4,
                           decoration: BoxDecoration(
                             color: Colors.grey[300],
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
+                        const SizedBox(height: 24),
+
+                        // Status & Time
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                             Container(
+                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                               decoration: BoxDecoration(
+                                 color: vm.stage == RideStage.arriving ? AppColors.primary.withValues(alpha: 0.1) : Colors.green.withValues(alpha: 0.1),
+                                 borderRadius: BorderRadius.circular(20),
+                               ),
+                               child: Text(
+                                 _getStatusText(vm.stage, Provider.of<LanguageViewModel>(context)),
+                                 style: TextStyle(
+                                   color: vm.stage == RideStage.arriving ? AppColors.primary : Colors.green[700],
+                                   fontWeight: FontWeight.bold,
+                                   fontSize: 14,
+                                 ),
+                               ),
+                             ),
+                             if (vm.stage == RideStage.arriving || vm.stage == RideStage.inProgress)
+                               Text(
+                                 vm.eta,
+                                 style: const TextStyle(
+                                   color: AppColors.textSecondary,
+                                   fontWeight: FontWeight.w600,
+                                   fontSize: 16,
+                                 ),
+                               ),
+                          ],
+                        ),
                         const SizedBox(height: 20),
 
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[200],
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: const Icon(
-                                Icons.person,
-                                size: 35,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    vm.rideDetails?.driverName ?? "Connecting...",
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  // Chat Button
-                                  if (vm.rideDetails?.driverName != null)
-                                    GestureDetector(
-                                      onTap: () {
-                                         Navigator.push(context, MaterialPageRoute(
-                                           builder: (_) => ChatScreen(
-                                             rideId: vm.rideId,
-                                             driverName: vm.rideDetails?.driverName ?? "Driver",
-                                           ),
-                                         ));
-                                      },
-                                      child: Container(
-                                         margin: const EdgeInsets.only(top: 4),
-                                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                         decoration: BoxDecoration(
-                                           color: Colors.blue.withValues(alpha: 0.1),
-                                           borderRadius: BorderRadius.circular(20),
-                                         ),
-                                         child: Row(
-                                           mainAxisSize: MainAxisSize.min,
-                                           children: const [
-                                             Icon(Icons.chat_bubble_outline, size: 14, color: Colors.blue),
-                                             SizedBox(width: 4),
-                                             Text("Chat", style: TextStyle(color: Colors.blue, fontSize: 12, fontWeight: FontWeight.bold)),
-                                           ],
-                                         ),
-                                      ),
-                                    ),
-                                  const SizedBox(height: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 3,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[100],
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      "${vm.rideDetails?.carName} • ${vm.rideDetails?.carNumber}",
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.grey[800],
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.star,
-                                        size: 14,
-                                        color: Colors.amber,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        vm.rideDetails?.rating.toString() ??
-                                            "5.0",
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            if (vm.stage == RideStage.arriving &&
-                                vm.otp != null)
+                        // Driver Info Card
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5F7FA),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.grey[200]!),
+                          ),
+                          child: Row(
+                            children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
+                                width: 56,
+                                height: 56,
                                 decoration: BoxDecoration(
-                                  color: Colors.black,
-                                  borderRadius: BorderRadius.circular(8),
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.grey[300]!),
+                                  image: const DecorationImage(
+                                     image: NetworkImage("https://cdn-icons-png.flaticon.com/512/3135/3135715.png"), // Placeholder driver
+                                     fit: BoxFit.cover,
+                                  ), 
                                 ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
                                 child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      "OTP",
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 10,
+                                    Text(
+                                      vm.rideDetails?.driverName ?? "Connecting...",
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textPrimary,
                                       ),
                                     ),
+                                    const SizedBox(height: 4),
                                     Text(
-                                      vm.otp!,
+                                      "${vm.rideDetails?.carName} • ${vm.rideDetails?.carNumber}",
                                       style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 1.2,
+                                        fontSize: 13,
+                                        color: AppColors.textSecondary,
+                                        fontWeight: FontWeight.w500,
                                       ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.star, size: 14, color: AppColors.accent),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          "${vm.rideDetails?.rating ?? 5.0}",
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ),
-                          ],
+                              // Chat/Call Actions
+                              Column(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.call, color: AppColors.primary),
+                                    onPressed: () => vm.callDriver(),
+                                    style: IconButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      padding: const EdgeInsets.all(10),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            ],
+                          ),
                         ),
-
+                        
                         const SizedBox(height: 20),
-                        const Divider(),
-                        const SizedBox(height: 10),
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              _getStatusText(vm.stage),
-                              style: TextStyle(
-                                color: vm.stage == RideStage.arriving
-                                    ? Colors.blue[700]
-                                    : Colors.green[700],
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            if (vm.stage == RideStage.arriving ||
-                                vm.stage == RideStage.inProgress)
-                              Text(
-                                vm.eta,
-                                style: const TextStyle(
-                                  color: Colors.grey,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                          ],
+                        
+                        if (vm.stage == RideStage.arriving && vm.otp != null)
+                        Container(
+                           width: double.infinity,
+                           margin: const EdgeInsets.only(bottom: 20),
+                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                           decoration: BoxDecoration(
+                             color: AppColors.surfaceDark,
+                             borderRadius: BorderRadius.circular(12),
+                           ),
+                           child: Row(
+                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                             children: [
+                               Text(
+                                 Provider.of<LanguageViewModel>(context).getText('otp'),
+                                 style: const TextStyle(color: Colors.white70, fontSize: 14),
+                               ),
+                               Text(
+                                 vm.otp!,
+                                 style: const TextStyle(
+                                   color: Colors.white,
+                                   fontSize: 24,
+                                   fontWeight: FontWeight.bold,
+                                   letterSpacing: 4,
+                                 ),
+                               ),
+                             ],
+                           ),
                         ),
-
-                        const SizedBox(height: 15),
 
                         _buildTripLine(vm),
 
                         const SizedBox(height: 20),
-                        const Divider(),
-                        const SizedBox(height: 10),
 
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.payments_outlined,
-                                  color: Colors.green,
-                                  size: 22,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  vm.rideDetails?.paymentMethod ?? "Cash",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Text(
-                              "₹${vm.rideDetails?.fare.toStringAsFixed(0) ?? '0'}",
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 24),
-
+                        // Action Buttons
                         Row(
                           children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () => _showCancelDialog(context, vm),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.red,
-                                  side: const BorderSide(color: Colors.red),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                icon: const Icon(Icons.close),
-                                label: const Text("Cancel"),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () => vm.callDriver(),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.black,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                icon: const Icon(Icons.call),
-                                label: const Text("Call Driver"),
-                              ),
-                            ),
+                             Expanded(
+                               child: OutlinedButton(
+                                 onPressed: () => _showCancelDialog(context, vm),
+                                 style: OutlinedButton.styleFrom(
+                                   foregroundColor: AppColors.error,
+                                   side: const BorderSide(color: Color(0xFFFFEBEE)),
+                                   backgroundColor: const Color(0xFFFFEBEE),
+                                   padding: const EdgeInsets.symmetric(vertical: 16),
+                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                 ),
+                                 child: Text(Provider.of<LanguageViewModel>(context).getText('cancel')),
+                               ),
+                             ),
                           ],
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
+              ).animate().slideY(begin: 0.3, end: 0, curve: Curves.easeOutBack),
             ),
           ],
         ),
@@ -510,18 +488,18 @@ class _RideBookedContent extends StatelessWidget {
     );
   }
 
-  String _getStatusText(RideStage stage) {
+  String _getStatusText(RideStage stage, LanguageViewModel lang) {
     switch (stage) {
       case RideStage.arriving:
-        return "Driver is arriving";
+        return lang.getText('status_arriving');
       case RideStage.inProgress:
-        return "Heading to destination";
+        return lang.getText('status_inprogress');
       case RideStage.completed:
-        return "Ride Completed";
+        return lang.getText('status_finished');
       case RideStage.cancelled:
-        return "Ride Cancelled";
+        return lang.getText('status_aborted');
       default:
-        return "Connecting...";
+        return lang.getText('status_connecting');
     }
   }
 
@@ -582,14 +560,14 @@ class _RideBookedContent extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Cancel Ride?",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              Provider.of<LanguageViewModel>(context, listen: false).getText('cancel_ride_title'),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            const Text(
-              "Are you sure you want to cancel? This might affect your rating.",
-              style: TextStyle(color: Colors.grey),
+            Text(
+              Provider.of<LanguageViewModel>(context, listen: false).getText('cancel_ride_conf'),
+              style: const TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: 24),
 
@@ -608,8 +586,8 @@ class _RideBookedContent extends StatelessWidget {
                     Navigator.pop(ctx);
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("No Internet! Cannot cancel ride."),
+                      SnackBar(
+                        content: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('no_internet_cancel')),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -622,7 +600,7 @@ class _RideBookedContent extends StatelessWidget {
                   if (!context.mounted) return;
                   Navigator.pop(context);
                 },
-                child: const Text("Yes, Cancel Ride"),
+                child: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('yes_cancel')),
               ),
             ),
 
@@ -630,9 +608,9 @@ class _RideBookedContent extends StatelessWidget {
             Center(
               child: TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text(
-                  "Don't Cancel",
-                  style: TextStyle(color: Colors.black),
+                child: Text(
+                  Provider.of<LanguageViewModel>(context, listen: false).getText('dont_cancel'),
+                  style: const TextStyle(color: Colors.black),
                 ),
               ),
             ),
@@ -655,20 +633,20 @@ void _showSafetyShield(BuildContext context, RideBookedViewModel vm) {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
               children: [
                 Icon(Icons.shield_moon, color: Colors.indigo, size: 28),
                 SizedBox(width: 12),
                 Text(
-                  "Safety Shield",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  Provider.of<LanguageViewModel>(context, listen: false).getText('safety_shield_title'),
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            const Text(
-              "Your safety is our priority",
-              style: TextStyle(color: Colors.grey),
+            Text(
+              Provider.of<LanguageViewModel>(context, listen: false).getText('safety_shield_subtitle'),
+              style: const TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: 24),
 
@@ -678,13 +656,13 @@ void _showSafetyShield(BuildContext context, RideBookedViewModel vm) {
                 backgroundColor: Colors.green,
                 child: Icon(Icons.share, color: Colors.white, size: 20),
               ),
-              title: const Text("Share Trip Details"),
-              subtitle: const Text("Send live tracking link"),
+              title: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('share_trip_details')),
+              subtitle: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('send_tracking_link')),
               onTap: () {
                 Navigator.pop(ctx);
                 // ignore: deprecated_member_use
                 Share.share(
-                    "Track my ride live on Rurboo! 🚗📍\nhttps://rurboo.app/track?id=${vm.rideId}");
+                    "${Provider.of<LanguageViewModel>(context, listen: false).getText('share_msg_text')}\nhttps://rurboo.app/track?id=${vm.rideId}");
               },
             ),
             const Divider(),
@@ -696,7 +674,7 @@ void _showSafetyShield(BuildContext context, RideBookedViewModel vm) {
                    backgroundColor: Colors.indigo,
                    child: Icon(Icons.contact_phone, color: Colors.white, size: 20),
                 ),
-                title: Text("Call ${vm.guardianPhone != null ? 'Guardian' : 'Contact'}"),
+                title: Text(Provider.of<LanguageViewModel>(context, listen: false).getText(vm.guardianPhone != null ? 'call_guardian' : 'call_contact')),
                 onTap: () {
                   Navigator.pop(ctx); 
                   SOSService().showSOSDialog(
@@ -714,7 +692,7 @@ void _showSafetyShield(BuildContext context, RideBookedViewModel vm) {
                 backgroundColor: Colors.red,
                 child: Icon(Icons.local_police, color: Colors.white, size: 20),
               ),
-              title: const Text("Emergency Call"),
+              title: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('emergency_call')),
               onTap: () {
                  Navigator.pop(ctx);
                  SOSService().showSOSDialog(

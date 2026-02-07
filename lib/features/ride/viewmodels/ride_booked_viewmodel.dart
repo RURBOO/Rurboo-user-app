@@ -58,6 +58,7 @@ class RideBookedViewModel extends ChangeNotifier {
   List<Map<String, dynamic>> trustedContacts = [];
   bool safetyModeEnabled = false;
   bool _hasAutoShared = false;
+  String? userCategory;
 
   void setMapController(GoogleMapController c) {
     mapController = c;
@@ -80,6 +81,7 @@ class RideBookedViewModel extends ChangeNotifier {
         final data = doc.data() as Map<String, dynamic>;
         guardianPhone = data['guardianPhone'];
         safetyModeEnabled = data['safetyModeEnabled'] ?? false;
+        userCategory = data['category']; // Fetch category for safety alerts
         
         if (data['trustedContacts'] != null) {
           trustedContacts = List<Map<String, dynamic>>.from(data['trustedContacts']);
@@ -160,7 +162,7 @@ class RideBookedViewModel extends ChangeNotifier {
 
           _updateDriverMarker();
 
-          if (stageChanged || _lastFetchedStage != stage) {
+          if (stageChanged || _lastFetchedStage != stage || (stage == RideStage.arriving && polylines.isEmpty && driverLocation != null)) {
             _handleStageChangeRoute();
             if (newStage == RideStage.arriving || newStage == RideStage.inProgress) {
                _checkForAutoShare();

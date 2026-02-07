@@ -1,7 +1,10 @@
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../language/viewmodels/language_vm.dart';
 import '../../navigation/views/main_navigator.dart';
 
 class RideSummaryScreen extends StatefulWidget {
@@ -127,20 +130,21 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageViewModel>(context);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Ride Summary"),
+        title: Text(lang.getText('ride_summary')),
         centerTitle: true,
         automaticallyImplyLeading: false,
         actions: [
           TextButton.icon(
             icon: const Icon(Icons.flag, color: Colors.red),
-            label: const Text("Report", style: TextStyle(color: Colors.red)),
+            label: Text(lang.getText('report_issue'), style: const TextStyle(color: Colors.red)),
             onPressed: () async {
               final Uri emailLaunch = Uri(
                 scheme: 'mailto',
-                path: 'support@rubo.com',
+                path: 'support@Rurboo.com',
                 query: Uri.encodeFull(
                   'subject=Report Ride ${widget.rideId}'
                   '&body=Ride ID: ${widget.rideId}\n'
@@ -162,15 +166,15 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
           padding: const EdgeInsets.all(24.0),
           child: Column(
             children: [
-              const Icon(Icons.check_circle, color: Colors.green, size: 80),
+              Icon(Icons.check_circle, color: Colors.green, size: 80),
               const SizedBox(height: 16),
-              const Text(
-                "You arrived!",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              Text(
+                lang.getText('ride_arrived_title'),
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
-                "Hope you had a safe ride with ${widget.driverName}.",
+                "${lang.getText('ride_arrived_subtitle')} ${widget.driverName}.",
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey[600]),
               ),
@@ -186,9 +190,9 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
                 ),
                 child: Column(
                   children: [
-                    const Text(
-                      "Total Fare",
-                      style: TextStyle(color: Colors.grey),
+                    Text(
+                      lang.getText('total_fare'),
+                      style: const TextStyle(color: Colors.grey),
                     ),
                     const SizedBox(height: 8),
                     _loadingFare
@@ -201,17 +205,17 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
                             ),
                           ),
                     const Divider(height: 30),
-                    const Row(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Payment Mode"),
+                        Text(lang.getText('payment_mode_label')),
                         Row(
                           children: [
-                            Icon(Icons.money, color: Colors.green, size: 20),
-                            SizedBox(width: 8),
+                            const Icon(Icons.money, color: Colors.green, size: 20),
+                            const SizedBox(width: 8),
                             Text(
-                              "Cash",
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                              lang.getText('cash'),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -231,7 +235,7 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
                    border: Border.all(color: _feltSafe ? Colors.green.shade200 : Colors.red.shade200),
                 ),
                 child: SwitchListTile(
-                   title: const Text("Did you feel safe during this ride?", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                   title: Text(lang.getText('safe_ride_question'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                    value: _feltSafe,
                    activeTrackColor: Colors.green,
                    activeThumbColor: Colors.green,
@@ -241,7 +245,7 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
                       setState(() => _feltSafe = val);
                       if (!val) {
                          ScaffoldMessenger.of(context).showSnackBar(
-                             const SnackBar(content: Text("We are sorry! Use the Report button to tell us more.")),
+                             SnackBar(content: Text(lang.getText('unsafe_feedback'))),
                          );
                       }
                    },
@@ -253,9 +257,9 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
               ),
 
               const SizedBox(height: 24),
-              const Text(
-                "Rate your Driver",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              Text(
+                lang.getText('rate_driver'),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 16),
 
@@ -272,9 +276,9 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
               const SizedBox(height: 24),
               TextField(
                 controller: _commentController,
-                decoration: const InputDecoration(
-                  hintText: "Add a comment (Optional)",
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  hintText: lang.getText('add_comment'),
+                  border: const OutlineInputBorder(),
                 ),
                 maxLines: 2,
               ),
@@ -298,9 +302,9 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text(
-                          "Submit Review",
-                          style: TextStyle(
+                      : Text(
+                          lang.getText('submit_review'),
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),

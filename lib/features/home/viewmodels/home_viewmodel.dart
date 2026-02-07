@@ -59,6 +59,9 @@ class HomeViewModel extends ChangeNotifier {
   Future<void> init(BuildContext context) async {
     if (_initialized) return;
     _initialized = true;
+    
+    // YIELD TO UI: Allow the frame to render before heavy lifting
+    await Future.delayed(Duration.zero);
 
     loadingLocation = true;
     _hasLocationError = false;
@@ -97,7 +100,16 @@ class HomeViewModel extends ChangeNotifier {
 
     try {
       final address = await searchRepo.reverseGeocode(currentLocation!);
-      pickup = LocationResult(address: address, coordinates: currentLocation);
+      // Check if reverse geocoding returned coordinates (which means it failed)
+      if (address.contains(RegExp(r'^\d+\.\d+,\s*\d+\.\d+'))) {
+        // If it's just coordinates, use "Current Location" instead
+        pickup = LocationResult(
+          address: "Current Location",
+          coordinates: currentLocation,
+        );
+      } else {
+        pickup = LocationResult(address: address, coordinates: currentLocation);
+      }
     } catch (_) {
       pickup = LocationResult(
         address: "Current Location",
@@ -146,6 +158,37 @@ class HomeViewModel extends ChangeNotifier {
     _updateMarkers();
     await _drawRoute();
     notifyListeners();
+  }
+  
+  // Voice Agent Helper
+  Future<LocationResult?> searchByText(String text) async {
+    if (text.isEmpty) return null;
+    
+    try {
+      // 1. Check for Shortcuts
+      if (text.toLowerCase() == "home") {
+         // Return saved home if available (Mock for now)
+         return LocationResult(address: "Home", coordinates: const LatLng(25.5941, 85.1376)); // Patna
+      }
+      
+      // 2. Perform Search with Location Bias
+      // Pass currentLocation to prioritize nearby results
+      final results = await searchRepo.autocomplete(text, focusLocation: currentLocation);
+      
+      if (results.isNotEmpty) {
+        // Intelligence: Automatically select the FIRST result (Highest Relevance/Nearest)
+        final firstMatch = results.first;
+        debugPrint("🤖 Auto-Selecting Nearest: ${firstMatch.address}");
+        
+        final detail = await searchRepo.getPlaceDetails(firstMatch.placeId!);
+        if (detail != null) {
+          return LocationResult(address: detail.address, coordinates: detail.coordinates);
+        }
+      }
+    } catch (e) {
+      debugPrint("Voice Search Error: $e");
+    }
+    return null;
   }
 
   void _redirectToActiveRide(BuildContext context, DocumentSnapshot doc) {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:rubo/features/language/viewmodels/language_vm.dart';
-import 'package:rubo/features/onboarding/views/onboarding_screen.dart';
+import 'package:rurboo/features/language/viewmodels/language_vm.dart';
+import 'package:rurboo/features/onboarding/views/onboarding_screen.dart';
 
 class LanguageSelectionScreen extends StatelessWidget {
   final bool fromProfile;

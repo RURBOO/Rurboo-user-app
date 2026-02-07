@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../language/viewmodels/language_vm.dart';
 
 class SupportScreen extends StatelessWidget {
   const SupportScreen({super.key});
@@ -11,7 +14,7 @@ class SupportScreen extends StatelessWidget {
       } else {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Cannot perform action")),
+            SnackBar(content: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('cannot_perform_action'))),
           );
         }
       }
@@ -22,10 +25,11 @@ class SupportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageViewModel>(context);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Support"),
+        title: Text(lang.getText('support')),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 1,
@@ -35,13 +39,13 @@ class SupportScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Need help?",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            Text(
+              lang.getText('need_help'),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text(
-              "Contact our support team 24/7",
+            Text(
+              lang.getText('contact_support_text'),
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 24),
@@ -53,14 +57,14 @@ class SupportScreen extends StatelessWidget {
               ),
               child: ListTile(
                 leading: const Icon(Icons.email_outlined, color: Colors.blue),
-                title: const Text('Email Support'),
-                subtitle: const Text('support@rubo.com'),
+                title: Text(lang.getText('email_support')),
+                subtitle: const Text('support@Rurboo.com'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => _launch(
                   context,
                   Uri(
                     scheme: 'mailto',
-                    path: 'support@rubo.com',
+                    path: 'support@Rurboo.com',
                     query: 'subject=Support Request',
                   ),
                 ),
@@ -75,7 +79,7 @@ class SupportScreen extends StatelessWidget {
               ),
               child: ListTile(
                 leading: const Icon(Icons.phone_in_talk, color: Colors.green),
-                title: const Text('Call Helpline'),
+                title: Text(lang.getText('call_helpline')),
                 subtitle: const Text('+91 12345 67890'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () =>

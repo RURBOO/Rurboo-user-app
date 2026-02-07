@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../../../features/home/views/home_screen.dart';
+import '../../../features/navigation/views/main_navigator.dart';
 
 class LocationDisclosureScreen extends StatelessWidget {
   const LocationDisclosureScreen({super.key});
@@ -18,7 +18,7 @@ class LocationDisclosureScreen extends StatelessWidget {
       if (context.mounted) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          MaterialPageRoute(builder: (_) => const MainNavigator()),
           (route) => false,
         );
       }
@@ -75,7 +75,7 @@ class LocationDisclosureScreen extends StatelessWidget {
               const SizedBox(height: 16),
 
               const Text(
-                "Rubo collects your location data to enable \"Pickup Point Selection\", \"Driver Matching\", and \"Trip Tracking\", even when the app is in use.",
+                "Rurboo collects your location data to enable \"Pickup Point Selection\", \"Driver Matching\", and \"Trip Tracking\", even when the app is in use.",
                 style: TextStyle(
                   fontSize: 16,
                   height: 1.5,
@@ -111,7 +111,7 @@ class LocationDisclosureScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (_) => const HomeScreen()),
+                      MaterialPageRoute(builder: (_) => const MainNavigator()),
                       (route) => false,
                     );
                   },

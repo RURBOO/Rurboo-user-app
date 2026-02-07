@@ -1,6 +1,8 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -41,6 +43,15 @@ class NotificationService {
 
     _isInitialized = true;
     debugPrint("✅ NotificationService Initialized");
+
+    // 4. Get & Save Token
+    final token = await getDeviceToken();
+    if (token != null) {
+      await saveTokenToDatabase(token);
+    }
+
+    // 5. Listen for Token Refresh
+    _fcm.onTokenRefresh.listen(saveTokenToDatabase);
   }
 
   Future<String?> getDeviceToken() async {
@@ -52,23 +63,38 @@ class NotificationService {
     final android = message.notification?.android;
 
     if (notification != null && android != null) {
-      /* 
-      // FIXME: flutter_local_notifications API mismatch
       await _localNotifications.show(
-        notification.hashCode,
-        notification.title,
-        notification.body,
-        NotificationDetails(
+        id: notification.hashCode,
+        title: notification.title,
+        body: notification.body,
+        notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
             'high_importance_channel',
             'High Importance Notifications',
+            channelDescription: 'This channel is used for important notifications.',
             importance: Importance.max,
             priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
           ),
         ),
       );
-      */
       debugPrint("Notification received: ${notification.title}");
+    }
+  }
+
+  Future<void> saveTokenToDatabase(String token) async {
+    // Lazy load instances to avoid issues if called too early
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({'fcmToken': token});
+      debugPrint("✅ FCM Token Updated: $token");
+    } catch (e) {
+      debugPrint("❌ Failed to save FCM Token: $e");
     }
   }
 }

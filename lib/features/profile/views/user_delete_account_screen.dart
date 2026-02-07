@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/services/user_preferences.dart';
 import '../../auth/views/phone_input_screen.dart';
+import '../../language/viewmodels/language_vm.dart';
 
 class UserDeleteAccountScreen extends StatefulWidget {
   const UserDeleteAccountScreen({super.key});
@@ -53,14 +55,14 @@ class _UserDeleteAccountScreenState extends State<UserDeleteAccountScreen> {
         );
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text("Account deleted.")));
+        ).showSnackBar(SnackBar(content: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('account_deleted'))));
       }
     } catch (e) {
       if (mounted) {
         if (e.toString().contains("requires-recent-login")) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Please logout and login again to delete."),
+            SnackBar(
+              content: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('relogin_delete')),
             ),
           );
         } else {
@@ -76,8 +78,9 @@ class _UserDeleteAccountScreenState extends State<UserDeleteAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageViewModel>(context);
     return Scaffold(
-      appBar: AppBar(title: const Text("Delete Account")),
+      appBar: AppBar(title: Text(lang.getText('delete_account'))),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -88,15 +91,15 @@ class _UserDeleteAccountScreenState extends State<UserDeleteAccountScreen> {
               color: Colors.red,
             ),
             const SizedBox(height: 20),
-            const Text(
-              "Delete your account?",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            Text(
+              lang.getText('delete_account_title'),
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            const Text(
-              "This action is permanent. You will lose your ride history and saved places.",
+            Text(
+              lang.getText('delete_account_desc'),
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const Spacer(),
             SizedBox(
@@ -110,7 +113,7 @@ class _UserDeleteAccountScreenState extends State<UserDeleteAccountScreen> {
                 onPressed: _isLoading ? null : _deleteAccount,
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text("Delete Permanently"),
+                    : Text(lang.getText('delete_permanently')),
               ),
             ),
           ],

@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/profile_viewmodel.dart';
+import '../../language/viewmodels/language_vm.dart';
 import 'edit_profile_screen.dart';
 import 'user_delete_account_screen.dart';
 import '../../language/views/language_selection_screen.dart';
 import 'support_screen.dart';
 import 'privacy_policy_screen.dart';
+import '../../../core/theme/app_colors.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../safety/views/safety_dashboard_screen.dart';
 import '../../safety/services/sos_service.dart';
+import '../../../core/services/user_preferences.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -17,17 +21,52 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  late ProfileViewModel _viewModel;
+  bool _announcementEnabled = true; // Default ON
+
+  @override
+  void initState() {
+    super.initState();
+    _viewModel = ProfileViewModel(); // Create VM once
+    _loadAnnouncementPreference();
+  }
+  
+  Future<void> _loadAnnouncementPreference() async {
+    final enabled = await UserPreferences.getAnnouncementEnabled();
+    if (mounted) {
+      setState(() {
+        _announcementEnabled = enabled;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _viewModel.dispose(); // Manually dispose if using .value locally, or let Provider handle it if providing
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ProfileViewModel(), // Fetch called in constructor
-      child: const _ProfileScreenBody(),
+    return ChangeNotifierProvider.value(
+      value: _viewModel,
+      child: _ProfileScreenBody(announcementEnabled: _announcementEnabled, onAnnouncementToggle: _toggleAnnouncement),
     );
+  }
+  
+  Future<void> _toggleAnnouncement(bool value) async {
+    setState(() {
+      _announcementEnabled = value;
+    });
+    await UserPreferences.saveAnnouncementEnabled(value);
   }
 }
 
 class _ProfileScreenBody extends StatelessWidget {
-  const _ProfileScreenBody();
+  final bool announcementEnabled;
+  final Function(bool) onAnnouncementToggle;
+  
+  const _ProfileScreenBody({required this.announcementEnabled, required this.onAnnouncementToggle});
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +119,7 @@ class _ProfileScreenBody extends StatelessWidget {
             Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF1A1A1A), Color(0xFF000000)],
+                  colors: [AppColors.primary, Color(0xFF121212)],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -127,7 +166,7 @@ class _ProfileScreenBody extends StatelessWidget {
                       ),
                     ],
                   ),
-                ),
+                ).animate().scale(curve: Curves.elasticOut, duration: 800.ms),
                 const SizedBox(height: 16),
                 Text(
                   vm.userName ?? "User",
@@ -156,9 +195,9 @@ class _ProfileScreenBody extends StatelessWidget {
   Widget _buildStatsRow(ProfileViewModel vm) {
     return Row(
       children: [
-        _buildStatCard("Total Rides", "${vm.totalRides}", Icons.directions_car),
+        _buildStatCard("Total Rides", "${vm.totalRides}", Icons.directions_car, color: AppColors.primary),
         const SizedBox(width: 16),
-        _buildStatCard("Rating", "${vm.avgRating}", Icons.star, color: Colors.amber),
+        _buildStatCard("Rating", "${vm.avgRating}", Icons.star, color: AppColors.accent),
       ],
     );
   }
@@ -180,29 +219,40 @@ class _ProfileScreenBody extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(height: 12),
             Text(
               value,
               style: const TextStyle(
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
               ),
             ),
+            const SizedBox(height: 4),
             Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
-                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
               ),
             ),
           ],
         ),
-      ),
+      ).animate().scale(delay: 200.ms, curve: Curves.easeOutBack),
     );
   }
 
   Widget _buildMenuSection(BuildContext context, ProfileViewModel vm) {
+    final lang = Provider.of<LanguageViewModel>(context);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -219,7 +269,7 @@ class _ProfileScreenBody extends StatelessWidget {
         children: [
           _buildMenuItem(
             context,
-            "Edit Profile",
+            lang.getText('edit_profile'), // "Edit Profile"
             Icons.edit_outlined,
             () async {
                final result = await Navigator.push(
@@ -237,29 +287,32 @@ class _ProfileScreenBody extends StatelessWidget {
             },
           ),
           _buildDivider(),
-          _buildMenuItem(context, "SOS - Emergency", Icons.sos, 
+          _buildMenuItem(context, "${lang.getText('sos')} - ${lang.getText('emergency_contact')}", Icons.sos, // "SOS - Emergency"
               () => _triggerProfileSOS(context), isDestructive: true),
           _buildDivider(),
-          _buildMenuItem(context, "Safety Dashboard", Icons.shield_moon_outlined, 
+          _buildMenuItem(context, lang.getText('safety_center'), Icons.shield_moon_outlined, // "Safety Dashboard" -> "Safety Center"
               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SafetyDashboardScreen()))),
           _buildDivider(),
-          _buildMenuItem(context, "Language", Icons.language, 
+          _buildAnnouncementToggle(context),
+          _buildDivider(),
+          _buildMenuItem(context, lang.getText('change_language'), Icons.language, // "Language"
               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LanguageSelectionScreen(fromProfile: true)))),
           _buildDivider(),
-          _buildMenuItem(context, "Support", Icons.headset_mic_outlined, 
+          _buildMenuItem(context, lang.getText('help_support'), Icons.headset_mic_outlined, // "Support"
               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportScreen()))),
           _buildDivider(),
-          _buildMenuItem(context, "Privacy Policy", Icons.privacy_tip_outlined, 
+          _buildMenuItem(context, lang.getText('privacy_policy'), Icons.privacy_tip_outlined, 
               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()))),
           _buildDivider(),
-          _buildMenuItem(context, "Logout", Icons.logout, 
-              () => _showLogoutDialog(context, vm), isDestructive: true),
+          _buildMenuItem(context, lang.getText('logout'), Icons.logout, // "Logout"
+              () => _showLogoutDialog(context, vm, lang), isDestructive: true),
           _buildDivider(),
-          _buildMenuItem(context, "Delete Account", Icons.delete_forever, 
+          _buildDivider(),
+          _buildMenuItem(context, lang.getText('delete_account'), Icons.delete_forever, 
               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserDeleteAccountScreen())), isDestructive: true),
         ],
       ),
-    );
+    ).animate().slideY(begin: 0.2, end: 0, delay: 300.ms, curve: Curves.easeOut);
   }
 
   Widget _buildProfileDetails(ProfileViewModel vm) {
@@ -334,6 +387,39 @@ class _ProfileScreenBody extends StatelessWidget {
     );
   }
   
+  Widget _buildAnnouncementToggle(BuildContext context) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.blue.withValues(alpha: 0.1),
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.volume_up, color: Colors.blue, size: 20),
+      ),
+      title: const Text(
+        "Voice Announcements",
+        style: TextStyle(
+          color: Colors.black87,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      subtitle: Text(
+        announcementEnabled ? "Enabled" : "Disabled",
+        style: TextStyle(
+          color: Colors.grey[600],
+          fontSize: 12,
+        ),
+      ),
+      trailing: Switch(
+        value: announcementEnabled,
+        onChanged: onAnnouncementToggle,
+        activeThumbColor: Colors.white,
+        activeTrackColor: AppColors.primary,
+      ),
+    );
+  }
+  
   Widget _buildDivider() {
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -341,16 +427,16 @@ class _ProfileScreenBody extends StatelessWidget {
     );
   }
 
-  void _showLogoutDialog(BuildContext context, ProfileViewModel vm) {
+  void _showLogoutDialog(BuildContext context, ProfileViewModel vm, LanguageViewModel lang) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Logout"),
-        content: const Text("Are you sure you want to end your session?"),
+        title: Text(lang.getText('logout')),
+        content: Text(lang.getText('logout_confirmation_desc')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
+            child: Text(lang.getText('cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -358,7 +444,7 @@ class _ProfileScreenBody extends StatelessWidget {
               vm.logout(context);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text("Logout", style: TextStyle(color: Colors.white)),
+            child: Text(lang.getText('logout'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),

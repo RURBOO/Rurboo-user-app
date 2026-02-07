@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../../language/viewmodels/language_vm.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -47,17 +49,19 @@ class SOSService {
     showDialog(
       context: context,
       barrierDismissible: false, // Forces user to make a choice
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) {
+        final lang = Provider.of<LanguageViewModel>(context, listen: false); // Listen false as dialog might not rebuild
+        return AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Colors.red, width: 2)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 30),
-            SizedBox(width: 10),
-            Text("Emergency SOS", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 30),
+            const SizedBox(width: 10),
+            Text(lang.getText('emergency_sos'), style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           ],
         ),
         content: const Text(
-          "Who do you want to call?\n\nThis action will be logged for your safety.",
+          "Who do you want to call?\n\nThis action will be logged for your safety.", // Keeping English for now as key might be missing, or add generic
           style: TextStyle(fontSize: 16),
         ),
         actionsAlignment: MainAxisAlignment.center,
@@ -73,7 +77,7 @@ class SOSService {
                     _triggerCall(effectiveGuardianPhone!, rideId, 'guardian');
                   },
                   icon: const Icon(Icons.person),
-                  label: Text("Call Guardian ($effectiveGuardianPhone)"),
+                  label: Text("${lang.getText('call_guardian')} ($effectiveGuardianPhone)"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.indigo,
                     foregroundColor: Colors.white,
@@ -90,7 +94,7 @@ class SOSService {
                   _triggerCall('112', rideId, 'police');
                 },
                 icon: const Icon(Icons.local_police),
-                label: const Text("Call Police (112)"),
+                label: Text(lang.getText('call_police')),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
                   foregroundColor: Colors.white,
@@ -102,12 +106,13 @@ class SOSService {
               
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+                child: Text(lang.getText('cancel'), style: const TextStyle(color: Colors.grey)),
               ),
             ],
           ),
         ],
-      ),
+      );
+     },
     );
   }
 

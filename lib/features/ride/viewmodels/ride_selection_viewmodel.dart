@@ -34,6 +34,8 @@ class RideSelectionViewModel extends ChangeNotifier {
   bool _isBooking = false;
   bool get isBooking => _isBooking;
 
+  double get distanceKm => _distanceKm;
+
   DateTime? scheduledTime;
 
   void setScheduledTime(DateTime? date) {
@@ -66,14 +68,17 @@ class RideSelectionViewModel extends ChangeNotifier {
       destination.coordinates!,
     );
 
+    // 🚀 Force One-Sided Distance (Geodesic)
+    // OSRM was returning ~2x distance (likely round trip), causing double fare.
+    _distanceKm = distance; 
+    _durationMins = distance * 2.5; // Est. 2.5 mins/km (approx 24km/h)
+
     if (routeInfo != null) {
       routePoints = routeInfo.points;
-      _distanceKm = routeInfo.distanceKm;
-      _durationMins = routeInfo.durationMins;
+      debugPrint("🚀🚀🚀 Using OSRM Path (Visual Only). Ignored OSRM Dist: ${routeInfo.distanceKm} km");
     } else {
       routePoints = [pickup.coordinates!, destination.coordinates!];
-      _distanceKm = distance;
-      _durationMins = distance * 3;
+      debugPrint("🚀🚀🚀 Fallback to Straight Line Path");
     }
 
     _setPolyline(routePoints);
@@ -123,27 +128,84 @@ class RideSelectionViewModel extends ChangeNotifier {
       firestoreRates: rates,
     );
 
+    final FareResult erickshaw = calculateFare(
+      vehicleType: VehicleType.erickshaw,
+      distanceKm: _distanceKm,
+      firestoreRates: rates,
+    );
+
+    final FareResult bigcar = calculateFare(
+      vehicleType: VehicleType.bigcar,
+      distanceKm: _distanceKm,
+      firestoreRates: rates,
+    );
+
+    final FareResult carriertruck = calculateFare(
+      vehicleType: VehicleType.carriertruck,
+      distanceKm: _distanceKm,
+      firestoreRates: rates,
+    );
+
     rideOptions = [
+      // 1. Bike
       RideOption(
         name: "Bike Taxi",
         description: "Fastest • ₹${bike.totalFare.toInt()}",
         eta: "${_durationMins.toInt()} min",
         fare: bike.totalFare,
         icon: Icons.two_wheeler,
+        iconColor: const Color(0xFF2196F3), // Blue
+        seats: 1,
       ),
+      // 2. E-Rickshaw
+      RideOption(
+        name: "E-Rickshaw",
+        description: "4 seats • ₹${erickshaw.totalFare.toInt()}",
+        eta: "${(_durationMins * 1.3).toInt()} min",
+        fare: erickshaw.totalFare,
+        icon: Icons.electric_rickshaw,
+        iconColor: const Color(0xFF4CAF50), // Green
+        seats: 4,
+      ),
+      // 3. Auto
       RideOption(
         name: "Auto Rickshaw",
         description: "3 seats • ₹${auto.totalFare.toInt()}",
-        eta: "${_durationMins.toInt()} min",
+        eta: "${(_durationMins * 1.1).toInt()} min",
         fare: auto.totalFare,
-        icon: Icons.electric_rickshaw,
-      ),
-      RideOption(
-        name: "Cab",
-        description: "Comfort • ₹${car.totalFare.toInt()}",
-        eta: "${_durationMins.toInt()} min",
-        fare: car.totalFare,
         icon: Icons.local_taxi,
+        iconColor: const Color(0xFFFFC107), // Amber/Yellow
+        seats: 3,
+      ),
+      // 4. Car
+      RideOption(
+        name: "Comfort Car",
+        description: "3 seats • AC • ₹${car.totalFare.toInt()}",
+        eta: "${(_durationMins * 1.2).toInt()} min",
+        fare: car.totalFare,
+        icon: Icons.directions_car,
+        iconColor: const Color(0xFF9C27B0), // Purple
+        seats: 3,
+      ),
+      // 5. Big Car
+      RideOption(
+        name: "Big Car (XL)",
+        description: "5 seats • Spacious • ₹${bigcar.totalFare.toInt()}",
+        eta: "${(_durationMins * 1.3).toInt()} min",
+        fare: bigcar.totalFare,
+        icon: Icons.airport_shuttle,
+        iconColor: const Color(0xFFFF5722), // Deep Orange
+        seats: 5,
+      ),
+      // 6. Carrier Truck
+      RideOption(
+        name: "Carrier Truck",
+        description: "Cargo • Heavy Load • ₹${carriertruck.totalFare.toInt()}",
+        eta: "${(_durationMins * 1.5).toInt()} min",
+        fare: carriertruck.totalFare,
+        icon: Icons.local_shipping,
+        iconColor: const Color(0xFF795548), // Brown
+        seats: 0,
       ),
     ];
   }

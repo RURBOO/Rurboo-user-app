@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../core/services/user_preferences.dart';
 import '../../splash/views/splash_screen.dart';
 
@@ -86,6 +87,14 @@ class ProfileViewModel extends ChangeNotifier {
 
   Future<void> updateProfilePicture(BuildContext context) async {
     try {
+        // Request Permissions first
+        await Permission.camera.request();
+        if (Platform.isAndroid) {
+           // For Android 13+
+           await Permission.photos.request(); 
+           await Permission.storage.request(); 
+        }
+
         final XFile? image = await _picker.pickImage(
             source: ImageSource.gallery, 
             imageQuality: 70,

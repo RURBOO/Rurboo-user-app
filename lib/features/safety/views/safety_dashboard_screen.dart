@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../viewmodels/safety_viewmodel.dart';
 import 'package:flutter/services.dart';
 
+import '../../language/viewmodels/language_vm.dart';
+
 class SafetyDashboardScreen extends StatelessWidget {
   const SafetyDashboardScreen({super.key});
 
@@ -15,17 +17,19 @@ class SafetyDashboardScreen extends StatelessWidget {
   }
 }
 
+
 class _SafetyDashboardBody extends StatelessWidget {
   const _SafetyDashboardBody();
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<SafetyViewModel>();
+    final lang = Provider.of<LanguageViewModel>(context);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text("Safety Center 🛡️", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text("${lang.getText('safety_center')} 🛡️", style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -54,7 +58,7 @@ class _SafetyDashboardBody extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Row(
+                          Row(
                             children: [
                               Icon(Icons.shield_moon, color: Colors.indigo, size: 28),
                               SizedBox(width: 12),
@@ -62,15 +66,15 @@ class _SafetyDashboardBody extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    "Safety Mode",
-                                    style: TextStyle(
+                                    lang.getText('safety_mode'),
+                                    style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                   Text(
-                                    "Auto-share rides with contacts",
-                                    style: TextStyle(
+                                    lang.getText('auto_share'),
+                                    style: const TextStyle(
                                       fontSize: 12,
                                       color: Colors.grey,
                                     ),
@@ -96,14 +100,14 @@ class _SafetyDashboardBody extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      "Trusted Contacts",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    Text(
+                      lang.getText('trusted_contacts'),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     TextButton.icon(
                       onPressed: () => _showAddContactDialog(context, vm),
                       icon: const Icon(Icons.add),
-                      label: const Text("Add New"),
+                      label: Text(lang.getText('add_new')),
                     ),
                   ],
                 ),
@@ -171,13 +175,13 @@ class _SafetyDashboardBody extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.orange.shade100),
                   ),
-                  child: const Column(
+                  child: Column(
                     children: [
-                      Row(children: [Icon(Icons.looks_one, size: 16), SizedBox(width: 8), Expanded(child: Text("Stay calm and do not panic."))]),
-                      SizedBox(height: 8),
-                      Row(children: [Icon(Icons.looks_two, size: 16), SizedBox(width: 8), Expanded(child: Text("Use the SOS button in ride screen."))]),
-                      SizedBox(height: 8),
-                      Row(children: [Icon(Icons.looks_3, size: 16), SizedBox(width: 8), Expanded(child: Text("Your live location will be shared."))]),
+                      Row(children: [const Icon(Icons.looks_one, size: 16), const SizedBox(width: 8), Expanded(child: Text(lang.getText('safety_tips_1')))]),
+                      const SizedBox(height: 8),
+                      Row(children: [const Icon(Icons.looks_two, size: 16), const SizedBox(width: 8), Expanded(child: Text(lang.getText('safety_tips_2')))]),
+                      const SizedBox(height: 8),
+                      Row(children: [const Icon(Icons.looks_3, size: 16), const SizedBox(width: 8), Expanded(child: Text(lang.getText('safety_tips_3')))]),
                     ],
                   ),
                 ),
@@ -187,25 +191,34 @@ class _SafetyDashboardBody extends StatelessWidget {
   }
 
   void _showAddContactDialog(BuildContext context, SafetyViewModel vm) {
+    final lang = Provider.of<LanguageViewModel>(context, listen: false);
     final nameCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
     
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Add Trusted Contact"),
+        title: Text(lang.getText('add_trusted_contact')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameCtrl,
-              decoration: const InputDecoration(labelText: "Name", prefixIcon: Icon(Icons.person)),
+              decoration: InputDecoration(
+                labelText: lang.getText('full_name'),
+                hintText: lang.getText('enter_contact_name_hint'),
+                prefixIcon: const Icon(Icons.person),
+              ),
               textCapitalization: TextCapitalization.words,
             ),
             const SizedBox(height: 12),
             TextField(
               controller: phoneCtrl,
-              decoration: const InputDecoration(labelText: "Phone Number", prefixIcon: Icon(Icons.phone)),
+              decoration: InputDecoration(
+                labelText: lang.getText('guardian_phone'), // Using guardian_phone or similar short label
+                hintText: lang.getText('enter_contact_phone_hint'),
+                prefixIcon: const Icon(Icons.phone),
+              ),
               keyboardType: TextInputType.phone,
               inputFormatters: [LengthLimitingTextInputFormatter(10), FilteringTextInputFormatter.digitsOnly],
             ),
@@ -214,7 +227,7 @@ class _SafetyDashboardBody extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
+            child: Text(lang.getText('cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -223,7 +236,7 @@ class _SafetyDashboardBody extends StatelessWidget {
                 Navigator.pop(ctx);
               }
             },
-            child: const Text("Add Contact"),
+            child: Text(lang.getText('add_contact')),
           ),
         ],
       ),

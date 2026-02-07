@@ -29,12 +29,12 @@ class TermsScreen extends StatelessWidget {
             _TermSection(
               title: '1. Acceptance of Terms',
               content:
-                  'By accessing or using the Rubo app, you agree to be bound by these Terms.',
+                  'By accessing or using the Rurboo app, you agree to be bound by these Terms.',
             ),
             _TermSection(
               title: '2. Ride Services',
               content:
-                  'Rubo connects riders with independent drivers. We are not responsible for the behavior of drivers or riders, though we enforce strict community guidelines.',
+                  'Rurboo connects riders with independent drivers. We are not responsible for the behavior of drivers or riders, though we enforce strict community guidelines.',
             ),
             _TermSection(
               title: '3. Payments',

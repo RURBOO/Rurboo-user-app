@@ -26,7 +26,7 @@ This guide covers the complete backend setup for Rurboo using Firebase and Googl
 
 ### Add iOS App (Optional for now)
 1.  Click **Add app** -> **iOS**.
-2.  **Bundle ID:** `com.rurboo.app` (or `rubo` as per your plist, verify matches).
+2.  **Bundle ID:** `com.rurboo.app` (or `Rurboo` as per your plist, verify matches).
 3.  Download `GoogleService-Info.plist` and place it in `ios/Runner/`.
 
 ---

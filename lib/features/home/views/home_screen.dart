@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import '../../language/viewmodels/language_vm.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import '../viewmodels/home_viewmodel.dart';
 import '../../ride/views/ride_selection_screen.dart';
 import '../models/location_result.dart';
-import 'search_destination_screen.dart';
+import 'package:rurboo/features/home/views/search_destination_screen.dart';
+import '../../voice/viewmodels/voice_agent_viewmodel.dart';
+import '../../../core/theme/app_colors.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,7 +29,23 @@ class _HomeScreenState extends State<HomeScreen>
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<HomeViewModel>(context, listen: false).init(context);
+      
+      // Initialize voice service for announcements only (no commands)
+      final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
+      voice.init();
+      
+      // Welcome announcement
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          voice.speak("रुर-बू mein aapka swagat hai. Apni manzil chunein");
+        }
+      });
     });
+  }
+  
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -41,6 +61,7 @@ class HomeBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = Provider.of<HomeViewModel>(context);
+    final lang = Provider.of<LanguageViewModel>(context);
 
     if (vm.hasLocationError) {
       return Scaffold(
@@ -56,16 +77,15 @@ class HomeBody extends StatelessWidget {
                   color: Colors.redAccent,
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  "Location Required",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                Text(
+                  lang.getText('location_required'),
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  "To book a ride, we need your precise location.\n"
-                  "Please enable GPS and allow location permissions.",
+                Text(
+                  lang.getText('enable_gps'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 const SizedBox(height: 32),
 
@@ -78,7 +98,7 @@ class HomeBody extends StatelessWidget {
                       backgroundColor: Colors.black,
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text("Try Again"),
+                    child: Text(lang.getText('try_again')),
                   ),
                 ),
 
@@ -88,14 +108,14 @@ class HomeBody extends StatelessWidget {
                   onPressed: () {
                     openAppSettings();
                   },
-                  child: const Text("Open Phone Settings"),
+                  child: Text(lang.getText('open_settings')),
                 ),
               ],
             ),
           ),
         ),
       );
-    }
+    } 
 
     if (vm.loadingLocation || vm.currentLocation == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -121,172 +141,86 @@ class HomeBody extends StatelessWidget {
           ),
 
           Positioned(
-            top: 50,
-            left: 16,
-            right: 16,
+            top: 60,
+            left: 20,
+            right: 20,
             child: GestureDetector(
               onTap: () => _openSearch(context, isDestination: false),
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black26, blurRadius: 8),
+                  borderRadius: BorderRadius.circular(30), // Pill Shape
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
                   ],
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.circle, color: Colors.green, size: 14),
-                    const SizedBox(width: 14),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.my_location, color: AppColors.primary, size: 18),
+                    ),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
-                            "Pickup From",
+                          Text(
+                            lang.getText('pickup_from'),
                             style: TextStyle(
-                              color: Colors.grey,
+                              color: AppColors.textSecondary,
                               fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            vm.pickup?.address ?? "Current Location",
+                            vm.pickup?.address ?? lang.getText('current_location'),
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const Icon(Icons.search, color: Colors.grey),
+                    Container(
+                      height: 30, 
+                      width: 1, 
+                      color: Colors.grey[200], 
+                      margin: const EdgeInsets.symmetric(horizontal: 12),
+                    ),
+                    const Icon(Icons.search, color: AppColors.textSecondary),
                   ],
                 ),
-              ),
+              ).animate().fade(duration: 500.ms).slideY(begin: -0.5, end: 0, curve: Curves.easeOutBack),
             ),
           ),
 
-          Positioned(
-            right: 16,
-            bottom: vm.destination == null ? 320 : 200,
-            child: FloatingActionButton(
-              mini: true,
-              backgroundColor: Colors.white,
-              onPressed: () {
-                if (vm.currentLocation != null) {
-                  vm.mapController?.animateCamera(
-                    CameraUpdate.newLatLng(vm.currentLocation!),
-                  );
-                }
-              },
-              child: const Icon(Icons.my_location, color: Colors.black),
-            ),
-          ),
-
-          vm.destination == null
-              ? _searchBottomSheet(context, vm)
-              : _confirmRideBottomSheet(context, vm),
+          if (vm.destination == null)
+            _searchBottomSheet(context, vm)
+          else
+            _confirmRideBottomSheet(context, vm),
         ],
       ),
     );
   }
 
-  Widget _searchBottomSheet(BuildContext context, HomeViewModel vm) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Container(
-        height: 280,
-        padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 12)],
-        ),
-        child: Column(
-          children: [
-            Center(
-              child: Container(
-                width: 60,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            GestureDetector(
-              onTap: () => _openSearch(context, isDestination: true),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 15,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: const [
-                    Icon(Icons.search),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text("Where to?", style: TextStyle(fontSize: 16)),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              "Recent Destinations",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: vm.recentDestinations.isEmpty
-                  ? const Center(
-                      child: Text(
-                        "No recent destinations yet",
-                        style: TextStyle(color: Colors.black54),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: vm.recentDestinations.length,
-                      itemBuilder: (_, index) {
-                        final place = vm.recentDestinations[index];
-                        return ListTile(
-                          leading: const Icon(Icons.history),
-                          title: Text(
-                            place.address,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          onTap: () => vm.selectDestination(
-                            LocationResult(
-                              address: place.address,
-                              coordinates: place.latLng,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _confirmRideBottomSheet(BuildContext context, HomeViewModel vm) {
+    final lang = Provider.of<LanguageViewModel>(context);
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
@@ -342,11 +276,156 @@ class HomeBody extends StatelessWidget {
                   ),
                 );
               },
-              child: const Text("Confirm Ride", style: TextStyle(fontSize: 16)),
+              child: Text(lang.getText('confirm_ride'), style: const TextStyle(fontSize: 16)),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _searchBottomSheet(BuildContext context, HomeViewModel vm) {
+    final lang = Provider.of<LanguageViewModel>(context);
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        height: 320, // Slightly taller for better spacing
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 30,
+              offset: const Offset(0, -5),
+            )
+          ],
+        ),
+        child: Column(
+          children: [
+            // Drag Handle
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            // Where to Box
+            GestureDetector(
+              onTap: () => _openSearch(context, isDestination: true),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F7FA), // Premium Light Background
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.search, color: AppColors.primary, size: 24),
+                    const SizedBox(width: 16),
+                    Text(
+                      lang.getText('where_to'),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Recent Destinations Title
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                lang.getText('recent_destinations'),
+                style: const TextStyle(
+                  fontSize: 14, 
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            
+            // Recent List
+            Expanded(
+              child: vm.recentDestinations.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.history, size: 40, color: Colors.grey[300]),
+                          const SizedBox(height: 8),
+                          Text(
+                            lang.getText('no_recent_destinations'),
+                            style: TextStyle(color: Colors.grey[400]),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: EdgeInsets.zero,
+                      itemCount: vm.recentDestinations.length,
+                      separatorBuilder: (c, i) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final destination = vm.recentDestinations[index];
+                        return InkWell(
+                          onTap: () => vm.selectDestination(
+                            LocationResult(
+                              address: destination.address,
+                              coordinates: destination.latLng,
+                            ),
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[100],
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.location_on_outlined, size: 20, color: AppColors.textPrimary),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      destination.address.split(',').first,
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                    ),
+                                    Text(
+                                      destination.address,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ).animate().slideY(begin: 0.3, end: 0, duration: 400.ms, curve: Curves.easeOutQuad),
     );
   }
 

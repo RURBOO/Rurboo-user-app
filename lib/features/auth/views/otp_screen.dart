@@ -3,8 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:rubo/features/language/viewmodels/language_vm.dart';
+import 'package:rurboo/features/language/viewmodels/language_vm.dart';
 import '../../../core/services/user_preferences.dart';
+import '../../../core/services/notification_service.dart';
 import 'create_profile_screen.dart';
 import 'location_disclosure_screen.dart';
 
@@ -103,6 +104,11 @@ class _OtpScreenState extends State<OtpScreen> {
 
       final uid = userCred.user!.uid;
       await UserPreferences.saveUserId(uid);
+
+      // Updating FCM Token
+      // ignore: use_build_context_synchronously
+      final token = await NotificationService().getDeviceToken();
+      if (token != null) await NotificationService().saveTokenToDatabase(token);
 
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
@@ -237,11 +243,23 @@ class _OtpScreenState extends State<OtpScreen> {
                       maxLength: 1,
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
                       decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.grey[200],
                         counterText: "",
                         contentPadding: const EdgeInsets.all(8),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Colors.black12),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Colors.black12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Colors.black, width: 2),
                         ),
                       ),
                       onChanged: (val) {

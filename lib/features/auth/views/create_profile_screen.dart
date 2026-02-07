@@ -3,9 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:rubo/features/language/viewmodels/language_vm.dart';
+import 'package:rurboo/features/language/viewmodels/language_vm.dart';
 import '../../../core/services/user_preferences.dart';
+import '../../../core/services/notification_service.dart';
 import 'location_disclosure_screen.dart';
+import '../../voice/viewmodels/voice_agent_viewmodel.dart';
+
 
 class CreateProfileScreen extends StatefulWidget {
   final String phoneNumber;
@@ -25,6 +28,13 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
   final ageController = TextEditingController();
   final guardianNameController = TextEditingController();
   final guardianPhoneController = TextEditingController();
+  
+  // Focus Nodes for placeholder announcements
+  final nameFocus = FocusNode();
+  final ageFocus = FocusNode();
+  final emergencyFocus = FocusNode();
+  final guardianNameFocus = FocusNode();
+  final guardianPhoneFocus = FocusNode();
   
   String gender = "";
   String? userCategory;
@@ -51,6 +61,89 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
   void initState() {
     super.initState();
     _translateTexts();
+    
+    // Setup focus listeners for placeholder announcements
+    _setupFocusListeners();
+    
+    // Auto-start Voice Agent
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+       final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
+       voice.startProfileCreation();
+       voice.addListener(_onVoiceUpdate);
+    });
+  }
+  
+  void _setupFocusListeners() {
+    nameFocus.addListener(() {
+      if (nameFocus.hasFocus) {
+        _announceField("Full name darj karein. Apna pura naam likhein.");
+      }
+    });
+    
+    ageFocus.addListener(() {
+      if (ageFocus.hasFocus) {
+        _announceField("Apni umar darj karein.");
+      }
+    });
+    
+    emergencyFocus.addListener(() {
+      if (emergencyFocus.hasFocus) {
+        _announceField("Emergency contact number darj karein. 10 digit ka number.");
+      }
+    });
+    
+    guardianNameFocus.addListener(() {
+      if (guardianNameFocus.hasFocus) {
+        _announceField("Guardian ka naam darj karein.");
+      }
+    });
+    
+    guardianPhoneFocus.addListener(() {
+      if (guardianPhoneFocus.hasFocus) {
+        _announceField("Guardian ka phone number darj karein. 10 digit ka number.");
+      }
+    });
+  }
+  
+  void _announceField(String message) {
+    final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
+    voice.speak(message);
+  }
+
+  @override
+  void dispose() {
+    final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
+    voice.removeListener(_onVoiceUpdate);
+    
+    // Dispose focus nodes
+    nameFocus.dispose();
+    ageFocus.dispose();
+    emergencyFocus.dispose();
+    guardianNameFocus.dispose();
+    guardianPhoneFocus.dispose();
+    
+    super.dispose();
+  }
+
+  void _onVoiceUpdate() {
+     final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
+     
+     if (voice.tempName != null && nameController.text != voice.tempName) {
+       nameController.text = voice.tempName!;
+     }
+     if (voice.tempAge != null && ageController.text != voice.tempAge) {
+       ageController.text = voice.tempAge!;
+     }
+     if (voice.tempCategory != null && userCategory != voice.tempCategory) {
+       setState(() {
+         userCategory = voice.tempCategory;
+         // Auto-set gender if Woman
+         if (userCategory == 'Woman') gender = "Woman";
+       });
+     }
+     
+     // Auto-Submit if logic allows? Maybe just wait for user to press button or say "Save"
+     // For now, let's keep it manual save or via "Confirm" voice command later
   }
 
   Future<void> _translateTexts() async {
@@ -124,6 +217,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
         'createdAt': FieldValue.serverTimestamp(),
         'whatsappUpdates': whatsappUpdates,
         'safetyModeEnabled': (gender == 'Woman' || userCategory == 'Child'), // Auto-enable for safety
+        'fcmToken': await NotificationService().getDeviceToken(),
       };
 
       await FirebaseFirestore.instance
@@ -188,6 +282,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
 
                         TextFormField(
                           controller: nameController,
+                          focusNode: nameFocus,
                           textCapitalization: TextCapitalization.words,
                           inputFormatters: [
                             FilteringTextInputFormatter.allow(
@@ -214,6 +309,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                               flex: 2,
                               child: TextFormField(
                                 controller: ageController,
+                                focusNode: ageFocus,
                                 keyboardType: TextInputType.number,
                                 inputFormatters: [
                                   FilteringTextInputFormatter.digitsOnly,
@@ -297,6 +393,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                                 const SizedBox(height: 16),
                                 TextFormField(
                                   controller: guardianNameController,
+                                  focusNode: guardianNameFocus,
                                   decoration: const InputDecoration(
                                     labelText: "Guardian Name",
                                     border: OutlineInputBorder(),
@@ -309,6 +406,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                                 const SizedBox(height: 16),
                                 TextFormField(
                                   controller: guardianPhoneController,
+                                  focusNode: guardianPhoneFocus,
                                   keyboardType: TextInputType.phone,
                                   inputFormatters: [LengthLimitingTextInputFormatter(10)],
                                   decoration: const InputDecoration(
@@ -328,6 +426,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
 
                         TextFormField(
                           controller: emergencyController,
+                          focusNode: emergencyFocus,
                           keyboardType: TextInputType.phone,
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,

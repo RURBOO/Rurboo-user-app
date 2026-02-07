@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/services/language_service.dart';
+import '../../../core/constants/app_strings.dart';
 
 class LanguageViewModel extends ChangeNotifier {
   final LanguageService _service;
@@ -63,5 +64,15 @@ class LanguageViewModel extends ChangeNotifier {
     notifyListeners();
 
     return list;
+  }
+  // ... existing code ...
+
+  String getText(String key) {
+    if (AppStrings.translations.containsKey(key)) {
+      final translation = AppStrings.translations[key]![_language];
+      if (translation != null) return translation;
+    }
+    // Fallback to English if translation missing, or key itself
+    return AppStrings.translations[key]?['en'] ?? key;
   }
 }

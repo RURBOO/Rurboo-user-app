@@ -1,4 +1,4 @@
-enum VehicleType { bike, auto, car }
+enum VehicleType { bike, auto, car, erickshaw, bigcar, carriertruck }
 
 class FareResult {
   final double totalFare;
@@ -31,24 +31,45 @@ FareResult calculateFare({
   // 1. Set Rates based on Vehicle Type
   switch (vehicleType) {
     case VehicleType.bike:
-      // Bike Rates
+      // Bike Rates - 1 seat
       defaultBase = 40; // Flat fare for first 2 km
       defaultPerKm = 9; // Cost per km after 2 km
       // jsonKey = 'bike';
       break;
 
     case VehicleType.auto:
-      // Auto Rates
+      // Auto Rates - 3 seats
       defaultBase = 80;
       defaultPerKm = 16;
       // jsonKey = 'auto';
       break;
 
     case VehicleType.car:
-      // Car Rates (Updated)
-      defaultBase = 150; // Base fare increased to 150
-      defaultPerKm = 25; // Rate per km increased to 25
+      // Car Rates - 3 seats
+      defaultBase = 150;
+      defaultPerKm = 25;
       // jsonKey = 'car';
+      break;
+
+    case VehicleType.erickshaw:
+      // E-Rickshaw Rates - 4 seats
+      defaultBase = 60;
+      defaultPerKm = 13;
+      // jsonKey = 'erickshaw';
+      break;
+
+    case VehicleType.bigcar:
+      // Big Car Rates - 5 seats
+      defaultBase = 200;
+      defaultPerKm = 30;
+      // jsonKey = 'bigcar';
+      break;
+
+    case VehicleType.carriertruck:
+      // Carrier Truck Rates - 0 seats (cargo)
+      defaultBase = 250;
+      defaultPerKm = 40;
+      // jsonKey = 'carriertruck';
       break;
   }
 
@@ -104,6 +125,15 @@ FareResult calculateFare({
         break;
       case VehicleType.car:
         nightCharge = 40;
+        break;
+      case VehicleType.erickshaw:
+        nightCharge = 15;
+        break;
+      case VehicleType.bigcar:
+        nightCharge = 50;
+        break;
+      case VehicleType.carriertruck:
+        nightCharge = 60;
         break;
     }
   }

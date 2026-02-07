@@ -1,50 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../language/viewmodels/language_vm.dart';
 
 class FAQScreen extends StatelessWidget {
   const FAQScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageViewModel>(context);
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('FAQ', style: TextStyle(color: Colors.black)),
+        title: Text(lang.getText('faq'), style: const TextStyle(color: Colors.black)),
         backgroundColor: Colors.white,
         elevation: 1,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
-        children: const [
+        children: [
           Text(
-            'Frequently Asked Questions',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            lang.getText('faq_title'),
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 20),
           _FAQItem(
-            question: 'How is the fare calculated?',
-            answer:
-                'Fares are calculated based on base fare + distance traveled. Night charges apply between 10 PM and 6 AM.',
+            question: lang.getText('faq_q1'),
+            answer: lang.getText('faq_a1'),
           ),
           _FAQItem(
-            question: 'How do I contact the driver?',
-            answer:
-                'Once a ride is booked, you can call the driver using the Phone icon on the tracking screen.',
+            question: lang.getText('faq_q2'),
+            answer: lang.getText('faq_a2'),
           ),
           _FAQItem(
-            question: 'Can I cancel a ride?',
-            answer:
-                'Yes, you can cancel before the driver arrives. Frequent cancellations may affect your rating.',
+            question: lang.getText('faq_q3'),
+            answer: lang.getText('faq_a3'),
           ),
           _FAQItem(
-            question: 'Is my payment secure?',
-            answer:
-                'We accept Cash and direct UPI payments. We do not store your banking details directly.',
+            question: lang.getText('faq_q4'),
+            answer: lang.getText('faq_a4'),
           ),
           _FAQItem(
-            question: 'How do I delete my account?',
-            answer:
-                'Go to Settings > Delete Account. This action is permanent.',
+            question: lang.getText('faq_q5'),
+            answer: lang.getText('faq_a5'),
           ),
         ],
       ),

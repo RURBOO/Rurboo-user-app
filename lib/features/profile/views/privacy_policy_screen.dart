@@ -22,7 +22,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Privacy Policy for Rubo',
+              'Privacy Policy for Rurboo',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 16),
@@ -39,7 +39,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             _PolicySection(
               title: '2. Location Data Usage',
               content:
-                  'Rubo collects location data to enable driver tracking, ride matching, and safety features even when the app is in the background (for drivers).',
+                  'Rurboo collects location data to enable driver tracking, ride matching, and safety features even when the app is in the background (for drivers).',
             ),
             _PolicySection(
               title: '3. Information Sharing',
@@ -58,7 +58,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             ),
             _PolicySection(
               title: '6. Contact Us',
-              content: 'If you have questions, contact us at: support@rubo.com',
+              content: 'If you have questions, contact us at: support@Rurboo.com',
             ),
           ],
         ),

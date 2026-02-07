@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/services/user_preferences.dart';
+import '../../language/viewmodels/language_vm.dart';
 
 import '../../home/models/location_result.dart';
 import '../viewmodels/ride_selection_viewmodel.dart';
@@ -12,6 +13,12 @@ import '../models/ride_options.dart';
 import '../../searching/views/searching_driver_screen.dart';
 import 'dart:math';
 import 'package:geoflutterfire_plus/geoflutterfire_plus.dart';
+import '../../voice/viewmodels/voice_agent_viewmodel.dart';
+
+import '../../voice/services/voice_intent_parser.dart'; // Added
+import '../../voice/models/voice_agent_state.dart';
+import '../../../core/theme/app_colors.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class RideSelectionScreen extends StatefulWidget {
   final String pickupText;
@@ -53,7 +60,30 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                 pickupLoc: widget.pickupLoc,
                 destLoc: widget.destinationLoc,
                 distance: widget.distanceKm,
-              );
+              ).then((_) {
+                 // Announce ALL vehicle fares comprehensively
+                 if (context.mounted && vm.rideOptions.isNotEmpty) {
+                    final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
+                    
+                    // Build vehicle list for announcement
+                    final List<Map<String, dynamic>> vehicles = vm.rideOptions.map((ride) => {
+                      'name': ride.name,
+                      'fare': ride.fare.toInt(),
+                    }).toList();
+                    
+                    // Announce pickup, destination, distance, and all vehicle fares
+                    voice.announceAllVehicleFares(
+                      pickup: widget.pickupText,
+                      destination: widget.destinationText,
+                      distanceKm: widget.distanceKm,
+                      vehicles: vehicles,
+                    );
+                 }
+              });
+              
+              // Voice Listener
+              final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
+              voice.addListener(_onVoiceUpdate);
             }
           });
 
@@ -62,6 +92,101 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
       ),
     );
   }
+
+  void _onVoiceUpdate() {
+     if (!mounted) return;
+     final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
+     final vm = Provider.of<RideSelectionViewModel>(context, listen: false);
+     
+     // 1. Vehicle Logic: Selection OR Negation
+     if (voice.lastIntent?.type == IntentType.booking) {
+        final intent = voice.lastIntent!;
+        
+        // A. Negation handling ("Bike nahi chahiye")
+        if (intent.negatedVehicle != null) {
+            final negated = intent.negatedVehicle!.toLowerCase();
+            
+            // If currently selected ride matches negated, switch to something else (default Auto)
+            if (vm.selectedRide?.name.toLowerCase().contains(negated) == true) {
+               // Try to Switch to Auto if not Auto, else Car
+               RideOption? fallback;
+               try {
+                 fallback = vm.rideOptions.firstWhere((r) => !r.name.toLowerCase().contains(negated));
+               } catch (_) {}
+               
+               if (fallback != null) {
+                  vm.selectRide(fallback);
+                  voice.speak("Thik hai, ${fallback.name} select kar diya.");
+               } else {
+                  voice.speak("Aur koi gadi available nahi hai.");
+               }
+               voice.consumeIntent();
+               return; // Exit
+            }
+        }
+
+        // B. Selection handling ("Auto chahiye")
+        if (intent.vehicle != null) {
+            final requestedVehicle = intent.vehicle!.toLowerCase();
+            
+            // Find matching ride
+            try {
+               final ride = vm.rideOptions.firstWhere(
+                 (r) => r.name.toLowerCase().contains(requestedVehicle)
+               );
+               
+               if (vm.selectedRide != ride) {
+                 vm.selectRide(ride);
+                 // Feedback: "Auto select kar diya. Kiraya 120 rupay hai."
+                 voice.speak("${ride.name} select kar diya. Kiraya ${ride.fare.toInt()} rupay hai. Confirm?");
+                 voice.consumeIntent(); // Prevent Loop
+               }
+            } catch (e) {
+               // Vehicle not found
+               if (voice.state != VoiceAgentState.speaking) {
+                   voice.speak("$requestedVehicle available nahi hai.");
+                   voice.consumeIntent();
+               }
+            }
+        }
+     }
+     
+     // 2. Handle Confirmation ("Haan", "Thik hai") -> Book
+     if (voice.lastIntent?.type == IntentType.confirm && voice.state == VoiceAgentState.confirmingFare) {
+         if (!vm.isBooking && vm.selectedRide != null) {
+            voice.speak("Booking confirm kar raha hoon.");
+            voice.consumeIntent();
+            
+            vm.bookRide(() async {
+               await bookRideTransaction(
+                 context, 
+                 vm, 
+                 pickupText: widget.pickupText, 
+                 destinationText: widget.destinationText
+               );
+            });
+         }
+     }
+     
+     // 3. Handle Cancellation ("Cancel karo")
+     if (voice.lastIntent?.type == IntentType.cancel) {
+        if (!vm.isBooking) {
+            voice.speak("Ride selection cancel kar diya.");
+            voice.consumeIntent();
+            Navigator.pop(context); // Go back to home
+        }
+     }
+  }
+
+  @override
+  void dispose() {
+    // We can't easily remove listener here if provider is disposed, 
+    // but usually checking mounted inside listener is enough.
+    // However, best practice is to remove if we added it.
+    // Since we access via context, ensure context is valid.
+    super.dispose();
+  }
+
 }
 
 class RideSelectionBody extends StatelessWidget {
@@ -70,7 +195,8 @@ class RideSelectionBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = Provider.of<RideSelectionViewModel>(context);
-    final yellow = Colors.amber.shade700;
+    final lang = Provider.of<LanguageViewModel>(context);
+    // REMOVED UNUSED YELLOW
 
     final parent = context.findAncestorWidgetOfExactType<RideSelectionScreen>();
 
@@ -79,16 +205,23 @@ class RideSelectionBody extends StatelessWidget {
     }
 
     return Scaffold(
+      extendBodyBehindAppBar: true, // Allow map to go behind app bar
       appBar: AppBar(
-        title: const Text("Select a Ride"),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        title: Text(lang.getText('select_ride'), style: const TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white.withValues(alpha: 0.9), // Fixed
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
-      body: Column(
+      body: Stack(
         children: [
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.40,
+          // MAP BACKGROUND
+          Positioned.fill(
+            bottom: MediaQuery.of(context).size.height * 0.45,
             child: GoogleMap(
               initialCameraPosition: CameraPosition(
                 target: vm.pickup.coordinates!,
@@ -103,95 +236,113 @@ class RideSelectionBody extends StatelessWidget {
             ),
           ),
 
-          Expanded(
+          // BOTTOM SHEET
+          Align(
+            alignment: Alignment.bottomCenter,
             child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
+              height: MediaQuery.of(context).size.height * 0.55,
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+              decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1), // Fixed
+                    blurRadius: 30,
+                    offset: const Offset(0, -5),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  
                   _locationPreview(parent.pickupText, parent.destinationText),
 
                   Padding(
-                    padding: const EdgeInsets.only(top: 8, bottom: 4),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(Icons.directions, size: 16, color: Colors.grey),
-                        const SizedBox(width: 4),
                         Text(
-                          "Total Distance: ${parent.distanceKm.toStringAsFixed(1)} km",
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black54,
+                           lang.getText('available_rides'),
+                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(20)
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.compare_arrows, size: 14, color: Colors.grey),
+                              const SizedBox(width: 4),
+                              Text(
+                                "${vm.distanceKm.toStringAsFixed(1)} km",
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black54),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 12),
-
                   if (vm.isOutstationRide)
-                    _outstationMessage()
+                    _outstationMessage(lang)
                   else
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Available Rides",
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
+                      child: ListView.separated(
+                        padding: EdgeInsets.zero,
+                        itemCount: vm.rideOptions.length,
+                        separatorBuilder: (c, i) => const SizedBox(height: 12),
+                        itemBuilder: (_, i) {
+                          final ride = vm.rideOptions[i];
+                          final selected = vm.selectedRide == ride;
+                          return GestureDetector(
+                            onTap: () => vm.selectRide(ride),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: selected ? AppColors.primary.withValues(alpha: 0.05) : Colors.white, // Fixed
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: selected
+                                      ? AppColors.primary
+                                      : Colors.grey[200]!,
+                                  width: selected ? 2 : 1,
+                                ),
+                                boxShadow: selected ? [
+                                   BoxShadow(color: AppColors.primary.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4)) // Fixed
+                                ] : [],
+                              ),
+                              child: _rideTile(ride, selected, AppColors.primary),
                             ),
-                          ),
-                          Expanded(
-                            child: ListView.builder(
-                              itemCount: vm.rideOptions.length,
-                              itemBuilder: (_, i) {
-                                final ride = vm.rideOptions[i];
-                                final selected = vm.selectedRide == ride;
-                                return GestureDetector(
-                                  onTap: () => vm.selectRide(ride),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    margin: const EdgeInsets.only(top: 10),
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: selected
-                                          ? Colors.amber[50]
-                                          : Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: selected
-                                            ? yellow
-                                            : Colors.grey[300]!,
-                                        width: selected ? 2 : 1,
-                                      ),
-                                    ),
-                                    child: _rideTile(ride, selected, yellow),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
+                          ).animate().fade(delay: (100 * i).ms).slideX();
+                        },
                       ),
                     ),
 
                   const SizedBox(height: 12),
-                  _paymentDisplay(),
+                  _paymentDisplay(lang),
                   const SizedBox(height: 12),
-                  _confirmButton(context, vm, yellow),
+                  _confirmButton(context, vm, AppColors.primary, lang, parent),
                 ],
               ),
-            ),
+            ).animate().slideY(begin: 0.3, end: 0, curve: Curves.easeOutBack),
           ),
         ],
       ),
@@ -260,9 +411,13 @@ class RideSelectionBody extends StatelessWidget {
     BuildContext context,
     RideSelectionViewModel vm,
     Color yellow,
+    LanguageViewModel lang,
+    RideSelectionScreen parent,
   ) {
     final bool isButtonDisabled =
         vm.isBooking || vm.isOutstationRide || vm.selectedRide == null;
+
+    final rideName = vm.selectedRide != null ? lang.getText(vm.selectedRide!.name) : "";
 
     return SizedBox(
       width: double.infinity,
@@ -278,8 +433,8 @@ class RideSelectionBody extends StatelessWidget {
                    color: vm.scheduledTime != null ? Colors.green : Colors.grey[700], size: 20),
                  label: Text(
                    vm.scheduledTime == null 
-                     ? "Schedule for Later" 
-                     : "Scheduled: ${_formatDate(vm.scheduledTime!)}",
+                     ? lang.getText('schedule_later') // "Schedule for Later"
+                     : "${lang.getText('schedule_later')}: ${_formatDate(vm.scheduledTime!)}",
                    style: TextStyle(
                      color: vm.scheduledTime != null ? Colors.green : Colors.grey[700],
                      fontWeight: FontWeight.w600,
@@ -294,7 +449,12 @@ class RideSelectionBody extends StatelessWidget {
                 ? null
                 : () async {
                     await vm.bookRide(() async {
-                      await _bookRide(context, vm);
+                      await bookRideTransaction(
+                        context, 
+                        vm, 
+                        pickupText: parent.pickupText, 
+                        destinationText: parent.destinationText
+                      );
                     });
                   },
             style: ElevatedButton.styleFrom(
@@ -318,10 +478,10 @@ class RideSelectionBody extends StatelessWidget {
                     vm.isOutstationRide
                         ? "Beyond Service Limit"
                         : (vm.selectedRide == null
-                              ? "Select a Ride"
+                              ? lang.getText('select_ride')
                               : vm.scheduledTime != null 
-                                  ? "Schedule ${vm.selectedRide!.name}"
-                                  : "Book ${vm.selectedRide!.name}"),
+                                  ? "${lang.getText('book_now')} $rideName"
+                                  : "${lang.getText('book_now')} $rideName"),
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -363,7 +523,7 @@ class RideSelectionBody extends StatelessWidget {
     if (selected.isBefore(now)) {
        if (context.mounted) {
          ScaffoldMessenger.of(context).showSnackBar(
-           const SnackBar(content: Text("Please select a future time")),
+           SnackBar(content: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('select_future_time'))),
          );
        }
        return;
@@ -376,164 +536,200 @@ class RideSelectionBody extends StatelessWidget {
     return "${d.day}/${d.month} ${d.hour}:${d.minute.toString().padLeft(2,'0')}";
   }
 
-  Widget _outstationMessage() =>
-      const Center(child: Text("Outstation Rides Not Available"));
+  Widget _outstationMessage(LanguageViewModel lang) =>
+      Center(child: Text(lang.getText('outstation_unavailable')));
 
-  Widget _paymentDisplay() => Row(
+  Widget _paymentDisplay(LanguageViewModel lang) => Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: const [
-      Text("Payment Method", style: TextStyle(fontWeight: FontWeight.w600)),
-      Text("Cash", style: TextStyle(fontWeight: FontWeight.bold)),
+    children: [
+      Text(lang.getText('payment_method'), style: const TextStyle(fontWeight: FontWeight.w600)),
+      Text(lang.getText('cash'), style: const TextStyle(fontWeight: FontWeight.bold)),
     ],
   );
 
-  Widget _rideTile(RideOption ride, bool selected, Color yellow) {
+  Widget _rideTile(RideOption ride, bool selected, Color color) {
     return Row(
       children: [
-        Icon(ride.icon, color: selected ? yellow : Colors.black54),
-        const SizedBox(width: 10),
+        // ICON
+        Icon(
+          ride.icon, 
+          size: 40, 
+          color: ride.iconColor ?? (selected ? AppColors.primary : Colors.grey[400]),
+        ),
+        const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 ride.name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold, 
+                  fontSize: 16,
+                  color: selected ? AppColors.textPrimary : Colors.black87,
+                ),
               ),
-              Text(ride.description, style: const TextStyle(fontSize: 12)),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                   Icon(Icons.person, size: 12, color: Colors.grey[600]),
+                   const SizedBox(width: 4),
+                   Text(
+                     ride.seats == 0 ? "Cargo" : "${ride.seats} seat${ride.seats > 1 ? 's' : ''}", 
+                     style: TextStyle(fontSize: 12, color: Colors.grey[600])
+                   ),
+                   const SizedBox(width: 8),
+                   Text(
+                     ride.description, 
+                     style: TextStyle(fontSize: 12, color: Colors.grey[600])
+                   ),
+                ],
+              )
             ],
           ),
         ),
-        Text(
-          "₹${ride.fare.toStringAsFixed(0)}",
-          style: const TextStyle(fontWeight: FontWeight.bold),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              "₹${ride.fare.toStringAsFixed(0)}",
+              style: TextStyle(
+                fontWeight: FontWeight.bold, 
+                fontSize: 18,
+                color: selected ? AppColors.textPrimary : Colors.black87,
+              ),
+            ),
+            if (selected)
+            Container(
+               margin: const EdgeInsets.only(top: 4),
+               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+               decoration: BoxDecoration(color: AppColors.success, borderRadius: BorderRadius.circular(4)),
+               child: const Text("Best Value", style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+            )
+          ],
         ),
       ],
     );
   }
+}
 
-  Future<void> _bookRide(
-    BuildContext context,
-    RideSelectionViewModel vm,
-  ) async {
-    final connectivity = await Connectivity().checkConnectivity();
-    if (connectivity.contains(ConnectivityResult.none)) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("No Internet Connection"),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
+Future<void> bookRideTransaction(
+  BuildContext context,
+  RideSelectionViewModel vm, {
+  required String pickupText,
+  required String destinationText,
+}) async {
+  final connectivity = await Connectivity().checkConnectivity();
+  if (connectivity.contains(ConnectivityResult.none)) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('no_internet')),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
+
+  if (!context.mounted) return;
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const Center(child: CircularProgressIndicator()),
+  );
+
+  try {
+    final userId = await UserPreferences.getUserId();
+    if (userId == null || vm.selectedRide == null) {
+      throw Exception("Invalid booking state");
     }
 
-    if (!context.mounted) return;
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
+    final GeoFirePoint pickupGeo = GeoFirePoint(
+      GeoPoint(
+        vm.pickup.coordinates!.latitude,
+        vm.pickup.coordinates!.longitude,
+      ),
     );
 
-    try {
-      final userId = await UserPreferences.getUserId();
-      if (userId == null || vm.selectedRide == null) {
-        throw Exception("Invalid booking state");
-      }
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .get();
 
-      final GeoFirePoint pickupGeo = GeoFirePoint(
-        GeoPoint(
-          vm.pickup.coordinates!.latitude,
-          vm.pickup.coordinates!.longitude,
-        ),
-      );
+    if (!userDoc.exists) throw Exception("User not found");
+    final userData = userDoc.data()!;
 
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .get();
+    final String otp = (1000 + Random().nextInt(9000)).toString();
 
-      if (!userDoc.exists) throw Exception("User not found");
-      final userData = userDoc.data()!;
+    String rideName = vm.selectedRide!.name.toLowerCase();
+    String category = "Car";
 
-      final String otp = (1000 + Random().nextInt(9000)).toString();
+    if (rideName.contains("bike") || rideName.contains("moto")) {
+      category = "Bike";
+    } else if (rideName.contains("auto") && !rideName.contains("rickshaw")) {
+      category = "Auto";
+    } else if (rideName.contains("rickshaw") && rideName.contains("e-")) {
+      category = "E-Rickshaw";
+    } else if (rideName.contains("rickshaw")) {
+      category = "Auto";
+    } else if (rideName.contains("big car")) {
+      category = "Big Car";
+    } else if (rideName.contains("truck") || rideName.contains("carrier")) {
+      category = "Carrier Truck";
+    }
 
-      // ... (existing variable definitions) ...
-      // NOTE: parent usage here is safe as 'parent' was captured before async call
-      // or we re-capture it? Actually 'parent' was captured at line 371.
-      // Wait, line 371 'findAncestorWidgetOfExactType' IS CONTEXT DEPENDENT.
-      // But it was called AFTER `await userDoc.get()`.
-      // So ensuring context is mounted there is crucial.
+    final rideData = {
+      'userId': userId,
+      'userName': userData['name'] ?? 'User',
+      'userPhone': userData['phoneNumber'] ?? '',
+      'pickupAddress': pickupText,
+      'destinationAddress': destinationText,
+      'pickupGeo': pickupGeo.data,
+      'pickupCoords': GeoPoint(
+        vm.pickup.coordinates!.latitude,
+        vm.pickup.coordinates!.longitude,
+      ),
+      'destinationCoords': GeoPoint(
+        vm.destination.coordinates!.latitude,
+        vm.destination.coordinates!.longitude,
+      ),
+      'fare': vm.selectedRide!.fare,
+      'rideType': vm.selectedRide!.name,
+      'vehicleCategory': category,
+      'paymentMethod': vm.selectedPayment,
+      'otp': otp,
+      'status': vm.scheduledTime != null ? 'scheduled' : 'pending',
+      'scheduledTime': vm.scheduledTime != null ? Timestamp.fromDate(vm.scheduledTime!) : null,
+      'createdAt': FieldValue.serverTimestamp(),
+    };
 
-      if (!context.mounted) return;
-      final parent = context
-          .findAncestorWidgetOfExactType<RideSelectionScreen>();
-      if (parent == null) {
-        throw Exception("Parent widget not found");
-      }
+    final ref = await FirebaseFirestore.instance
+        .collection('rideRequests')
+        .add(rideData);
 
-      String rideName = vm.selectedRide!.name.toLowerCase();
-      String category = "Car";
+    if (context.mounted) {
+      Navigator.pop(context);
 
-      if (rideName.contains("bike") || rideName.contains("moto")) {
-        category = "Bike";
-      } else if (rideName.contains("auto") || rideName.contains("rickshaw")) {
-        category = "Auto";
-      }
-
-      final rideData = {
-        'userId': userId,
-        'userName': userData['name'] ?? 'User',
-        'userPhone': userData['phoneNumber'] ?? '',
-        'pickupAddress': parent.pickupText,
-        'destinationAddress': parent.destinationText,
-        'pickupGeo': pickupGeo.data,
-        'pickupCoords': GeoPoint(
-          vm.pickup.coordinates!.latitude,
-          vm.pickup.coordinates!.longitude,
-        ),
-        'destinationCoords': GeoPoint(
-          vm.destination.coordinates!.latitude,
-          vm.destination.coordinates!.longitude,
-        ),
-        'fare': vm.selectedRide!.fare,
-        'rideType': vm.selectedRide!.name,
-        'vehicleCategory': category,
-        'paymentMethod': vm.selectedPayment,
-        'otp': otp,
-        'status': vm.scheduledTime != null ? 'scheduled' : 'pending',
-        'scheduledTime': vm.scheduledTime != null ? Timestamp.fromDate(vm.scheduledTime!) : null,
-        'createdAt': FieldValue.serverTimestamp(),
-      };
-
-      final ref = await FirebaseFirestore.instance
-          .collection('rideRequests')
-          .add(rideData);
-
-      if (context.mounted) {
-        Navigator.pop(context);
-
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (_) => SearchingDriverScreen(
-              rideId: ref.id,
-              pickupLatLng: vm.pickup.coordinates!,
-              pickupAddress: parent.pickupText,
-              destinationLatLng: vm.destination.coordinates!,
-              destinationAddress: parent.destinationText,
-            ),
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => SearchingDriverScreen(
+            rideId: ref.id,
+            pickupLatLng: vm.pickup.coordinates!,
+            pickupAddress: pickupText,
+            destinationLatLng: vm.destination.coordinates!,
+            destinationAddress: destinationText,
           ),
-          (route) => false,
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Booking failed: $e")));
-      }
+        ),
+        (route) => false,
+      );
+    }
+  } catch (e) {
+    if (context.mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("${Provider.of<LanguageViewModel>(context, listen: false).getText('booking_failed')}: $e")));
     }
   }
 }

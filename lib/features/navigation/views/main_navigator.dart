@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:rubo/features/history/views/history_screen.dart';
-import 'package:rubo/features/home/views/home_screen.dart';
-import 'package:rubo/features/profile/views/profile_screen.dart';
+import 'package:rurboo/features/history/views/history_screen.dart';
+import 'package:rurboo/features/home/views/home_screen.dart';
+import 'package:rurboo/features/profile/views/profile_screen.dart';
+import 'package:provider/provider.dart';
+import '../../language/viewmodels/language_vm.dart';
 
 class MainNavigator extends StatefulWidget {
   const MainNavigator({super.key});
@@ -27,24 +29,32 @@ class _MainNavigatorState extends State<MainNavigator> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageViewModel>(context);
     return Scaffold(
-      body: Center(child: _widgetOptions.elementAt(_selectedIndex)),
+      body: Stack(
+        children: [
+          Center(child: _widgetOptions.elementAt(_selectedIndex)),
+          // Voice command feature disabled for v1.0 - only announcements active
+          // Will be enabled in future updates
+          // const VoiceAssistantWidget(),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
+        items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
+            icon: const Icon(Icons.home_outlined),
+            activeIcon: const Icon(Icons.home),
+            label: lang.getText('nav_home'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.history_outlined),
-            activeIcon: Icon(Icons.history),
-            label: 'History',
+            icon: const Icon(Icons.history_outlined),
+            activeIcon: const Icon(Icons.history),
+            label: lang.getText('nav_history'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
+            icon: const Icon(Icons.person_outline),
+            activeIcon: const Icon(Icons.person),
+            label: lang.getText('nav_profile'),
           ),
         ],
         currentIndex: _selectedIndex,

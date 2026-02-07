@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/widgets/shimmer_loading.dart';
+import '../../language/viewmodels/language_vm.dart';
 import '../viewmodels/history_viewmodel.dart';
 import '../models/ride_history_model.dart';
 
@@ -30,9 +31,9 @@ class _HistoryScreenBody extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text(
-          "Ride History",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+        title: Text(
+          Provider.of<LanguageViewModel>(context).getText('ride_history'),
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
         ),
         backgroundColor: Colors.white,
         elevation: 1,
@@ -50,7 +51,7 @@ class _HistoryScreenBody extends StatelessWidget {
             return Center(child: Text(vm.errorMessage!));
           }
           if (vm.rideHistory.isEmpty) {
-            return _buildEmptyState();
+            return _buildEmptyState(context);
           }
           return _buildHistoryList(vm.rideHistory);
         },
@@ -70,10 +71,13 @@ class _HistoryScreenBody extends StatelessWidget {
   }
 
   Widget _buildHistoryCard(BuildContext context, RideHistoryModel ride) {
+    final lang = Provider.of<LanguageViewModel>(context, listen: false);
     final bool isCompleted =
         ride.status == 'completed' || ride.status == 'closed';
     final Color statusColor = isCompleted ? Colors.green : Colors.red;
-    final String displayStatus = isCompleted ? "COMPLETED" : "CANCELLED";
+    final String displayStatus = isCompleted 
+        ? lang.getText('status_completed') 
+        : lang.getText('status_cancelled');
 
     final String formattedDate = DateFormat(
       'MMM d, yyyy • hh:mm a',
@@ -184,21 +188,22 @@ class _HistoryScreenBody extends StatelessWidget {
     return Icons.local_taxi;
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final lang = Provider.of<LanguageViewModel>(context, listen: false);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.history, size: 80, color: Colors.grey[300]),
           const SizedBox(height: 16),
-          const Text(
-            "No rides yet",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            lang.getText('no_rides'),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          const Text(
-            "Your completed rides will show up here.",
-            style: TextStyle(color: Colors.grey),
+          Text(
+            lang.getText('history_empty_desc'),
+            style: const TextStyle(color: Colors.grey),
           ),
         ],
       ),

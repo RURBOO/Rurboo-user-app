@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../core/services/user_preferences.dart';
+import '../../../core/services/notification_service.dart';
 import '../../auth/views/location_disclosure_screen.dart';
 import '../../language/views/language_selection_screen.dart';
 import '../../navigation/views/main_navigator.dart';
@@ -55,6 +56,11 @@ class _SplashScreenState extends State<SplashScreen>
       _navigateTo(const LanguageSelectionScreen());
       return;
     }
+    
+    // Sync FCM Token
+    NotificationService().getDeviceToken().then((t) {
+      if (t != null) NotificationService().saveTokenToDatabase(t);
+    });
 
     final permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied ||
@@ -229,11 +235,16 @@ class _SplashScreenState extends State<SplashScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                "RURBOO",
-                style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2.0,
+              Image.asset(
+                "assets/images/app_logo.jpg",
+                width: 200,
+                // fallback if image not found/loading
+                errorBuilder: (context, error, stackTrace) => Text(
+                  "RURBOO",
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 2.0,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),

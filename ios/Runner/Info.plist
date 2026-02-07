@@ -7,7 +7,7 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 
 	<key>CFBundleDisplayName</key>
-	<string>Rubo</string>
+	<string>RURBOO</string>
 
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
@@ -19,7 +19,7 @@
 	<string>6.0</string>
 
 	<key>CFBundleName</key>
-	<string>rubo</string>
+	<string>RURBOO</string>
 
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
@@ -41,6 +41,12 @@
 
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>We need your location to track your ride.</string>
+
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need access to the microphone for voice commands.</string>
+
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>We need speech recognition to understand your voice commands.</string>
 
 	<key>LSApplicationQueriesSchemes</key>
 	<array>

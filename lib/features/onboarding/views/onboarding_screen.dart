@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:rubo/features/language/viewmodels/language_vm.dart';
+import 'package:rurboo/features/language/viewmodels/language_vm.dart';
 import '../../auth/views/selection_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -14,91 +14,36 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int currentPage = 0;
 
-  List<Map<String, String>> onboarding = [];
-
-  final List<Map<String, String>> originalData = [
-    {
-      'image': 'assets/images/screen1.jpg',
-      'title1': 'Easy way to book\n',
-      'title2': 'your ride',
-      'desc': 'Book your ride and get picked up by the nearest driver.',
-    },
-    {
-      'image': 'assets/images/screen2.jpg',
-      'title1': 'Select\n',
-      'title2': 'your ride',
-      'desc': 'Choose a ride type that suits your need and pricing.',
-    },
-    {
-      'image': 'assets/images/screen3.jpg',
-      'title1': 'Live ride\n',
-      'title2': 'tracking',
-      'desc': 'Track your ride in real-time with updates.',
-    },
-    {
-      'image': 'assets/images/screen4.jpg',
-      'title1': 'Share your\n',
-      'title2': 'trip',
-      'desc': 'Share your ride details with family/friends.',
-    },
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadTranslations();
-    });
-  }
-
-  Future<void> _loadTranslations() async {
-    final lang = Provider.of<LanguageViewModel>(context, listen: false);
-
-    final texts = originalData
-        .expand((e) => [e['title1']!, e['title2']!, e['desc']!])
-        .toList();
-
-    final translated = await lang.translateOnboarding(texts);
-
-    List<Map<String, String>> result = [];
-    int i = 0;
-
-    for (var item in originalData) {
-      result.add({
-        'image': item['image']!,
-        'title1': translated[i],
-        'title2': translated[i + 1],
-        'desc': translated[i + 2],
-      });
-      i += 3;
-    }
-
-    if (mounted) {
-      setState(() => onboarding = result);
-    }
-  }
-
-  void nextPage() {
-    if (currentPage < onboarding.length - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const SelectionScreen()),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageViewModel>(context);
 
-    if (lang.loading || onboarding.isEmpty) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+    final List<Map<String, String>> onboarding = [
+      {
+        'image': 'assets/images/screen1.jpg',
+        'title1': lang.getText('onboarding_title1_1'),
+        'title2': lang.getText('onboarding_title2_1'),
+        'desc': lang.getText('onboarding_desc_1'),
+      },
+      {
+        'image': 'assets/images/screen2.jpg',
+        'title1': lang.getText('onboarding_title1_2'),
+        'title2': lang.getText('onboarding_title2_2'),
+        'desc': lang.getText('onboarding_desc_2'),
+      },
+      {
+        'image': 'assets/images/screen3.jpg',
+        'title1': lang.getText('onboarding_title1_3'),
+        'title2': lang.getText('onboarding_title2_3'),
+        'desc': lang.getText('onboarding_desc_3'),
+      },
+      {
+        'image': 'assets/images/screen4.jpg',
+        'title1': lang.getText('onboarding_title1_4'),
+        'title2': lang.getText('onboarding_title2_4'),
+        'desc': lang.getText('onboarding_desc_4'),
+      },
+    ];
 
     return Scaffold(
       body: SafeArea(
@@ -174,9 +119,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         builder: (_) => const SelectionScreen(),
                       ),
                     ),
-                    child: const Text(
-                      "Skip",
-                      style: TextStyle(
+                    child: Text(
+                      lang.getText('skip'), // "Skip"
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -203,7 +148,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
 
                   GestureDetector(
-                    onTap: nextPage,
+                    onTap: () {
+                        if (currentPage < onboarding.length - 1) {
+                          _pageController.nextPage(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeInOut,
+                          );
+                        } else {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (_) => const SelectionScreen()),
+                          );
+                        }
+                    },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 22,
@@ -213,17 +170,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         color: const Color(0xFFFFD84D),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
                           Text(
-                            "Next",
-                            style: TextStyle(
+                            lang.getText('next'), // "Next"
+                            style: const TextStyle(
                               color: Colors.black,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(width: 6),
-                          Icon(Icons.arrow_right_alt, color: Colors.black),
+                          const SizedBox(width: 6),
+                          const Icon(Icons.arrow_right_alt, color: Colors.black),
                         ],
                       ),
                     ),

@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../../language/viewmodels/language_vm.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final String currentName;
@@ -68,7 +70,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         
         if (mounted) {
            ScaffoldMessenger.of(context).showSnackBar(
-             const SnackBar(content: Text("Profile Updated Successfully! ✅")),
+             SnackBar(content: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('profile_updated'))),
            );
            Navigator.pop(context, true);
         }
@@ -84,9 +86,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageViewModel>(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Edit Profile"),
+        title: Text(lang.getText('edit_profile')),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -96,14 +99,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-               const Text("Basic Information", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+               Text(lang.getText('basic_info'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                const SizedBox(height: 15),
                
               // Name
               TextFormField(
                 controller: _nameCtrl,
-                decoration: const InputDecoration(
-                  labelText: "Full Name",
+                decoration: InputDecoration(
+                  labelText: lang.getText('full_name'),
+                  hintText: lang.getText('enter_name_hint'),
                   prefixIcon: Icon(Icons.person),
                   border: OutlineInputBorder(),
                 ),
@@ -115,8 +119,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               TextFormField(
                 controller: _emailCtrl,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: "Email Address",
+                decoration: InputDecoration(
+                  labelText: lang.getText('email'),
+                  hintText: lang.getText('enter_email_hint'),
                   prefixIcon: Icon(Icons.email),
                   border: OutlineInputBorder(),
                 ),
@@ -132,8 +137,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       controller: _ageCtrl,
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: const InputDecoration(
-                        labelText: "Age",
+                      decoration: InputDecoration(
+                        labelText: lang.getText('age'),
+                        hintText: lang.getText('enter_age_hint'),
                         prefixIcon: Icon(Icons.cake),
                         border: OutlineInputBorder(),
                       ),
@@ -151,13 +157,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     flex: 3,
                     child: DropdownButtonFormField<String>(
                       initialValue: _selectedGender, // Use initialValue to fix deprecation
-                      decoration: const InputDecoration(
-                        labelText: "Gender",
+                      decoration: InputDecoration(
+                        labelText: lang.getText('gender'),
                         prefixIcon: Icon(Icons.people),
                         border: OutlineInputBorder(),
                       ),
                       items: ["Male", "Woman", "Other"].map((g) => 
-                        DropdownMenuItem(value: g, child: Text(g))).toList(),
+                        DropdownMenuItem(value: g, child: Text(lang.getText(g.toLowerCase())))).toList(),
                       onChanged: (v) => setState(() => _selectedGender = v),
                     ),
                   ),
@@ -178,7 +184,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   onPressed: _isLoading ? null : _save,
                   child: _isLoading
                       ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text("Save Changes", style: TextStyle(fontSize: 16)),
+                      : Text(lang.getText('save_changes'), style: const TextStyle(fontSize: 16)),
                 ),
               ),
             ],

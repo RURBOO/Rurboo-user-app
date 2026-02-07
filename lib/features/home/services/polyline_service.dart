@@ -25,11 +25,13 @@ class PolylineService {
     );
 
     try {
-      if (kDebugMode) {
-        print("Fetching Route: $url");
-      }
+      debugPrint("🚀🚀🚀 OSRM GET: $url");
+      
+      final response = await http.get(url).timeout(const Duration(seconds: 10)); // Request sent
 
-      final response = await http.get(url).timeout(const Duration(seconds: 10));
+      if (kDebugMode) {
+        debugPrint("🚀🚀🚀 OSRM Response Code: ${response.statusCode}");
+      }
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -48,6 +50,8 @@ class PolylineService {
         }).toList();
 
         final double distMeters = (route['distance'] as num).toDouble();
+        debugPrint("🚀🚀🚀 OSRM Parsed Distance (Meters): $distMeters");
+        
         final double durSeconds = (route['duration'] as num).toDouble();
 
         return RouteInfo(
@@ -59,7 +63,7 @@ class PolylineService {
       return null;
     } catch (e) {
       if (kDebugMode) {
-        print("OSRM Service Error: $e");
+        debugPrint("OSRM Service Error: $e");
       }
       return null;
     }

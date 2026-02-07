@@ -7,13 +7,32 @@ import '../models/location_result.dart';
 
 class SearchRepository {
   // Headers required for Android-restricted API Keys when making direct HTTP calls
-  Map<String, String> get _headers => {
+  Map<String, String> get _headers {
+    // Release SHA-1: 6A:0F:93:82:14:47:6B:9B:90:2A:33:E7:7B:00:8A:12:38:8C:D7:28 (From rurboo-release-key.jks)
+    // Debug SHA-1: Will be extracted from ~/.android/debug.keystore
+    
+    // Get debug SHA-1 (default Android debug keystore)
+    // Run: keytool -list -v -keystore ~/.android/debug.keystore -storepass android -keypass android | grep SHA1
+    
+    if (kDebugMode) {
+      // Using debug keystore SHA-1: D2:EF:14:F3:EB:8E:65:90:29:22:26:1E:90:09:7F:18:2F:D6:A6:E0
+      // NOTE: This is specific to this developer machine's debug keystore
+      // If another developer runs this, they need to add THEIR debug SHA-1 to Google Cloud Console
+      return {
         'Content-Type': 'application/json',
         'X-Android-Package': 'com.rurboo.app',
         'X-Android-Cert': 'D2EF14F3EB8E65902922261E90097F182FD6A6E0',
       };
+    }
+    
+    return {
+        'Content-Type': 'application/json',
+        'X-Android-Package': 'com.rurboo.app',
+        'X-Android-Cert': '6A0F938214476B9B902A33E77B008A12388CD728',
+      };
+  }
 
-  Future<List<LocationResult>> autocomplete(String query) async {
+  Future<List<LocationResult>> autocomplete(String query, {LatLng? focusLocation}) async {
     if (query.length < 2) return [];
 
     try {
@@ -23,9 +42,14 @@ class SearchRepository {
         return [];
       }
 
-      final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$query&key=$apiKey&components=country:in',
-      );
+      String urlString = 'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$query&key=$apiKey&components=country:in';
+      
+      // Add Location Bias (radius 50km)
+      if (focusLocation != null) {
+         urlString += '&location=${focusLocation.latitude},${focusLocation.longitude}&radius=50000';
+      }
+
+      final url = Uri.parse(urlString);
 
       debugPrint('🔍 Autocomplete Request: $url');
       final response = await http.get(url, headers: _headers);

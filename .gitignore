@@ -55,3 +55,15 @@ app.*.map.json
 /android/app/release
 android/key.properties
 android/app/rurboo-release-key.jks
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+android/key.properties
+android/app/rurboo-release-key.jks
+
+# Release builds
+*.apk
+app-release.apk
+build/

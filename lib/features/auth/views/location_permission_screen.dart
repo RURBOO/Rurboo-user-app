@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rubo/features/navigation/views/main_navigator.dart';
+import 'package:rurboo/features/navigation/views/main_navigator.dart';
 
 class LocationPermissionScreen extends StatelessWidget {
   const LocationPermissionScreen({super.key});
