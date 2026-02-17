@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -69,6 +70,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                     final List<Map<String, dynamic>> vehicles = vm.rideOptions.map((ride) => {
                       'name': ride.name,
                       'fare': ride.fare.toInt(),
+                      'id': ride.id,
                     }).toList();
                     
                     // Announce pickup, destination, distance, and all vehicle fares
@@ -221,7 +223,7 @@ class RideSelectionBody extends StatelessWidget {
         children: [
           // MAP BACKGROUND
           Positioned.fill(
-            bottom: MediaQuery.of(context).size.height * 0.45,
+            bottom: 0, // Extend to bottom
             child: GoogleMap(
               initialCameraPosition: CameraPosition(
                 target: vm.pickup.coordinates!,
@@ -232,117 +234,182 @@ class RideSelectionBody extends StatelessWidget {
               polylines: vm.polylines,
               zoomControlsEnabled: false,
               myLocationEnabled: false,
-              padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+              // Add padding so logo/legal buttons appear above the minimized sheet (approx 40% height)
+              padding: EdgeInsets.only(
+                top: 40, 
+                left: 20, 
+                right: 20, 
+                bottom: MediaQuery.of(context).size.height * 0.45
+              ),
             ),
           ),
 
-          // BOTTOM SHEET
-          Align(
-            alignment: Alignment.bottomCenter,
+          // BOTTOM SHEET (Draggable List Only)
+          DraggableScrollableSheet(
+            initialChildSize: 0.80, // Increased to 80%
+            minChildSize: 0.65,     // Increased minimum height
+            maxChildSize: 0.95,
+            builder: (context, scrollController) {
+              return Container(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 30,
+                      offset: const Offset(0, -5),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    
+                    _locationPreview(parent.pickupText, parent.destinationText),
+
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                             lang.getText('available_rides'),
+                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(20)
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.compare_arrows, size: 14, color: Colors.grey),
+                                const SizedBox(width: 4),
+                                Text(
+                                  "${vm.distanceKm.toStringAsFixed(1)} km",
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black54),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    if (vm.isOutstationRide)
+                       _outstationMessage(lang)
+                    else
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                             Provider.of<VoiceAgentViewModel>(context, listen: false).stopAnnouncement();
+                          },
+                          child: ListView.separated(
+                          controller: scrollController,
+                          // HUGE padding at bottom to clear the fixed footer
+                          padding: const EdgeInsets.only(bottom: 320), 
+                          itemCount: vm.rideOptions.length,
+                          separatorBuilder: (c, i) => const SizedBox(height: 12),
+                          itemBuilder: (_, i) {
+                            final ride = vm.rideOptions[i];
+                            final selected = vm.selectedRide == ride;
+                            
+                            final voiceVM = Provider.of<VoiceAgentViewModel>(context);
+                            final isHighlighted = voiceVM.highlightedElementId == ride.id;
+                            
+                            return GestureDetector(
+                              onTap: () {
+                                 Provider.of<VoiceAgentViewModel>(context, listen: false).stopAnnouncement();
+                                 vm.selectRide(ride);
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: selected ? AppColors.primary.withValues(alpha: 0.05) :Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: isHighlighted 
+                                        ? const Color(0xFFFFD54F) 
+                                        : (selected ? AppColors.primary : Colors.grey[200]!),
+                                    width: isHighlighted ? 3 : (selected ? 2 : 1),
+                                  ),
+                                  boxShadow: isHighlighted 
+                                      ? [
+                                          BoxShadow(
+                                            color: const Color(0xFFFFD54F).withValues(alpha: 0.5),
+                                            blurRadius: 15,
+                                            spreadRadius: 2,
+                                          )
+                                        ]
+                                      : (selected ? [
+                                     BoxShadow(color: AppColors.primary.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4))
+                                  ] : []),
+                                ),
+                                child: _rideTile(ride, selected, AppColors.primary),
+                              ),
+                            ).animate(target: isHighlighted ? 1 : 0).scale(begin: const Offset(1,1), end: const Offset(1.05, 1.05));
+                          },
+                        ),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
+
+          // Fixed Bottom Footer Area
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
             child: Container(
-              height: MediaQuery.of(context).size.height * 0.55,
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12), // Reduced vertical padding
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
                 boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1), // Fixed
-                    blurRadius: 30,
-                    offset: const Offset(0, -5),
-                  ),
-                ],
+                   BoxShadow(
+                     color: Colors.black.withValues(alpha: 0.05),
+                     blurRadius: 10,
+                     offset: const Offset(0, -5),
+                   )
+                ]
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                  
-                  _locationPreview(parent.pickupText, parent.destinationText),
+                    // Coupons Section
+                    _couponSection(context, vm, lang),
+                    const SizedBox(height: 12),
 
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                           lang.getText('available_rides'),
-                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(20)
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.compare_arrows, size: 14, color: Colors.grey),
-                              const SizedBox(width: 4),
-                              Text(
-                                "${vm.distanceKm.toStringAsFixed(1)} km",
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black54),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  if (vm.isOutstationRide)
-                    _outstationMessage(lang)
-                  else
-                    Expanded(
-                      child: ListView.separated(
-                        padding: EdgeInsets.zero,
-                        itemCount: vm.rideOptions.length,
-                        separatorBuilder: (c, i) => const SizedBox(height: 12),
-                        itemBuilder: (_, i) {
-                          final ride = vm.rideOptions[i];
-                          final selected = vm.selectedRide == ride;
-                          return GestureDetector(
-                            onTap: () => vm.selectRide(ride),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: selected ? AppColors.primary.withValues(alpha: 0.05) : Colors.white, // Fixed
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: selected
-                                      ? AppColors.primary
-                                      : Colors.grey[200]!,
-                                  width: selected ? 2 : 1,
-                                ),
-                                boxShadow: selected ? [
-                                   BoxShadow(color: AppColors.primary.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4)) // Fixed
-                                ] : [],
-                              ),
-                              child: _rideTile(ride, selected, AppColors.primary),
-                            ),
-                          ).animate().fade(delay: (100 * i).ms).slideX();
-                        },
-                      ),
-                    ),
-
-                  const SizedBox(height: 12),
-                  _paymentDisplay(lang),
-                  const SizedBox(height: 12),
-                  _confirmButton(context, vm, AppColors.primary, lang, parent),
+                   // Book for Others Toggle
+                   _bookForOthersOption(context, vm, lang),
+                   const SizedBox(height: 12),
+                   
+                   // Payment Method Display
+                   _paymentDisplay(lang),
+                   const SizedBox(height: 12),
+                   
+                   // Confirm Button (contains Schedule)
+                   _confirmButton(context, vm, AppColors.primary, lang, parent),
                 ],
               ),
-            ).animate().slideY(begin: 0.3, end: 0, curve: Curves.easeOutBack),
+            ),
           ),
         ],
       ),
@@ -448,6 +515,11 @@ class RideSelectionBody extends StatelessWidget {
             onPressed: isButtonDisabled
                 ? null
                 : () async {
+                    if (vm.isBookForOthers && (vm.receiverName == null || vm.receiverPhone == null)) {
+                       _showBookForOthersDialog(context, vm);
+                       return;
+                    }
+
                     await vm.bookRide(() async {
                       await bookRideTransaction(
                         context, 
@@ -476,7 +548,7 @@ class RideSelectionBody extends StatelessWidget {
                   )
                 : Text(
                     vm.isOutstationRide
-                        ? "Beyond Service Limit"
+                        ? lang.getText('beyond_service_limit')
                         : (vm.selectedRide == null
                               ? lang.getText('select_ride')
                               : vm.scheduledTime != null 
@@ -539,13 +611,178 @@ class RideSelectionBody extends StatelessWidget {
   Widget _outstationMessage(LanguageViewModel lang) =>
       Center(child: Text(lang.getText('outstation_unavailable')));
 
-  Widget _paymentDisplay(LanguageViewModel lang) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Text(lang.getText('payment_method'), style: const TextStyle(fontWeight: FontWeight.w600)),
-      Text(lang.getText('cash'), style: const TextStyle(fontWeight: FontWeight.bold)),
-    ],
+  Widget _paymentDisplay(LanguageViewModel lang) => InkWell(
+    onTap: () {
+      // payment selection
+    },
+    child: Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.account_balance_wallet, color: Colors.green, size: 20),
+              const SizedBox(width: 8),
+              Text(lang.getText('payment_method'), style: const TextStyle(fontWeight: FontWeight.w600)),
+            ],
+          ),
+          Row(
+            children: [
+              Text(lang.getText('cash'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(width: 4),
+              const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
+            ],
+          ),
+        ],
+      ),
+    ),
   );
+
+  Widget _bookForOthersOption(BuildContext context, RideSelectionViewModel vm, LanguageViewModel lang) {
+     return InkWell(
+        onTap: () {
+           if (!vm.isBookForOthers) {
+              vm.setBookForOthers(true);
+              _showBookForOthersDialog(context, vm);
+           } else {
+              vm.setBookForOthers(false);
+           }
+        },
+        child: Container(
+           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+           decoration: BoxDecoration(
+             color: vm.isBookForOthers ? AppColors.primary.withValues(alpha: 0.1) : Colors.grey[50],
+             borderRadius: BorderRadius.circular(12),
+             border: Border.all(color: vm.isBookForOthers ? AppColors.primary : Colors.grey[200]!)
+           ),
+           child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                 Row(
+                   children: [
+                      Icon(Icons.person_add_alt, color: vm.isBookForOthers ? AppColors.primary : Colors.grey),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(lang.getText('book_for_someone_else'), style: const TextStyle(fontWeight: FontWeight.w600)),
+                          if (vm.isBookForOthers && vm.receiverName != null)
+                             Text(
+                               "${vm.receiverName} (${vm.receiverPhone})",
+                               style: const TextStyle(fontSize: 12, color: Colors.grey),
+                             )
+                        ],
+                      ),
+                   ],
+                 ),
+                 Switch(
+                   value: vm.isBookForOthers,
+                   onChanged: (val) {
+                      vm.setBookForOthers(val);
+                      if (val) _showBookForOthersDialog(context, vm);
+                   },
+                   activeTrackColor: AppColors.primary,
+                   activeThumbColor: AppColors.primary,
+                 )
+              ],
+           ),
+        ),
+     );
+  }
+
+  Widget _couponSection(BuildContext context, RideSelectionViewModel vm, LanguageViewModel lang) {
+    bool hasCoupon = vm.appliedCoupon != null;
+    
+    return InkWell(
+      onTap: () => _showCouponSheet(context, vm),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        decoration: BoxDecoration(
+          color: hasCoupon ? Colors.green.withValues(alpha: 0.1) : Colors.grey[50], // Fixed
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: hasCoupon ? Colors.green : Colors.grey[200]!),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.discount, color: hasCoupon ? Colors.green : Colors.orange, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  hasCoupon 
+                    ? "${lang.getText('coupon_applied')} (-₹${vm.appliedCoupon!.amount.toInt()})" 
+                    : lang.getText('apply_coupon'),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600, 
+                    color: hasCoupon ? Colors.green : Colors.black87
+                  ),
+                ),
+              ],
+            ),
+            if (hasCoupon)
+               IconButton(
+                 icon: const Icon(Icons.close, size: 16, color: Colors.grey),
+                 onPressed: () => vm.removeCoupon(),
+                 constraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                 padding: EdgeInsets.zero,
+               )
+            else
+               const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCouponSheet(BuildContext context, RideSelectionViewModel vm) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) {
+         return Padding(
+           padding: const EdgeInsets.all(20),
+           child: Column(
+             mainAxisSize: MainAxisSize.min,
+             crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(Provider.of<LanguageViewModel>(context, listen: false).getText('available_coupons'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
+                
+                if (vm.coupons.isEmpty)
+                  Center(child: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('no_coupons_available'), style: const TextStyle(color: Colors.grey)))
+                else
+                  ...vm.coupons.map((coupon) {
+                    return ListTile(
+                      leading: const Icon(Icons.local_offer, color: Colors.orange),
+                      title: Text("${Provider.of<LanguageViewModel>(context, listen: false).getText('save')} ₹${coupon.amount.toInt()}"),
+                      subtitle: Text("${Provider.of<LanguageViewModel>(context, listen: false).getText('coupon_applicable_on')} ₹100"),
+                      trailing: TextButton(
+                        onPressed: () {
+                          vm.applyCoupon(coupon);
+                          Navigator.pop(context);
+                          if (vm.couponError != null) {
+                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(vm.couponError!)));
+                          }
+                        },
+                        child: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('apply_btn_label')),
+                      ),
+                    );
+                  }),
+                 
+               const SizedBox(height: 20),
+             ],
+           ),
+         );
+      },
+    );
+  }
 
   Widget _rideTile(RideOption ride, bool selected, Color color) {
     return Row(
@@ -611,6 +848,56 @@ class RideSelectionBody extends StatelessWidget {
       ],
     );
   }
+
+  void _showBookForOthersDialog(BuildContext context, RideSelectionViewModel vm) {
+    final nameController = TextEditingController(text: vm.receiverName);
+    final phoneController = TextEditingController(text: vm.receiverPhone);
+
+    showDialog(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text("Book for Someone Else"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: "Passenger Name", prefixIcon: Icon(Icons.person)),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: phoneController,
+              decoration: const InputDecoration(labelText: "Phone Number", prefixIcon: Icon(Icons.phone)),
+              keyboardType: TextInputType.phone,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+               vm.setBookForOthers(false);
+               Navigator.pop(c);
+            },
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (nameController.text.isNotEmpty && phoneController.text.length >= 10) {
+                vm.setReceiverDetails(nameController.text, phoneController.text);
+                Navigator.pop(c);
+              } else {
+                 ScaffoldMessenger.of(context).showSnackBar(
+                   const SnackBar(content: Text("Please enter valid details")),
+                 );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+            child: const Text("Confirm"),
+          )
+        ],
+      ),
+    );
+  }
 }
 
 Future<void> bookRideTransaction(
@@ -640,7 +927,17 @@ Future<void> bookRideTransaction(
 
   try {
     final userId = await UserPreferences.getUserId();
-    if (userId == null || vm.selectedRide == null) {
+    final authUser = FirebaseAuth.instance.currentUser;
+
+    // 🔒 SECURTIY CHECK
+    if (userId == null || authUser == null || userId != authUser.uid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Session Expired. Please login again.")),
+      );
+      return; 
+    }
+
+    if (vm.selectedRide == null) {
       throw Exception("Invalid booking state");
     }
 
@@ -659,24 +956,12 @@ Future<void> bookRideTransaction(
     if (!userDoc.exists) throw Exception("User not found");
     final userData = userDoc.data()!;
 
-    final String otp = (1000 + Random().nextInt(9000)).toString();
+    // ✅ SECURE OTP GENERATION (Refactored)
+    // TODO: Move this to Cloud Function for maximum security
+    final String otp = _generateSecureOTP();
 
-    String rideName = vm.selectedRide!.name.toLowerCase();
-    String category = "Car";
-
-    if (rideName.contains("bike") || rideName.contains("moto")) {
-      category = "Bike";
-    } else if (rideName.contains("auto") && !rideName.contains("rickshaw")) {
-      category = "Auto";
-    } else if (rideName.contains("rickshaw") && rideName.contains("e-")) {
-      category = "E-Rickshaw";
-    } else if (rideName.contains("rickshaw")) {
-      category = "Auto";
-    } else if (rideName.contains("big car")) {
-      category = "Big Car";
-    } else if (rideName.contains("truck") || rideName.contains("carrier")) {
-      category = "Carrier Truck";
-    }
+    // ✅ ROBUST VEHICLE CATEGORIZATION
+    final String category = _getVehicleCategory(vm.selectedRide!.name);
 
     final rideData = {
       'userId': userId,
@@ -695,12 +980,19 @@ Future<void> bookRideTransaction(
       ),
       'fare': vm.selectedRide!.fare,
       'rideType': vm.selectedRide!.name,
-      'vehicleCategory': category,
+      'cartName': vm.selectedRide!.name, // Redundancy for old logic
+      'vehicleCategory': category, // Uses cleaner helper
       'paymentMethod': vm.selectedPayment,
       'otp': otp,
       'status': vm.scheduledTime != null ? 'scheduled' : 'pending',
       'scheduledTime': vm.scheduledTime != null ? Timestamp.fromDate(vm.scheduledTime!) : null,
+      'receiverName': vm.isBookForOthers ? vm.receiverName : null,
+      'receiverPhone': vm.isBookForOthers ? vm.receiverPhone : null,
+      'isBookForOthers': vm.isBookForOthers,
       'createdAt': FieldValue.serverTimestamp(),
+      'discountAmount': vm.appliedCoupon != null ? vm.appliedCoupon!.amount : 0.0,
+      'couponCode': vm.appliedCoupon?.code,
+      'finalFare': vm.finalFare, // Store final discounted fare
     };
 
     final ref = await FirebaseFirestore.instance
@@ -732,4 +1024,24 @@ Future<void> bookRideTransaction(
       ).showSnackBar(SnackBar(content: Text("${Provider.of<LanguageViewModel>(context, listen: false).getText('booking_failed')}: $e")));
     }
   }
+}
+
+// --- HELPER METHODS ---
+
+String _generateSecureOTP() {
+  var rng = Random.secure();
+  return (1000 + rng.nextInt(9000)).toString();
+}
+
+String _getVehicleCategory(String rideName) {
+  final name = rideName.toLowerCase();
+  
+  // Strictly ordered checks
+  if (name.contains("bike") || name.contains("moto")) return "Bike";
+  if (name.contains("rickshaw") && name.contains("e-")) return "E-Rickshaw";
+  if (name.contains("auto") || name.contains("rickshaw")) return "Auto";
+  if (name.contains("big car") || name.contains("suv") || name.contains("sedan")) return "Big Car";
+  
+  // Default to Car if nothing specific matches
+  return "Car";
 }

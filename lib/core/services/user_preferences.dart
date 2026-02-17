@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../features/home/models/location_result.dart';
 
 class UserPreferences {
 
@@ -33,5 +35,26 @@ class UserPreferences {
     final prefs = await SharedPreferences.getInstance();
     // Default to true for first-time users
     return prefs.getBool(_keyAnnouncementEnabled) ?? true;
+  }
+
+  // Home Location
+  static const String _keyHomeLocation = 'home_location';
+
+  static Future<void> saveHomeLocation(LocationResult location) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyHomeLocation, jsonEncode(location.toJson()));
+  }
+
+  static Future<LocationResult?> getHomeLocation() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? jsonString = prefs.getString(_keyHomeLocation);
+    if (jsonString != null) {
+      try {
+        return LocationResult.fromJson(jsonDecode(jsonString));
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
   }
 }

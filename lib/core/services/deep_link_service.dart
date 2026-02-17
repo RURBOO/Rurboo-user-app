@@ -11,8 +11,7 @@ import 'package:provider/provider.dart';
 import '../../features/home/models/location_result.dart';
 import '../../features/home/services/polyline_service.dart';
 import '../../features/home/viewmodels/home_viewmodel.dart';
-import '../../features/ride/views/ride_selection_screen.dart';
-import '../../features/ride/views/ride_booked_screen.dart';
+import '../../core/navigation/app_router.dart';
 import '../../features/ride/models/ride_booking.dart';
 
 class DeepLinkService {
@@ -227,17 +226,16 @@ class DeepLinkService {
             paymentMethod: data['paymentMethod'] ?? "Cash",
           );
           
-          _navigatorKey.currentState?.push(
-              MaterialPageRoute(
-                  builder: (_) => RideBookedScreen(
-                      pickupLatLng: LatLng(pickupGp.latitude, pickupGp.longitude),
-                      pickupAddress: data['pickupAddress'] ?? "Pickup",
-                      destinationLatLng: LatLng(destGp.latitude, destGp.longitude),
-                      destinationAddress: data['destinationAddress'] ?? "Destination",
-                      ride: ride,
-                      rideId: rideId,
-                  ),
-              ),
+          _navigatorKey.currentState?.pushNamed(
+              AppRoutes.rideTracking,
+              arguments: {
+                'pickupLatLng': LatLng(pickupGp.latitude, pickupGp.longitude),
+                'pickupAddress': data['pickupAddress'] ?? "Pickup",
+                'destinationLatLng': LatLng(destGp.latitude, destGp.longitude),
+                'destinationAddress': data['destinationAddress'] ?? "Destination",
+                'ride': ride,
+                'rideId': rideId,
+              }
           );
 
       } catch (e) {
@@ -307,16 +305,15 @@ class DeepLinkService {
     
     if (!context.mounted) return;
 
-    _navigatorKey.currentState?.push(
-      MaterialPageRoute(
-        builder: (_) => RideSelectionScreen(
-          pickupText: pickup.address,
-          destinationText: destination.address,
-          pickupLoc: pickup,
-          destinationLoc: destination,
-          distanceKm: dist,
-        ),
-      ),
+    _navigatorKey.currentState?.pushNamed(
+      AppRoutes.rideSelection,
+      arguments: {
+        'pickupText': pickup.address,
+        'destinationText': destination.address,
+        'pickupLoc': pickup,
+        'destinationLoc': destination,
+        'distanceKm': dist,
+      },
     );
   }
 }

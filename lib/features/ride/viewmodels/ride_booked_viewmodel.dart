@@ -317,10 +317,20 @@ class RideBookedViewModel extends ChangeNotifier {
   }
 
   Future<void> cancelRide() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      debugPrint("❌ Cannot cancel ride: No Auth Session");
+      return; 
+    }
+    
     await FirebaseFirestore.instance
         .collection('rideRequests')
         .doc(rideId)
-        .update({'status': 'cancelled', 'cancelledBy': 'user'});
+        .update({
+          'status': 'cancelled', 
+          'cancelledBy': 'user',
+          'cancelledAt': FieldValue.serverTimestamp(),
+    });
   }
 
   Future<void> triggerSOS() async {

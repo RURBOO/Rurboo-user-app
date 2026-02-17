@@ -110,10 +110,19 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                   LengthLimitingTextInputFormatter(10),
                 ],
                 decoration: InputDecoration(
-                  prefix: const Text(
-                    "🇮🇳 +91 ",
-                    style: TextStyle(fontSize: 16),
+                  prefixIcon: Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(right: 8),
+                    child: const Text(
+                      "🇮🇳 +91",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
                   ),
+                  prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
                   hintText: lang.getText('enter_phone_hint'),
                   counterText: "",
                   border: OutlineInputBorder(

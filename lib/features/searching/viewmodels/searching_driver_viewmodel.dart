@@ -14,7 +14,7 @@ class SearchingDriverViewModel extends ChangeNotifier {
   Timer? _timeoutTimer;
 
   VoidCallback? onTimeout;
-  Function(DriverModel driver)? onDriverFound;
+  Function(DriverModel driver, Map<String, dynamic> rideData)? onDriverFound;
 
   SearchingDriverViewModel({required this.rideId, required this.pickupLatLng});
 
@@ -53,7 +53,7 @@ class SearchingDriverViewModel extends ChangeNotifier {
               driverLocation: driverLoc,
             );
 
-            onDriverFound?.call(driver);
+            onDriverFound?.call(driver, data);
             stopListening();
           }
         });
@@ -134,7 +134,7 @@ class SearchingDriverViewModel extends ChangeNotifier {
           driverLocation: driverLoc,
         );
 
-        onDriverFound?.call(driver);
+        onDriverFound?.call(driver, data);
         stopListening();
       }
     } catch (e) {

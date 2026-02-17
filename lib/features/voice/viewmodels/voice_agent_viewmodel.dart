@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/voice_intent_parser.dart';
 import '../services/voice_agent_service.dart';
@@ -318,33 +319,89 @@ class VoiceAgentViewModel extends ChangeNotifier {
     });
   }
   
-  /// Announce all vehicle fares sequentially
+  // --- Highlighting Support ---
+  String? _highlightedElementId;
+  String? get highlightedElementId => _highlightedElementId;
+  
+  bool _isAnnouncing = false;
+
+  void stopAnnouncement() {
+    if (_isAnnouncing || _state == VoiceAgentState.speaking) {
+      _voiceService.stopSpeaking();
+      _isAnnouncing = false;
+      _highlightedElementId = null;
+      notifyListeners();
+    }
+  }
+
+  /// Announce all vehicle fares sequentially with highlighting
   Future<void> announceAllVehicleFares({
     required String pickup,
     required String destination,
     required double distanceKm,
     required List<Map<String, dynamic>> vehicles,
   }) async {
-    // Build comprehensive announcement
-    String announcement = "";
-    
-    // 1. Pickup and Destination
-    announcement += "Aapka pickup location hai $pickup. ";
-    announcement += "Destination hai $destination. ";
-    
-    // 2. Distance
-    announcement += "Doori hai ${distanceKm.toStringAsFixed(1)} kilometer. ";
-    
-    // 3. All vehicle fares
-    announcement += "Available vehicles aur unka kiraya hai. ";
-    
+    // Check announcement preference
+    final announcementEnabled = await UserPreferences.getAnnouncementEnabled();
+    if (!announcementEnabled) return;
+
+    _isAnnouncing = true;
+    _transitionTo(VoiceAgentState.speaking);
+
+    // 1. Intro
+    await _speakChunk("Aapka pickup location hai $pickup.");
+    if (!_isAnnouncing) return;
+
+    await _speakChunk("Destination hai $destination.");
+    if (!_isAnnouncing) return;
+
+    await _speakChunk("Doori hai ${distanceKm.toStringAsFixed(1)} kilometer.");
+    if (!_isAnnouncing) return;
+
+    await _speakChunk("Available vehicles aur unka kiraya hai.");
+    if (!_isAnnouncing) return;
+
+    // 2. Sequential Vehicle Announcements
     for (var vehicle in vehicles) {
+      if (!_isAnnouncing) break;
+
       final name = vehicle['name'] as String;
-      final fare = vehicle['fare'] as int;
-      announcement += "$name ka kiraya $fare rupay. ";
+      final fare = vehicle['id'] as String; // Use ID for highlighting
+      final price = vehicle['fare'] as int;
+
+      // Highlight this vehicle
+      _highlightedElementId = fare; // Assuming ID matches keys like 'bike', 'auto'
+      notifyListeners();
+
+      await _speakChunk("$name ka kiraya $price rupay.");
+      
+      // Small pause between items for better UX
+      await Future.delayed(const Duration(milliseconds: 500));
     }
+
+    // Reset
+    _highlightedElementId = null;
+    _isAnnouncing = false;
+    notifyListeners();
     
-    await speak(announcement);
+    // Auto-restart listening if in continuous mode
+    if (_continuousModeEnabled && _state != VoiceAgentState.sosActivated) {
+        startSession();
+    } else {
+        _transitionTo(VoiceAgentState.idle);
+        if (_wakeWordEnabled) _wakeWordDetector.startListening();
+    }
+  }
+
+  Future<void> _speakChunk(String text) async {
+    if (!_isAnnouncing) return;
+    Completer<void> completer = Completer();
+    
+    await _voiceService.speakWithCompletion(text, () {
+      if (!completer.isCompleted) completer.complete();
+    });
+    
+    return completer.future;
   }
 
   void _triggerSOS() {

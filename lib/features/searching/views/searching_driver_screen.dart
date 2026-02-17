@@ -77,7 +77,7 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
 
     vm = Provider.of<SearchingDriverViewModel>(context, listen: false);
 
-    vm.onDriverFound = (driver) {
+    vm.onDriverFound = (driver, rideData) {
       if (!mounted) return;
 
       final ride = RideBookingModel(
@@ -86,8 +86,10 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
         carName: driver.carName,
         carNumber: driver.carNumber,
         rating: driver.rating,
-        fare: 201,
-        paymentMethod: "Cash",
+        fare: (rideData['finalFare'] ?? rideData['fare'] ?? 0).toDouble(),
+        paymentMethod: rideData['paymentMethod'] ?? "Cash",
+        discountAmount: (rideData['discountAmount'] ?? 0).toDouble(),
+        couponCode: rideData['couponCode'],
       );
 
       Navigator.pushReplacement(

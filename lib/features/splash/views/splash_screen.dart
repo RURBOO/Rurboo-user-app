@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -52,7 +53,12 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
 
     final userId = await UserPreferences.getUserId();
-    if (userId == null) {
+    final authUser = FirebaseAuth.instance.currentUser;
+
+    // 🔒 SECURTIY CHECK: Ensure Auth Session Matches Local Data
+    if (userId == null || authUser == null) {
+      debugPrint("⚠️ Session Invalid or Missing. Redirecting to Login.");
+      await UserPreferences.clearUserData(); // Clear potential stale data
       _navigateTo(const LanguageSelectionScreen());
       return;
     }

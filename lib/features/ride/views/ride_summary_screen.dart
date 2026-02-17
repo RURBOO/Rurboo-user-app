@@ -30,6 +30,7 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
   bool _feltSafe = true; // Added Safety Feedback Variable
 
   double _displayFare = 0.0;
+  double _discountAmount = 0.0;
   bool _loadingFare = true;
 
   @override
@@ -51,12 +52,15 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
         return;
       }
 
-      final double finalFare =
-          (doc.data()?['fare'] as num?)?.toDouble() ?? widget.fare;
+      final data = doc.data()!;
+      final double finalFare = (data['finalFare'] as num?)?.toDouble() ?? 
+                               (data['fare'] as num?)?.toDouble() ?? widget.fare;
+      final double discount = (data['discountAmount'] as num?)?.toDouble() ?? 0.0;
 
       if (mounted) {
         setState(() {
           _displayFare = finalFare;
+          _discountAmount = discount;
           _loadingFare = false;
         });
       }
@@ -197,12 +201,38 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
                     const SizedBox(height: 8),
                     _loadingFare
                         ? const CircularProgressIndicator(strokeWidth: 2)
-                        : Text(
-                            "₹${_displayFare.toStringAsFixed(0)}",
-                            style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        : Column(
+                            children: [
+                              if (_discountAmount > 0)
+                                Text(
+                                  "₹${(_displayFare + _discountAmount).toStringAsFixed(0)}",
+                                  style: const TextStyle(
+                                    decoration: TextDecoration.lineThrough,
+                                    color: Colors.grey,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              Text(
+                                "₹${_displayFare.toStringAsFixed(0)}",
+                                style: const TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              if (_discountAmount > 0)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    "Referral Discount Applied (-₹${_discountAmount.toStringAsFixed(0)})",
+                                    style: const TextStyle(
+                                      color: Colors.green,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                     const Divider(height: 30),
                     Row(

@@ -61,7 +61,7 @@ class HomeViewModel extends ChangeNotifier {
     _initialized = true;
     
     // YIELD TO UI: Allow the frame to render before heavy lifting
-    await Future.delayed(Duration.zero);
+    await Future.delayed(Duration.zero); // Keep for now as simple yield, but ideally use addPostFrameCallback in View
 
     loadingLocation = true;
     _hasLocationError = false;
@@ -167,8 +167,13 @@ class HomeViewModel extends ChangeNotifier {
     try {
       // 1. Check for Shortcuts
       if (text.toLowerCase() == "home") {
-         // Return saved home if available (Mock for now)
-         return LocationResult(address: "Home", coordinates: const LatLng(25.5941, 85.1376)); // Patna
+         // Check User Preferences for Home
+         final homeData = await UserPreferences.getHomeLocation(); // Hypothetical method
+         if (homeData != null) {
+            return homeData;
+         }
+         // If no home saved, fall through to normal search or return null
+         // return LocationResult(address: "Home", coordinates: const LatLng(25.5941, 85.1376)); // Patna REMOVED
       }
       
       // 2. Perform Search with Location Bias

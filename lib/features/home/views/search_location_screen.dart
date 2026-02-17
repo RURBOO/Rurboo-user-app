@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../viewmodels/search_location_viewmodel.dart';
 import '../repositories/search_repository.dart';
 import '../models/location_result.dart';
+import 'map_picker_screen.dart'; // Added
 
 class SearchLocationScreen extends StatelessWidget {
   final bool isDestination;
@@ -50,6 +51,27 @@ class _SearchLocationBody extends StatelessWidget {
       body: Column(
         children: [
           _searchBox(vm),
+          
+          // "Choose on Map" Option
+          ListTile(
+            leading: const Icon(Icons.map, color: Colors.blue),
+            title: const Text(
+              "Choose on Map", 
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.blue),
+            onTap: () async {
+               final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MapPickerScreen()),
+               );
+               
+               if (result != null && context.mounted) {
+                  Navigator.pop(context, result);
+               }
+            },
+          ),
+          const Divider(height: 1),
 
           if (vm.loading) const LinearProgressIndicator(minHeight: 2),
 

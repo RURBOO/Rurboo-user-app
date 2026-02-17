@@ -457,6 +457,71 @@ class _RideBookedContent extends StatelessWidget {
                         _buildTripLine(vm),
 
                         const SizedBox(height: 20),
+                        
+                        // Fare & Payment Info
+                        Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[50], // Fixed
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[200]!),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(Icons.payment, color: Colors.indigo, size: 20),
+                                      SizedBox(width: 8),
+                                      Text(vm.rideDetails?.paymentMethod ?? "Cash", style: TextStyle(fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      if ((vm.rideDetails?.discountAmount ?? 0) > 0)
+                                        Text(
+                                          "₹${vm.rideDetails!.fare.toInt()}",
+                                          style: const TextStyle(
+                                            decoration: TextDecoration.lineThrough,
+                                            color: Colors.grey,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      Text(
+                                        "₹${(vm.rideDetails!.fare - (vm.rideDetails?.discountAmount ?? 0)).clamp(0, double.infinity).toInt()}",
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              if ((vm.rideDetails?.discountAmount ?? 0) > 0)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Icon(Icons.discount, size: 12, color: Colors.green),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        "Referral Discount Applied (-₹${vm.rideDetails!.discountAmount.toInt()})",
+                                        style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                            ],
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 20),
 
                         // Action Buttons
                         Row(

@@ -31,18 +31,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         'title2': lang.getText('onboarding_title2_2'),
         'desc': lang.getText('onboarding_desc_2'),
       },
-      {
-        'image': 'assets/images/screen3.jpg',
-        'title1': lang.getText('onboarding_title1_3'),
-        'title2': lang.getText('onboarding_title2_3'),
-        'desc': lang.getText('onboarding_desc_3'),
-      },
-      {
-        'image': 'assets/images/screen4.jpg',
-        'title1': lang.getText('onboarding_title1_4'),
-        'title2': lang.getText('onboarding_title2_4'),
-        'desc': lang.getText('onboarding_desc_4'),
-      },
     ];
 
     return Scaffold(

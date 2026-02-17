@@ -38,13 +38,29 @@ class _SelectionScreenState extends State<SelectionScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 60),
                   child: Center(
-                    child: Text(
-                      "Rurboo",
-                      style: Theme.of(context).textTheme.displayLarge
-                          ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 150, // Increased size slightly
+                          height: 150,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.rectangle, // Changed to rectangle
+                            borderRadius: BorderRadius.circular(20), // Rounded corners
+                            border: Border.all(color: Colors.white, width: 3),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.3),
+                                blurRadius: 10,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                            image: const DecorationImage(
+                              image: AssetImage('assets/images/app_logo.jpg'),
+                              fit: BoxFit.contain, // Ensure full logo is visible
+                            ),
                           ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

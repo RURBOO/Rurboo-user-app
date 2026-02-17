@@ -450,5 +450,172 @@ class AppStrings {
     'enter_contact_phone_hint': {'en': 'Enter contact number', 'hi': 'संपर्क नंबर दर्ज करें'},
     'privacy_policy': {'en': 'Privacy Policy', 'hi': 'गोपनीयता नीति'},
     'logout_confirmation_desc': {'en': 'Are you sure you want to end your session?', 'hi': 'क्या आप वाकई अपना सत्र समाप्त करना चाहते हैं?'},
+    'feedback_suggestions': {'en': 'Feedback & Suggestions', 'hi': 'प्रतिक्रिया और सुझाव'},
+    'suggestions_title': {'en': 'Help us improve Rurboo', 'hi': 'रुरबू को बेहतर बनाने में हमारी मदद करें'},
+    'suggestions_hint': {'en': 'Share your ideas or suggestions for future updates...', 'hi': 'भविष्य के अपडेट के लिए अपने विचार या सुझाव साझा करें...'},
+    'suggestions_submitted': {'en': 'Thank you! Your suggestion has been submitted. ✅', 'hi': 'धन्यवाद! आपका सुझाव जमा कर दिया गया है। ✅'},
+    
+    // --- Profile Stats & Dashboard ---
+    'total_rides': {'en': 'Total Rides', 'hi': 'कुल सवारी'},
+    'rating_label': {'en': 'Rating', 'hi': 'रेटिंग'},
+    'referral_dashboard': {'en': 'Referral Dashboard', 'hi': 'रेफरल डैशबोर्ड'},
+    'referral_code_label': {'en': 'Code', 'hi': 'कोड'},
+    'referred_label': {'en': 'Referred', 'hi': 'रेफर किया'},
+    'earnings_label': {'en': 'Earnings', 'hi': 'कमाई'},
+    'used_label': {'en': 'Used', 'hi': 'इस्तेमाल किया'},
+    'refund_policy_menu': {'en': 'Refund Policy', 'hi': 'धनवापसी नीति'},
+    'terms_conditions_menu': {'en': 'Terms & Conditions', 'hi': 'नियम और शर्तें'},
+    'voice_announcements_menu': {'en': 'Voice Announcements', 'hi': 'आवाज घोषणाएं'},
+    'enabled': {'en': 'Enabled', 'hi': 'सक्षम'},
+    'disabled': {'en': 'Disabled', 'hi': 'अक्षम'},
+    'version': {'en': 'Version', 'hi': 'संस्करण'},
+    'years': {'en': 'years', 'hi': 'वर्ष'},
+
+    // --- Legal General ---
+    'last_updated': {'en': 'Last updated', 'hi': 'अंतिम अपडेट'},
+    'last_updated_date': {'en': 'February 2026', 'hi': 'फरवरी 2026'},
+    'contact_us': {'en': 'Contact Us', 'hi': 'संपर्क करें'},
+    'contact_us_desc': {'en': 'For any legal queries or support, please contact us at:', 'hi': 'किसी भी कानूनी प्रश्न या सहायता के लिए, कृपया हमसे संपर्क करें:'},
+
+    // --- Privacy Policy Content (Detailed) ---
+    'pp_title': {'en': 'Privacy Policy', 'hi': 'गोपनीयता नीति'},
+    'pp_intro_title': {'en': '1. Introduction', 'hi': '1. परिचय'},
+    'pp_intro_body': {
+      'en': 'Welcome to Rurboo ("we," "our," or "us"). We are committed to protecting your privacy and ensuring your personal information is handled in a safe and responsible manner. This policy outlines how we collect, use, and protect your data.',
+      'hi': 'रुरबू ("हम," "हमारा," या "हमें") में आपका स्वागत है। हम आपकी गोपनीयता की रक्षा करने और यह सुनिश्चित करने के लिए प्रतिबद्ध हैं कि आपकी व्यक्तिगत जानकारी को सुरक्षित और जिम्मेदार तरीके से संभाला जाए। यह नीति यह रेखांकित करती है कि हम आपका डेटा कैसे एकत्र, उपयोग और सुरक्षित करते हैं।'
+    },
+    'pp_info_title': {'en': '2. Information We Collect', 'hi': '2. जानकारी जो हम एकत्र करते हैं'},
+    'pp_info_body': {
+      'en': 'We collect information to provide better services:\n\n• Personal Information: Name, phone number, email address, profile picture.\n• Location Data: Real-time location data to connect you with drivers and track rides.\n• Device Information: Device model, OS version, unique identifiers.\n• Usage Data: App interaction, ride history, crash logs.',
+      'hi': 'हम बेहतर सेवाएं प्रदान करने के लिए जानकारी एकत्र करते हैं:\n\n• व्यक्तिगत जानकारी: नाम, फोन नंबर, ईमेल पता, प्रोफाइल चित्र।\n• स्थान डेटा: आपको ड्राइवरों से जोड़ने और सवारी ट्रैक करने के लिए वास्तविक समय का स्थान डेटा।\n• डिवाइस जानकारी: डिवाइस मॉडल, ओएस संस्करण, अद्वितीय पहचानकर्ता।\n• उपयोग डेटा: ऐप इंटरेक्शन, सवारी इतिहास, क्रैश लॉग।'
+    },
+    'pp_perms_title': {'en': '3. Permissions We Request', 'hi': '3. अनुमतियाँ जो हम मांगते हैं'},
+    'pp_perms_body': {
+      'en': '• Location: Required for booking rides and safety features.\n• Microphone: Used for voice commands and voice agent features.\n• Camera/Gallery: For updating profile pictures.\n• Phone: To make calls to drivers or emergency contacts.',
+      'hi': '• स्थान: सवारी बुकिंग और सुरक्षा सुविधाओं के लिए आवश्यक।\n• माइक्रोफोन: वॉयस कमांड और वॉयस एजेंट सुविधाओं के लिए उपयोग किया जाता है।\n• कैमरा/गैलरी: प्रोफाइल चित्र अपडेट करने के लिए।\n• फोन: ड्राइवरों या आपातकालीन संपर्कों को कॉल करने के लिए।'
+    },
+    'pp_use_title': {'en': '4. How We Use Your Data', 'hi': '4. हम आपके डेटा का उपयोग कैसे करते हैं'},
+    'pp_use_body': {
+      'en': 'We use your data to:\n• Facilitate ride bookings and payments.\n• Ensure safety through ride tracking and SOS features.\n• Improve app performance and user experience.\n• Communicate updates, offers, and support responses.',
+      'hi': 'हम आपके डेटा का उपयोग करते हैं:\n• सवारी बुकिंग और भुगतान को सुविधाजनक बनाने के लिए।\n• सवारी ट्रैकिंग और एसओएस सुविधाओं के माध्यम से सुरक्षा सुनिश्चित करने के लिए।\n• ऐप प्रदर्शन और उपयोगकर्ता अनुभव में सुधार करने के लिए।\n• अपडेट, ऑफ़र और सहायता प्रतिक्रियाओं को संप्रेषित करने के लिए।'
+    },
+    'pp_share_title': {'en': '5. Information Sharing', 'hi': '5. जानकारी साझा करना'},
+    'pp_share_body': {
+      'en': 'We do not sell your personal data. We share data only with:\n• Drivers: To fulfill your ride request (Name, pickup/drop location).\n• Legal Authorities: If required by law or to protect safety.\n• Service Providers: For payments, cloud hosting, and analytics.',
+      'hi': 'हम आपका व्यक्तिगत डेटा नहीं बेचते हैं। हम केवल डेटा साझा करते हैं:\n• ड्राइवर: आपके सवारी अनुरोध को पूरा करने के लिए (नाम, पिकअप/ड्रॉप स्थान)।\n• कानूनी अधिकारी: यदि कानून द्वारा आवश्यक हो या सुरक्षा की रक्षा के लिए।\n• सेवा प्रदाता: भुगतान, क्लाउड होस्टिंग और एनालिटिक्स के लिए।'
+    },
+    'pp_security_title': {'en': '6. Data Security', 'hi': '6. डेटा सुरक्षा'},
+    'pp_security_body': {
+      'en': 'We implement industry-standard security measures to protect your data. However, no method of transmission over the internet is 100% secure.',
+      'hi': 'हम आपके डेटा की सुरक्षा के लिए उद्योग-मानक सुरक्षा उपाय लागू करते हैं। हालाँकि, इंटरनेट पर संचरण का कोई भी तरीका 100% सुरक्षित नहीं है।'
+    },
+    'pp_rights_title': {'en': '7. Your Rights', 'hi': '7. आपके अधिकार'},
+    'pp_rights_body': {
+      'en': 'You have the right to access, update, or delete your data. You can manage your profile settings in the app or contact support for assistance.',
+      'hi': 'आपको अपने डेटा तक पहुंचने, अपडेट करने या हटाने का अधिकार है। आप ऐप में अपनी प्रोफ़ाइल सेटिंग्स प्रबंधित कर सकते हैं या सहायता के लिए समर्थन से संपर्क कर सकते हैं।'
+    },
+    'pp_contact_title': {'en': '8. Contact Us', 'hi': '8. संपर्क करें'},
+    'pp_contact_body': {
+      'en': 'If you have questions about this policy, please contact us at privacy@rurboo.com.',
+      'hi': 'यदि इस नीति के बारे में आपके कोई प्रश्न हैं, तो कृपया हमसे privacy@rurboo.com पर संपर्क करें।'
+    },
+
+    // --- Terms & Conditions Content (Detailed) ---
+    'ts_title': {'en': 'Terms & Conditions', 'hi': 'नियम और शर्तें'},
+    'ts_intro_title': {'en': '1. Acceptance of Terms', 'hi': '1. शर्तों की स्वीकृति'},
+    'ts_intro_body': {
+      'en': 'By downloading or using the Rurboo app, you agree to be bound by these Terms and Conditions. If you do not agree, please do not use our services.',
+      'hi': 'रुरबू ऐप डाउनलोड या उपयोग करके, आप इन नियमों और शर्तों से बंधे होने के लिए सहमत हैं। यदि आप सहमत नहीं हैं, तो कृपया हमारी सेवाओं का उपयोग न करें।'
+    },
+    'ts_services_title': {'en': '2. Services Provided', 'hi': '2. प्रदान की गई सेवाएं'},
+    'ts_services_body': {
+      'en': 'Rurboo is a technology platform that connects users (Riders) with independent third-party drivers. Rurboo is not a transportation provider and does not own the vehicles.',
+      'hi': 'रुरबू एक प्रौद्योगिकी मंच है जो उपयोगकर्ताओं (सवारों) को स्वतंत्र तीसरे पक्ष के ड्राइवरों से जोड़ता है। रुरबू एक परिवहन प्रदाता नहीं है और वाहनों का मालिक नहीं है।'
+    },
+    'ts_account_title': {'en': '3. User Accounts', 'hi': '3. उपयोगकर्ता खाते'},
+    'ts_account_body': {
+      'en': '• You must be at least 18 years old to use the service.\n• You agree to provide accurate, current, and complete information.\n• You are responsible for maintaining the confidentiality of your account.',
+      'hi': '• सेवा का उपयोग करने के लिए आपकी आयु कम से कम 18 वर्ष होनी चाहिए।\n• आप सटीक, वर्तमान और पूर्ण जानकारी प्रदान करने के लिए सहमत हैं।\n• आप अपने खाते की गोपनीयता बनाए रखने के लिए जिम्मेदार हैं।'
+    },
+    'ts_conduct_title': {'en': '4. User Conduct', 'hi': '4. उपयोगकर्ता आचरण'},
+    'ts_conduct_body': {
+      'en': 'You agree not to use the service for any unlawful purpose. You must treat drivers with respect and not cause damage to their vehicles. Violation may result in account termination.',
+      'hi': 'आप किसी भी गैरकानूनी उद्देश्य के लिए सेवा का उपयोग नहीं करने के लिए सहमत हैं। आपको ड्राइवरों के साथ सम्मान से पेश आना चाहिए और उनके वाहनों को नुकसान नहीं पहुंचाना चाहिए। उल्लंघन के परिणामस्वरूप खाता समाप्त किया जा सकता है।'
+    },
+    'ts_payment_title': {'en': '5. Payments', 'hi': '5. भुगतान'},
+    'ts_payment_body': {
+      'en': 'You are responsible for paying all fees associated with your rides. Rurboo facilitates payments but is not a party to the direct contract between you and the driver.',
+      'hi': 'आप अपनी सवारी से जुड़े सभी शुल्कों का भुगतान करने के लिए जिम्मेदार हैं। रुरबू भुगतान की सुविधा प्रदान करता है लेकिन आप और ड्राइवर के बीच सीधे अनुबंध का पक्ष नहीं है।'
+    },
+    'ts_liability_title': {'en': '6. Limitation of Liability', 'hi': '6. दायित्व की सीमा'},
+    'ts_liability_body': {
+      'en': 'Rurboo shall not be liable for any indirect, incidental, or consequential damages arising from the use of the service. We do not guarantee the availability or quality of drivers.',
+      'hi': 'रुरबू सेवा के उपयोग से उत्पन्न होने वाले किसी भी अप्रत्यक्ष, आकस्मिक, या परिणामी नुकसान के लिए उत्तरदायी नहीं होगा। हम ड्राइवरों की उपलब्धता या गुणवत्ता की गारंटी नहीं देते हैं।'
+    },
+    'ts_termination_title': {'en': '7. Termination', 'hi': '7. समाप्ति'},
+    'ts_termination_body': {
+      'en': 'We reserve the right to suspend or terminate your account at our sole discretion, without notice, for conduct that we believe violates these Terms.',
+      'hi': 'हम इन शर्तों का उल्लंघन करने वाले आचरण के लिए, बिना किसी नोटिस के, अपने विवेकाधिकार पर आपके खाते को निलंबित या समाप्त करने का अधिकार सुरक्षित रखते हैं।'
+    },
+    'ts_changes_title': {'en': '8. Changes to Terms', 'hi': '8. शर्तों में बदलाव'},
+    'ts_changes_body': {
+      'en': 'We may update these terms at any time. Continued use of the app constitutes acceptance of the new terms.',
+      'hi': 'हम किसी भी समय इन शर्तों को अपडेट कर सकते हैं। ऐप का निरंतर उपयोग नई शर्तों की स्वीकृति का गठन करता है।'
+    },
+    
+    // --- Refund Policy Content ---
+    'rp_title': {'en': 'Refund Policy', 'hi': 'धनवापसी नीति'},
+    'rp_cancel_title': {'en': '1. Cancellation by User', 'hi': '1. उपयोगकर्ता द्वारा रद्दीकरण'},
+    'rp_cancel_body': {'en': 'You can cancel a ride request at any time before the driver arrives. If you cancel after 5 minutes of driver acceptance, a cancellation fee may apply to compensate the driver for their time and fuel.', 'hi': 'आप ड्राइवर के आने से पहले किसी भी समय सवारी अनुरोध रद्द कर सकते हैं। यदि आप ड्राइवर की स्वीकृति के 5 मिनट बाद रद्द करते हैं, तो ड्राइवर को उनके समय और ईंधन की भरपाई के लिए रद्दीकरण शुल्क लागू हो सकता है।'},
+    'rp_refund_title': {'en': '2. Refund Eligibility', 'hi': '2. धनवापसी पात्रता'},
+    'rp_refund_body': {'en': 'Refunds are applicable only for online payments in the following cases:\n• Amount deducted but ride not booked.\n• Driver denied duty after payment.\n• Technical glitch resulting in double payment.\n\nRefunds are processed within 5-7 business days to the original payment method.', 'hi': 'धनवापसी केवल निम्नलिखित मामलों में ऑनलाइन भुगतान के लिए लागू होती है:\n• राशि काट ली गई लेकिन सवारी बुक नहीं हुई।\n• भुगतान के बाद ड्राइवर ने ड्यूटी से इनकार कर दिया।\n• तकनीकी खराबी के कारण दोहरा भुगतान।\n\nधनवापसी मूल भुगतान विधि में 5-7 व्यावसायिक दिनों के भीतर संसाधित की जाती है।'},
+
+    // --- Map Picker ---
+    'select_location_label': {'en': 'Select Location', 'hi': 'स्थान चुनें'},
+    'fetching_address': {'en': 'Fetching address...', 'hi': 'पता प्राप्त कर रहे हैं...'},
+    'could_not_fetch_address': {'en': 'Could not fetch address', 'hi': 'पता प्राप्त नहीं किया जा सका'},
+    'drag_pin_hint': {'en': 'Drag the Red Pin to precise location', 'hi': 'सटीक स्थान के लिए लाल पिन को खींचें'},
+    'confirm_location_btn': {'en': 'Confirm Location', 'hi': 'स्थान की पुष्टि करें'},
+
+    // --- Support Ticket System ---
+    'support_ticket_title': {'en': 'Support & Tickets', 'hi': 'सहायता और टिकट'},
+    'create_ticket_tab': {'en': 'Raise Ticket', 'hi': 'टिकट बढ़ाएं'},
+    'my_tickets_tab': {'en': 'History', 'hi': 'इतिहास'},
+    'ticket_category_label': {'en': 'Select Category', 'hi': 'श्रेणी चुनें'},
+    'ticket_subject_label': {'en': 'Subject', 'hi': 'विषय'},
+    'ticket_desc_label': {'en': 'Description', 'hi': 'विवरण'},
+    'ticket_submit_btn': {'en': 'Submit Ticket', 'hi': 'टिकट जमा करें'},
+    'ticket_status_open': {'en': 'Open', 'hi': 'खुला है'},
+    'ticket_status_closed': {'en': 'Closed', 'hi': 'बंद है'},
+    'cat_ride': {'en': 'Ride Issue', 'hi': 'सवारी समस्या'},
+    'cat_payment': {'en': 'Payment Issue', 'hi': 'भुगतान समस्या'},
+    'cat_account': {'en': 'Account Issue', 'hi': 'खाता समस्या'},
+    'cat_other': {'en': 'Other', 'hi': 'अन्य'},
+    'ticket_created_success': {'en': 'Ticket created successfully!', 'hi': 'टिकट सफलतापूर्वक बनाया गया!'},
+    'no_tickets_found': {'en': 'No support tickets found.', 'hi': 'कोई सहायता टिकट नहीं मिला।'},
+    'ticket_id': {'en': 'Ticket ID', 'hi': 'टिकट आईडी'},
+    'admin_response': {'en': 'Admin Response', 'hi': 'एडमिन प्रतिक्रिया'},
+    
+    // --- Feedback Extra ---
+    'suggestions_desc_text': {
+      'en': 'We love hearing from our users! Please share your ideas, suggestions, or features you want to see in future updates.',
+      'hi': 'हमें अपने उपयोगकर्ताओं से सुनना पसंद है! कृपया भविष्य के अपडेट के लिए अपने विचार, सुझाव या फीचर्स साझा करें।'
+    },
+    'help_build_better_rurboo': {
+      'en': 'Your feedback helps us build a better Rurboo.',
+      'hi': 'आपकी प्रतिक्रिया हमें एक बेहतर रुरबू बनाने में मदद करती है।'
+    },
+    'support_request': {'en': 'Support Request', 'hi': 'सहायता अनुरोध'},
+    'beyond_service_limit': {'en': 'Beyond Service Limit', 'hi': 'सेवा सीमा से बाहर'},
+    'book_for_someone_else': {'en': 'Book for Someone Else', 'hi': 'किसी और के लिए बुक करें'},
+    'apply_coupon': {'en': 'Apply Coupon', 'hi': 'कूपन लागू करें'},
+    'coupon_applied': {'en': 'Coupon Applied', 'hi': 'कूपन लागू किया गया'},
+    'no_coupons_available': {'en': 'No coupons available', 'hi': 'कोई कूपन उपलब्ध नहीं है'},
+    'available_coupons': {'en': 'Available Coupons', 'hi': 'उपलब्ध कूपन'},
+    'coupon_applicable_on': {'en': 'Applicable on rides above', 'hi': 'से अधिक की सवारी पर लागू'},
+    'ticket_status_pending': {'en': 'Pending', 'hi': 'लंबित'},
+    'ticket_status_processing': {'en': 'Processing', 'hi': 'प्रक्रियाधीन'},
+    'ticket_status_completed': {'en': 'Completed', 'hi': 'पूर्ण'},
+    'apply_btn_label': {'en': 'APPLY', 'hi': 'लागू करें'},
   };
 }

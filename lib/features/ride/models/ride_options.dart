@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class RideOption {
+  final String id; // e.g. 'bike', 'auto'
   final String name;
   final String description;
   final String eta;
@@ -10,6 +11,7 @@ class RideOption {
   final int seats; // Number of passenger seats
 
   RideOption({
+    required this.id,
     required this.name,
     required this.description,
     required this.eta,

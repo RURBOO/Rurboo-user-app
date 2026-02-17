@@ -1,51 +1,179 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper function to check if user is authenticated
+
+    // =========================================================
+    // HELPER FUNCTIONS
+    // =========================================================
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // Helper function to check if user is accessing their own data
+    function uid() {
+      return request.auth.uid;
+    }
+
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return isAuthenticated() && uid() == userId;
     }
 
-    // USERS COLLECTION
-    match /users/{userId} {
-      // Users can read/write their own profile
-      allow read, write: if isOwner(userId);
+    function isAdmin() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/admins/$(uid()));
     }
 
-    // DRIVERS COLLECTION
-    match /drivers/{driverId} {
-      // Drivers manage their own data
-      allow write: if isOwner(driverId);
-      // Authenticated users can read driver profiles (for booking)
+    function isDriver() {
+      // Note: exists() costs 1 read. Consider Custom Claims for scale.
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/drivers/$(uid()));
+    }
+
+    // =========================================================
+    // ADMINS (Read-only reference)
+    // =========================================================
+    match /admins/{adminId} {
       allow read: if isAuthenticated();
+      allow write: if false;
     }
 
-    // RIDES COLLECTION
-    match /rides/{rideId} {
-      // Users can create rides
-      allow create: if isAuthenticated();
-      // Riders and Drivers can read/update the ride they are involved in
-      allow read, update: if isAuthenticated() && (
-        resource.data.userId == request.auth.uid || 
-        resource.data.driverId == request.auth.uid
-      );
+    // =========================================================
+    // USERS
+    // =========================================================
+    match /users/{userId} {
+      allow create: if isOwner(userId);
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Prevent privilege escalation
+      allow update: if isOwner(userId)
+        && !("role" in request.resource.data)
+        && !("isAdmin" in request.resource.data)
+        && !("walletBalance" in request.resource.data); // Wallet protected
     }
 
-    // HISTORY/TRANSACTIONS
-    match /history/{historyId} {
+    // =========================================================
+    // DRIVERS
+    // =========================================================
+    match /drivers/{driverId} {
+      allow read: if isAuthenticated(); // Public read for booking
+
+      // Driver can update specific fields (status, location)
+      allow update: if isDriver()
+        && uid() == driverId
+        && (
+           // Allow updating location/status
+           request.resource.data.diff(resource.data).changedKeys()
+            .hasOnly(["location", "isOnline", "lastActive", "heading"]) ||
+           // Allow initial setup
+           resource.data.status == 'pending'
+        );
+
+      allow create, delete: if isAdmin();
+    }
+
+    // =========================================================
+    // RIDE REQUESTS (CORE LOGIC)
+    // =========================================================
+    match /rideRequests/{rideId} {
+
+      // USER CREATES RIDE
+      allow create: if isAuthenticated()
+        // App sends 'pending' or 'scheduled'
+        && (request.resource.data.status == "pending" || request.resource.data.status == "scheduled")
+        && request.resource.data.userId == uid();
+
+      // READ: User, Driver, Admin
       allow read: if isAuthenticated() && (
-        resource.data.userId == request.auth.uid || 
-        resource.data.driverId == request.auth.uid
+        resource.data.userId == uid() ||
+        resource.data.driverId == uid() ||
+        // Drivers need to see pending rides to accept them
+        (resource.data.status == "pending" && isDriver()) || 
+        isAdmin()
+      );
+
+      // UPDATE: STATE MACHINE & Logic
+      allow update: if isAuthenticated() && (
+
+        // USER CAN CANCEL
+        (uid() == resource.data.userId &&
+         resource.data.status in ["pending", "scheduled", "driver_accepted"] &&
+         request.resource.data.status == "cancelled") ||
+
+        // DRIVER ACCEPTS
+        // Any driver can accept a pending ride
+        (resource.data.status == "pending" &&
+         request.resource.data.status == "driver_accepted" && 
+         request.resource.data.driverId == uid()) ||
+
+        // DRIVER UPDATES STATUS
+        (uid() == resource.data.driverId &&
+         request.resource.data.status in ["arrived", "started", "completed"]) ||
+
+        // ADMIN OVERRIDE
+        isAdmin()
       );
     }
 
-    // Default: Deny all other access
+    // =========================================================
+    // RIDE HISTORY (Read Only for Users)
+    // =========================================================
+    match /history/{historyId} {
+      allow create: if isAdmin(); // Populated by Backend/Admin
+      allow read: if isAuthenticated() && (
+        resource.data.userId == uid() ||
+        resource.data.driverId == uid() ||
+        isAdmin()
+      );
+      allow update, delete: if false;
+    }
+
+    // =========================================================
+    // SUPPORT TICKETS (User App)
+    // =========================================================
+    match /support_tickets/{ticketId} {
+      // App sends 'Open' (Capitalized)
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == uid()
+        && request.resource.data.status == "Open";
+
+      allow read: if isAuthenticated() && (
+        resource.data.userId == uid() ||
+        isAdmin()
+      );
+
+      // User adds messages, Admin resolves
+      allow update: if isAuthenticated() && (
+        resource.data.userId == uid() ||
+        isAdmin()
+      );
+    }
+
+    // =========================================================
+    // SUGGESTIONS (User App)
+    // =========================================================
+    match /suggestions/{suggestionId} {
+      allow create: if isAuthenticated();
+      allow read: if isAdmin();
+    }
+
+    // =========================================================
+    // FEEDBACK (Driver App - REQUIRED)
+    // =========================================================
+    match /feedback/{feedbackId} {
+      allow create: if isAuthenticated() && request.resource.data.driverId == uid();
+      allow read: if isAdmin();
+    }
+
+    // =========================================================
+    // CONFIG / RATES (Shared)
+    // =========================================================
+    match /config/{document} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // =========================================================
+    // DEFAULT DENY
+    // =========================================================
     match /{document=**} {
       allow read, write: if false;
     }

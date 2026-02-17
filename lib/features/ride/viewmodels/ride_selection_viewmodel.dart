@@ -3,7 +3,9 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/utils/fare_calc.dart';
+import '../../../core/services/user_preferences.dart';
 import '../models/ride_options.dart';
+import '../models/coupon_model.dart'; // Added
 import '../../home/models/location_result.dart';
 import '../repositories/ride_selection_repository.dart';
 import '../../home/services/polyline_service.dart';
@@ -12,6 +14,12 @@ class RideSelectionViewModel extends ChangeNotifier {
   final RideSelectionRepository repo;
 
   RideSelectionViewModel({required this.repo});
+
+  // Coupons
+  List<CouponModel> coupons = [];
+  CouponModel? appliedCoupon;
+  String? couponError;
+
 
   GoogleMapController? mapController;
 
@@ -37,9 +45,27 @@ class RideSelectionViewModel extends ChangeNotifier {
   double get distanceKm => _distanceKm;
 
   DateTime? scheduledTime;
+  String? receiverName;
+  String? receiverPhone;
+  bool isBookForOthers = false;
 
   void setScheduledTime(DateTime? date) {
     scheduledTime = date;
+    notifyListeners();
+  }
+
+  void setBookForOthers(bool value) {
+    isBookForOthers = value;
+    if (!value) {
+      receiverName = null;
+      receiverPhone = null;
+    }
+    notifyListeners();
+  }
+
+  void setReceiverDetails(String name, String phone) {
+    receiverName = name;
+    receiverPhone = phone;
     notifyListeners();
   }
 
@@ -100,6 +126,9 @@ class RideSelectionViewModel extends ChangeNotifier {
 
       _createRideOptions(rates);
     }
+    
+    // Fetch Coupons
+    fetchCoupons();
 
     loading = false;
     notifyListeners();
@@ -110,104 +139,112 @@ class RideSelectionViewModel extends ChangeNotifier {
   }
 
   void _createRideOptions(Map<String, dynamic>? rates) {
-    final FareResult bike = calculateFare(
-      vehicleType: VehicleType.bike,
-      distanceKm: _distanceKm,
-      firestoreRates: rates,
-    );
+    List<RideOption> newOptions = [];
+    
+    // 1. Determine which keys to iterate
+    // If we have rates from Firestore, use those keys (except metadata keys)
+    // If not, use default keys.
+    List<String> vehicleKeys = [];
+    
+    if (rates != null && rates.isNotEmpty) {
+      vehicleKeys = rates.keys.where((k) => k != 'commission_percent').toList();
+    } else {
+      // Offline fallback
+      vehicleKeys = ['bike', 'auto', 'car', 'erickshaw', 'bigcar', 'carriertruck'];
+    }
 
-    final FareResult auto = calculateFare(
-      vehicleType: VehicleType.auto,
-      distanceKm: _distanceKm,
-      firestoreRates: rates,
-    );
+    // Sort keys to ensure consistent order (optional, or rely on Firestore)
+    // For better UX, we might want a priority list, but for now simple sort or list is fine.
+    
+    for (String key in vehicleKeys) {
+      final FareResult result = calculateFare(
+        vehicleKey: key,
+        distanceKm: _distanceKm,
+        firestoreRates: rates,
+      );
 
-    final FareResult car = calculateFare(
-      vehicleType: VehicleType.car,
-      distanceKm: _distanceKm,
-      firestoreRates: rates,
-    );
+      newOptions.add(RideOption(
+        id: key,
+        name: _formatVehicleName(key),
+        description: _getVehicleDescription(key, result),
+        eta: _calculateEta(key),
+        fare: result.totalFare,
+        icon: _getIconForVehicle(key),
+        iconColor: _getColorForVehicle(key),
+        seats: _getSeatsForVehicle(key),
+      ));
+    }
+    
+    // Sort options by Price Low -> High
+    newOptions.sort((a, b) => a.fare.compareTo(b.fare));
 
-    final FareResult erickshaw = calculateFare(
-      vehicleType: VehicleType.erickshaw,
-      distanceKm: _distanceKm,
-      firestoreRates: rates,
-    );
+    rideOptions = newOptions;
+  }
+  
+  // --- Helpers for Dynamic UI ---
 
-    final FareResult bigcar = calculateFare(
-      vehicleType: VehicleType.bigcar,
-      distanceKm: _distanceKm,
-      firestoreRates: rates,
-    );
+  String _formatVehicleName(String key) {
+    switch (key.toLowerCase()) {
+      case 'bike': return "Bike Taxi";
+      case 'auto': return "Auto Rickshaw";
+      case 'erickshaw': return "E-Rickshaw";
+      case 'car': return "Comfort Car";
+      case 'bigcar': return "Big Car (XL)";
+      case 'carriertruck': return "Carrier Truck";
+      default: 
+        // Capitalize: "suv" -> "Suv"
+        return key[0].toUpperCase() + key.substring(1); 
+    }
+  }
 
-    final FareResult carriertruck = calculateFare(
-      vehicleType: VehicleType.carriertruck,
-      distanceKm: _distanceKm,
-      firestoreRates: rates,
-    );
+  String _getVehicleDescription(String key, FareResult fare) {
+    int seats = _getSeatsForVehicle(key);
+    String seatText = seats > 0 ? "$seats seats" : "Cargo";
+    return "$seatText • ₹${fare.totalFare.toInt()}";
+  }
 
-    rideOptions = [
-      // 1. Bike
-      RideOption(
-        name: "Bike Taxi",
-        description: "Fastest • ₹${bike.totalFare.toInt()}",
-        eta: "${_durationMins.toInt()} min",
-        fare: bike.totalFare,
-        icon: Icons.two_wheeler,
-        iconColor: const Color(0xFF2196F3), // Blue
-        seats: 1,
-      ),
-      // 2. E-Rickshaw
-      RideOption(
-        name: "E-Rickshaw",
-        description: "4 seats • ₹${erickshaw.totalFare.toInt()}",
-        eta: "${(_durationMins * 1.3).toInt()} min",
-        fare: erickshaw.totalFare,
-        icon: Icons.electric_rickshaw,
-        iconColor: const Color(0xFF4CAF50), // Green
-        seats: 4,
-      ),
-      // 3. Auto
-      RideOption(
-        name: "Auto Rickshaw",
-        description: "3 seats • ₹${auto.totalFare.toInt()}",
-        eta: "${(_durationMins * 1.1).toInt()} min",
-        fare: auto.totalFare,
-        icon: Icons.local_taxi,
-        iconColor: const Color(0xFFFFC107), // Amber/Yellow
-        seats: 3,
-      ),
-      // 4. Car
-      RideOption(
-        name: "Comfort Car",
-        description: "3 seats • AC • ₹${car.totalFare.toInt()}",
-        eta: "${(_durationMins * 1.2).toInt()} min",
-        fare: car.totalFare,
-        icon: Icons.directions_car,
-        iconColor: const Color(0xFF9C27B0), // Purple
-        seats: 3,
-      ),
-      // 5. Big Car
-      RideOption(
-        name: "Big Car (XL)",
-        description: "5 seats • Spacious • ₹${bigcar.totalFare.toInt()}",
-        eta: "${(_durationMins * 1.3).toInt()} min",
-        fare: bigcar.totalFare,
-        icon: Icons.airport_shuttle,
-        iconColor: const Color(0xFFFF5722), // Deep Orange
-        seats: 5,
-      ),
-      // 6. Carrier Truck
-      RideOption(
-        name: "Carrier Truck",
-        description: "Cargo • Heavy Load • ₹${carriertruck.totalFare.toInt()}",
-        eta: "${(_durationMins * 1.5).toInt()} min",
-        fare: carriertruck.totalFare,
-        icon: Icons.local_shipping,
-        iconColor: const Color(0xFF795548), // Brown
-        seats: 0,
-      ),
-    ];
+  String _calculateEta(String key) {
+    // Estimations: Bike is fastest, Truck is slowest
+    double factor = 1.0;
+    if (key.contains('bike')) {
+      factor = 0.8;
+    } else if (key.contains('auto')) {
+      factor = 1.1;
+    } else if (key.contains('truck')) {
+      factor = 1.5;
+    } else {
+      factor = 1.2;
+    }
+
+    return "${(_durationMins * factor).toInt()} min";
+  }
+
+  IconData _getIconForVehicle(String key) {
+    final k = key.toLowerCase();
+    if (k.contains('bike') || k.contains('moto')) return Icons.two_wheeler;
+    if (k.contains('auto') || k.contains('rickshaw')) return Icons.local_taxi; // or generic taxi
+    if (k.contains('truck') || k.contains('carrier')) return Icons.local_shipping;
+    if (k.contains('big') || k.contains('suv')) return Icons.airport_shuttle;
+    return Icons.directions_car;
+  }
+
+  Color _getColorForVehicle(String key) {
+    final k = key.toLowerCase();
+    if (k.contains('bike')) return const Color(0xFF2196F3);
+    if (k.contains('auto')) return const Color(0xFFFFC107);
+    if (k.contains('erickshaw')) return const Color(0xFF4CAF50);
+    if (k.contains('truck')) return const Color(0xFF795548);
+    return const Color(0xFF1E88E5);
+  }
+
+  int _getSeatsForVehicle(String key) {
+    final k = key.toLowerCase();
+    if (k.contains('bike')) return 1;
+    if (k.contains('auto')) return 3;
+    if (k.contains('erickshaw')) return 4;
+    if (k.contains('big')) return 6;
+    if (k.contains('truck')) return 0;
+    return 4; // Default Car
   }
 
   Future<bool> bookRide(Future<void> Function() action) async {
@@ -290,6 +327,66 @@ class RideSelectionViewModel extends ChangeNotifier {
 
   void selectRide(RideOption ride) {
     selectedRide = ride;
+    // Re-validate coupon if ride changes
+    if (appliedCoupon != null) {
+      applyCoupon(appliedCoupon!);
+    }
     notifyListeners();
+  }
+
+  // --- Coupon Logic ---
+
+  Future<void> fetchCoupons() async {
+    try {
+      final userId = await UserPreferences.getUserId();
+      if (userId == null) return;
+
+      final query = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('coupons')
+          .where('isUsed', isEqualTo: false)
+          .where('expiryDate', isGreaterThan: Timestamp.now())
+          .get();
+
+      coupons = query.docs
+          .map((d) => CouponModel.fromMap(d.id, d.data()))
+          .toList();
+      
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error fetching coupons: $e");
+    }
+  }
+
+  void applyCoupon(CouponModel coupon) {
+    if (selectedRide == null) {
+      couponError = "Select a ride first";
+      notifyListeners();
+      return;
+    }
+
+    if (selectedRide!.fare < 100) {
+      couponError = "Minimum ride fare ₹100 required";
+      appliedCoupon = null;
+    } else {
+      couponError = null;
+      appliedCoupon = coupon;
+    }
+    notifyListeners();
+  }
+
+  void removeCoupon() {
+    appliedCoupon = null;
+    couponError = null;
+    notifyListeners();
+  }
+
+  double get finalFare {
+    if (selectedRide == null) return 0;
+    if (appliedCoupon != null) {
+      return (selectedRide!.fare - appliedCoupon!.amount).clamp(0.0, double.infinity);
+    }
+    return selectedRide!.fare;
   }
 }

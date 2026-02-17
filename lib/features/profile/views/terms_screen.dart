@@ -1,70 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../language/viewmodels/language_vm.dart';
 
 class TermsScreen extends StatelessWidget {
   const TermsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageViewModel>(context);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          'Terms & Conditions',
-          style: TextStyle(color: Colors.black),
+        title: Text(
+          lang.getText('terms_conditions_menu'),
+          style: const TextStyle(color: Colors.black),
         ),
         backgroundColor: Colors.white,
         elevation: 1,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: const SingleChildScrollView(
-        padding: EdgeInsets.all(20.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Terms of Service',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-            _TermSection(
-              title: '1. Acceptance of Terms',
-              content:
-                  'By accessing or using the Rurboo app, you agree to be bound by these Terms.',
-            ),
-            _TermSection(
-              title: '2. Ride Services',
-              content:
-                  'Rurboo connects riders with independent drivers. We are not responsible for the behavior of drivers or riders, though we enforce strict community guidelines.',
-            ),
-            _TermSection(
-              title: '3. Payments',
-              content:
-                  'Riders must pay the fare shown in the app. Drivers must settle platform commissions daily/weekly as per the agreement.',
-            ),
-            _TermSection(
-              title: '4. User Conduct',
-              content:
-                  'You agree not to use the service for unlawful purposes or to harass other users.',
-            ),
-            _TermSection(
-              title: '5. Termination',
-              content:
-                  'We reserve the right to suspend accounts that violate safety policies or accumulate unpaid debt.',
-            ),
+             _buildSection(lang.getText('ts_intro_title'), lang.getText('ts_intro_body')),
+             _buildSection(lang.getText('ts_services_title'), lang.getText('ts_services_body')),
+             _buildSection(lang.getText('ts_account_title'), lang.getText('ts_account_body')),
+             _buildSection(lang.getText('ts_conduct_title'), lang.getText('ts_conduct_body')),
+             _buildSection(lang.getText('ts_payment_title'), lang.getText('ts_payment_body')),
+             _buildSection(lang.getText('ts_liability_title'), lang.getText('ts_liability_body')),
+             _buildSection(lang.getText('ts_termination_title'), lang.getText('ts_termination_body')),
+             _buildSection(lang.getText('ts_changes_title'), lang.getText('ts_changes_body')),
+             _buildConactSection(lang),
+             const SizedBox(height: 30),
           ],
         ),
       ),
     );
   }
-}
 
-class _TermSection extends StatelessWidget {
-  final String title;
-  final String content;
-  const _TermSection({required this.title, required this.content});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildSection(String title, String content) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 24.0),
       child: Column(
@@ -72,12 +48,48 @@ class _TermSection extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 8),
-          Text(content, style: const TextStyle(fontSize: 16, height: 1.5)),
+          Text(
+            content,
+            style: const TextStyle(
+              fontSize: 15,
+              height: 1.5,
+              color: Colors.black54,
+            ),
+          ),
         ],
       ),
     );
+  }
+  
+  Widget _buildConactSection(LanguageViewModel lang) {
+     return Container(
+       padding: const EdgeInsets.all(16),
+       decoration: BoxDecoration(
+         color: Colors.blue.withValues(alpha: 0.05),
+         borderRadius: BorderRadius.circular(12),
+         border: Border.all(color: Colors.blue.withValues(alpha: 0.1)),
+       ),
+       child: Column(
+         crossAxisAlignment: CrossAxisAlignment.start,
+         children: [
+           Text(
+             lang.getText('contact_us'),
+             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue),
+           ),
+           const SizedBox(height: 8),
+           Text(
+             "${lang.getText('contact_us_desc')} legal@rurboo.com",
+             style: const TextStyle(fontSize: 15, height: 1.5, color: Colors.blueGrey),
+           ),
+         ],
+       ),
+     );
   }
 }

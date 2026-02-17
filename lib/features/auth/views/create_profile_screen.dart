@@ -23,6 +23,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
 
   final nameController = TextEditingController();
   final emergencyController = TextEditingController();
+  final referralController = TextEditingController(); // Moved to class level
   
   // New Safety Fields
   final ageController = TextEditingController();
@@ -171,6 +172,58 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
     });
   }
 
+  String _generateReferralCode(String name) {
+    String prefix = name.trim().replaceAll(" ", "").toUpperCase();
+    if (prefix.length > 4) prefix = prefix.substring(0, 4);
+    if (prefix.isEmpty) prefix = "USER";
+    
+    // Add 4 random digits
+    final random = DateTime.now().millisecondsSinceEpoch.toString(); 
+    final suffix = random.substring(random.length - 4);
+    
+    return "$prefix$suffix";
+  }
+
+  Future<void> _processReferral(String newUserId, String enteredCode) async {
+    if (enteredCode.isEmpty) return;
+    
+    try {
+       final query = await FirebaseFirestore.instance
+           .collection('users')
+           .where('referralCode', isEqualTo: enteredCode)
+           .limit(1)
+           .get();
+           
+       if (query.docs.isNotEmpty) {
+         final referrerDoc = query.docs.first;
+         final referrerId = referrerDoc.id;
+         
+         // 1. Credit Referrer
+         await FirebaseFirestore.instance
+             .collection('users')
+             .doc(referrerId)
+             .collection('coupons')
+             .add({
+               'code': 'REF-${DateTime.now().millisecondsSinceEpoch}',
+               'amount': 50.0,
+               'type': 'referral_bonus',
+               'isUsed': false,
+               'createdAt': FieldValue.serverTimestamp(),
+               'expiryDate': DateTime.now().add(const Duration(days: 30)),
+               'description': 'Referral Bonus for inviting a friend'
+             });
+             
+         // 2. Link New User (Optional, strict mapping)
+         await FirebaseFirestore.instance.collection('users').doc(newUserId).update({
+           'referredBy': referrerId,
+           'redeemedReferralCode': enteredCode,
+         });
+       }
+    } catch (e) {
+      debugPrint("Referral Error: $e");
+    }
+  }
+
   void submit() async {
     if (!formKey.currentState!.validate() || gender.isEmpty) {
       if (gender.isEmpty) {
@@ -220,10 +273,20 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
         'fcmToken': await NotificationService().getDeviceToken(),
       };
 
+      // Referral Code Logic removed from here (moved to class level)
+
       await FirebaseFirestore.instance
           .collection('users')
           .doc(newUserId)
-          .set(userProfile);
+          .set({
+            ...userProfile,
+            'referralCode': _generateReferralCode(nameController.text),
+          });
+
+      // Process Referral if code entered
+      if (referralController.text.trim().isNotEmpty) {
+         await _processReferral(newUserId, referralController.text.trim().toUpperCase());
+      }
 
       await UserPreferences.saveUserId(newUserId);
 
@@ -445,15 +508,29 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                         ),
                         // ... Checkbox and Button ...
                         const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Checkbox(
-                              value: whatsappUpdates,
-                              onChanged: (v) => setState(() => whatsappUpdates = v!),
+                          Row(
+                            children: [
+                              Checkbox(
+                                value: whatsappUpdates,
+                                onChanged: (v) => setState(() => whatsappUpdates = v!),
+                              ),
+                              Expanded(child: Text(whatsappLbl)),
+                            ],
+                          ),
+                          
+                          const SizedBox(height: 10),
+                          
+                          // Referral Code Input
+                          TextFormField(
+                            controller: referralController,
+                            textCapitalization: TextCapitalization.characters,
+                            decoration: const InputDecoration(
+                              labelText: "Referral Code (Optional)",
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.confirmation_number_outlined),
+                              hintText: "e.g. ADAR1234",
                             ),
-                            Expanded(child: Text(whatsappLbl)),
-                          ],
-                        ),
+                          ),
 
                         const SizedBox(height: 30),
 
