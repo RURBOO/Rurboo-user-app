@@ -279,6 +279,71 @@ class _RideBookedContent extends StatelessWidget {
               ),
             ),
 
+            // End Ride Request Overlay
+            if (vm.isEndRideRequested)
+              Positioned(
+                top: 150,
+                left: 16,
+                right: 16,
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                      )
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 40),
+                      const SizedBox(height: 10),
+                      Text(
+                        Provider.of<LanguageViewModel>(context).getText('driver_requested_end_ride') ?? "Driver requested to end trip early.",
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        Provider.of<LanguageViewModel>(context).getText('driver_requested_end_desc') ?? "Please confirm if you have reached your destination securely.",
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.grey, fontSize: 13),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => vm.rejectEndRide(),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.red,
+                                side: const BorderSide(color: Colors.red),
+                              ),
+                              child: Text(Provider.of<LanguageViewModel>(context).getText('reject') ?? "Reject"),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () => vm.approveEndRide(),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: Text(Provider.of<LanguageViewModel>(context).getText('approve') ?? "Approve"),
+                            ),
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
+                ),
+              ),
+
             // Bottom Sheet
             Align(
               alignment: Alignment.bottomCenter,
@@ -524,6 +589,7 @@ class _RideBookedContent extends StatelessWidget {
                         const SizedBox(height: 20),
 
                         // Action Buttons
+                        if (vm.stage != RideStage.inProgress && vm.stage != RideStage.completed)
                         Row(
                           children: [
                              Expanded(

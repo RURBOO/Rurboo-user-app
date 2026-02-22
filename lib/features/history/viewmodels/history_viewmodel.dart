@@ -27,7 +27,6 @@ class HistoryViewModel extends ChangeNotifier {
       final querySnapshot = await FirebaseFirestore.instance
           .collection('rideRequests')
           .where('userId', isEqualTo: userId)
-          .where('status', whereIn: ['completed', 'cancelled', 'closed'])
           .orderBy('createdAt', descending: true)
           .get();
 

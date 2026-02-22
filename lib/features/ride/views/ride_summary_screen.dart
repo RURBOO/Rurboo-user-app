@@ -1,9 +1,10 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/services/user_preferences.dart';
 import '../../language/viewmodels/language_vm.dart';
 import '../../navigation/views/main_navigator.dart';
 
@@ -89,31 +90,36 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
           .collection('rideRequests')
           .doc(widget.rideId);
 
-      await FirebaseFirestore.instance.runTransaction((transaction) async {
-        final driverSnapshot = await transaction.get(driverRef);
-        if (!driverSnapshot.exists) throw Exception("Driver missing");
+      final driverSnapshot = await driverRef.get();
+      if (!driverSnapshot.exists) throw Exception("Driver not found in DB");
 
-        final data = driverSnapshot.data()!;
+      final data = driverSnapshot.data()!;
+      final double ratingSum = (data['ratingSum'] as num?)?.toDouble() ?? 0.0;
+      final int ratingCount = (data['ratingCount'] as num?)?.toInt() ?? 0;
 
-        final double ratingSum = (data['ratingSum'] as num?)?.toDouble() ?? 0.0;
-        final int ratingCount = (data['ratingCount'] as num?)?.toInt() ?? 0;
+      final newSum = ratingSum + _rating;
+      final newCount = ratingCount + 1;
 
-        final newSum = ratingSum + _rating;
-        final newCount = ratingCount + 1;
-
-        transaction.update(driverRef, {
+      try {
+        await driverRef.update({
           'rating': newSum / newCount,
           'ratingSum': newSum,
           'ratingCount': newCount,
         });
+      } catch (e) {
+        throw Exception("Failed to update driver rating: $e");
+      }
 
-        transaction.update(rideRef, {
+      try {
+        await rideRef.update({
           'rating': _rating,
           'review': _commentController.text.trim(),
-          'feltSafe': _feltSafe,
-          'status': 'closed',
+          'feltSafe': _feltSafe, // Boolean shouldn't be an issue
+          'status': 'closed', 
         });
-      });
+      } catch (e) {
+        throw Exception("Failed to update ride request: $e");
+      }
 
       if (mounted) {
         Navigator.pushAndRemoveUntil(
@@ -132,6 +138,108 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
     }
   }
 
+  Future<void> _skipRating() async {
+    setState(() => _isSubmitting = true);
+    try {
+      await FirebaseFirestore.instance
+          .collection('rideRequests')
+          .doc(widget.rideId)
+          .update({'status': 'closed'});
+
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const MainNavigator()),
+          (_) => false,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error skipping: $e")));
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  void _showReportDialog(BuildContext context, dynamic lang) {
+    final reportController = TextEditingController();
+    bool isSubmittingReport = false;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(lang.getText('report_issue')),
+              content: TextField(
+                controller: reportController,
+                decoration: const InputDecoration(
+                  hintText: 'Describe the issue...',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 4,
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: isSubmittingReport
+                      ? null
+                      : () async {
+                          if (reportController.text.trim().isEmpty) return;
+
+                          setDialogState(() => isSubmittingReport = true);
+                          try {
+                            final userId = FirebaseAuth.instance.currentUser?.uid;
+                            if (userId == null) throw Exception("User not authenticated");
+                            
+                            await FirebaseFirestore.instance
+                                .collection('support_tickets')
+                                .add({
+                              'rideId': widget.rideId,
+                              'driverName': widget.driverName,
+                              'userId': userId,
+                              'issue': reportController.text.trim(),
+                              'createdAt': FieldValue.serverTimestamp(),
+                              'status': 'open',
+                            });
+
+                            if (dialogContext.mounted) {
+                              Navigator.pop(dialogContext);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Report submitted successfully!')),
+                              );
+                            }
+                          } catch (e) {
+                            if (dialogContext.mounted) {
+                              setDialogState(() => isSubmittingReport = false);
+                              ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                SnackBar(content: Text('Error: $e')),
+                              );
+                            }
+                          }
+                        },
+                  child: isSubmittingReport
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Submit'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageViewModel>(context);
@@ -145,22 +253,7 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
           TextButton.icon(
             icon: const Icon(Icons.flag, color: Colors.red),
             label: Text(lang.getText('report_issue'), style: const TextStyle(color: Colors.red)),
-            onPressed: () async {
-              final Uri emailLaunch = Uri(
-                scheme: 'mailto',
-                path: 'support@Rurboo.com',
-                query: Uri.encodeFull(
-                  'subject=Report Ride ${widget.rideId}'
-                  '&body=Ride ID: ${widget.rideId}\n'
-                  'Driver: ${widget.driverName}\n\n'
-                  'Describe the issue below:\n',
-                ),
-              );
-
-              if (await canLaunchUrl(emailLaunch)) {
-                await launchUrl(emailLaunch);
-              }
-            },
+            onPressed: () => _showReportDialog(context, lang),
           ),
         ],
       ),
@@ -339,6 +432,18 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: _isSubmitting ? null : _skipRating,
+                child: Text(
+                  lang.getText('skip'),
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],

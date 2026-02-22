@@ -43,6 +43,8 @@ class RideBookedViewModel extends ChangeNotifier {
   bool _isCameraLocked = true;
   Timer? _cameraUnlockTimer;
 
+  bool isEndRideRequested = false;
+
   RideBookedViewModel({
     required this.repo,
     required this.rideId,
@@ -138,6 +140,13 @@ class RideBookedViewModel extends ChangeNotifier {
 
           final bool stageChanged = newStage != stage;
           stage = newStage;
+
+          // Check if driver requested to end ride early
+          if (data['endRideRequested'] == true && data['endRideApproved'] != true && data['endRideRejected'] != true) {
+            isEndRideRequested = true;
+          } else {
+            isEndRideRequested = false;
+          }
 
           if (data['driverLocation'] != null) {
             final geo = data['driverLocation'] as GeoPoint;
@@ -392,6 +401,38 @@ class RideBookedViewModel extends ChangeNotifier {
           await launchUrl(smsUri);
         }
       }
+    }
+  }
+
+  Future<void> approveEndRide() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('rideRequests')
+          .doc(rideId)
+          .update({
+             'endRideApproved': true,
+             'endRideRequested': false,
+          });
+      isEndRideRequested = false;
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error approving end ride: $e");
+    }
+  }
+
+  Future<void> rejectEndRide() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('rideRequests')
+          .doc(rideId)
+          .update({
+             'endRideRejected': true,
+             'endRideRequested': false,
+          });
+      isEndRideRequested = false;
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error rejecting end ride: $e");
     }
   }
 

@@ -13,6 +13,17 @@ service cloud.firestore {
       return request.auth.uid;
     }
 
+    // =========================================================
+    // SUPPORT TICKETS
+    // =========================================================
+    match /support_tickets/{ticketId} {
+      // Users can create and read their own tickets
+      allow create: if isAuthenticated() && request.resource.data.userId == uid();
+      allow read: if isAuthenticated() && (resource.data.userId == uid() || isAdmin());
+      // Only admins can update
+      allow update: if isAdmin();
+    }
+
     function isOwner(userId) {
       return isAuthenticated() && uid() == userId;
     }
@@ -22,6 +33,12 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/admins/$(uid()));
     }
 
+    function isSuperAdmin() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/admins/$(uid())) &&
+        get(/databases/$(database)/documents/admins/$(uid())).data.role == 'super_admin';
+    }
+
     function isDriver() {
       // Note: exists() costs 1 read. Consider Custom Claims for scale.
       return isAuthenticated() &&
@@ -29,11 +46,34 @@ service cloud.firestore {
     }
 
     // =========================================================
-    // ADMINS (Read-only reference)
+    // ADMINS (Enhanced for Operator Management)
     // =========================================================
     match /admins/{adminId} {
+      // All admins can read other admins
       allow read: if isAuthenticated();
-      allow write: if false;
+      
+      // Only super admins can create, update, or delete other admins
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // =========================================================
+    // ADMIN AUDIT LOGS (New - for tracking admin actions)
+    // =========================================================
+    match /admin_audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin(); // Admins create their own audit logs
+      allow update, delete: if false; // Immutable
+    }
+
+    // =========================================================
+    // ADMIN ACTIONS (New - for tracking specific admin operations)
+    // =========================================================
+    match /adminActions/{actionId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if false; // Immutable
     }
 
     // =========================================================
@@ -48,26 +88,51 @@ service cloud.firestore {
         && !("role" in request.resource.data)
         && !("isAdmin" in request.resource.data)
         && !("walletBalance" in request.resource.data); // Wallet protected
+      
+      // Allow drivers to drop ratings
+      allow update: if isDriver()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'ratingSum', 'ratingCount']);
+
+      // Admins can update users (for user management)
+      allow update: if isAdmin();
     }
 
     // =========================================================
-    // DRIVERS
+    // DRIVERS (Enhanced for live location tracking)
     // =========================================================
     match /drivers/{driverId} {
       allow read: if isAuthenticated(); // Public read for booking
 
-      // Driver can update specific fields (status, location)
+      // Driver can update specific fields (status, location, currentLocation)
       allow update: if isDriver()
         && uid() == driverId
         && (
-           // Allow updating location/status
+           // Allow updating location/status, CURRENTLOCATION, and FCM tokens
            request.resource.data.diff(resource.data).changedKeys()
-            .hasOnly(["location", "isOnline", "lastActive", "heading"]) ||
+            .hasOnly(["location", "currentLocation", "isOnline", "lastActive", "heading", "speed", "lastLocationUpdate", "fcmToken", "lastTokenUpdate", "totalRides", "dailyCommissionDue"]) ||
            // Allow initial setup
            resource.data.status == 'pending'
         );
 
+      // Allow users to drop ratings
+      allow update: if isAuthenticated()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'ratingSum', 'ratingCount']);
+
+      // Admins can fully manage drivers
       allow create, delete: if isAdmin();
+      allow update: if isAdmin();
+      
+      // Allow driver to manage their vehicles
+      match /vehicles/{vehicleId} {
+        allow read: if isAuthenticated() && (uid() == driverId || isAdmin());
+        allow write: if isAuthenticated() && (uid() == driverId || isAdmin());
+      }
+      
+      // Allow driver to write to their earnings
+      match /earnings/{earningId} {
+        allow read: if isAuthenticated() && (uid() == driverId || isAdmin());
+        allow create: if isAuthenticated() && uid() == driverId;
+      }
     }
 
     // =========================================================
@@ -95,22 +160,40 @@ service cloud.firestore {
 
         // USER CAN CANCEL
         (uid() == resource.data.userId &&
-         resource.data.status in ["pending", "scheduled", "driver_accepted"] &&
+         resource.data.status in ["pending", "scheduled", "accepted"] &&
          request.resource.data.status == "cancelled") ||
+
+        // USER APPROVES/REJECTS EARLY END RIDE OR SUBMITS REVIEW
+        (uid() == resource.data.userId &&
+         (resource.data.status == "in_progress" || resource.data.status == "completed") &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['endRideApproved', 'endRideRejected', 'endRideRequested', 'rating', 'review', 'feltSafe', 'status'])) ||
 
         // DRIVER ACCEPTS
         // Any driver can accept a pending ride
         (resource.data.status == "pending" &&
-         request.resource.data.status == "driver_accepted" && 
+         request.resource.data.status == "accepted" && 
          request.resource.data.driverId == uid()) ||
 
-        // DRIVER UPDATES STATUS
+        // DRIVER UPDATES STATUS OR SUBMITS REVIEW
         (uid() == resource.data.driverId &&
-         request.resource.data.status in ["arrived", "started", "completed"]) ||
+         request.resource.data.status in ["accepted", "arrived", "in_progress", "started", "completed", "cancelled", "closed"]) ||
 
         // ADMIN OVERRIDE
         isAdmin()
       );
+    }
+
+    // =========================================================
+    // RIDES (New - separate collection for completed rides)
+    // =========================================================
+    match /rides/{rideId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == uid() ||
+        resource.data.driverId == uid() ||
+        isAdmin()
+      );
+      allow create: if isAuthenticated(); // Created by app/backend
+      allow update, delete: if isAdmin(); // Only admins can modify
     }
 
     // =========================================================
@@ -124,6 +207,15 @@ service cloud.firestore {
         isAdmin()
       );
       allow update, delete: if false;
+    }
+
+    // =========================================================
+    // LEDGER ENTRIES (New - for finance tracking)
+    // =========================================================
+    match /ledger_entries/{entryId} {
+      allow read: if isAdmin(); // Only admins can read financial records
+      allow create: if isAdmin(); // Created by admin panel or backend
+      allow update, delete: if isSuperAdmin(); // Only super admins can modify
     }
 
     // =========================================================
@@ -164,11 +256,62 @@ service cloud.firestore {
     }
 
     // =========================================================
-    // CONFIG / RATES (Shared)
+    // CONFIG / RATES (Enhanced for admin updates)
     // =========================================================
     match /config/{document} {
       allow read: if isAuthenticated();
-      allow write: if false;
+      
+      // Only admins can update config (pricing, rates, etc.)
+      allow write: if isAdmin();
+    }
+
+    // =========================================================
+    // NOTIFICATIONS (New - for admin/driver/user notifications)
+    // =========================================================
+    // =========================================================
+    // NOTIFICATIONS (Enhanced for Broadcast/Targeting)
+    // =========================================================
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && (
+        // 1. Direct Ownership
+        resource.data.userId == uid() ||
+        resource.data.targetId == uid() ||
+        
+        // 2. Broadcast - All Users
+        (resource.data.targetAudience == 'all_users' && exists(/databases/$(database)/documents/users/$(uid()))) ||
+        (resource.data.targetAudience == 'active_users' && exists(/databases/$(database)/documents/users/$(uid()))) || // Simplify for now
+        
+        // 3. Broadcast - All Drivers
+        (resource.data.targetAudience == 'all_drivers' && isDriver()) ||
+        
+        // 4. Broadcast - Everyone
+        resource.data.targetAudience == 'everyone' ||
+        
+        // Admin Access
+        isAdmin()
+      );
+      
+      allow create: if isAdmin(); // Only admins send
+      allow update: if isAuthenticated() && (
+         // User marking as read (only if it's their specific doc)
+         (resource.data.userId == uid() && request.resource.data.diff(resource.data).changedKeys().hasOnly(['read'])) ||
+         isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // =========================================================
+    // SOS / EMERGENCY INCIDENTS (New - for risk management)
+    // =========================================================
+    match /sos_incidents/{incidentId} {
+      allow create: if isAuthenticated(); // Users/drivers can create SOS
+      allow read: if isAuthenticated() && (
+        resource.data.userId == uid() ||
+        resource.data.driverId == uid() ||
+        isAdmin()
+      );
+      allow update: if isAdmin(); // Only admins can update/resolve SOS
+      allow delete: if isSuperAdmin();
     }
 
     // =========================================================

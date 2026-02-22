@@ -35,6 +35,8 @@ class SearchingDriverViewModel extends ChangeNotifier {
           final status = data['status'];
           final driverId = data['driverId'];
 
+          debugPrint("USER RIDE LISTENER: Status='$status', Driver='$driverId'");
+
           if (status == 'accepted' && driverId != null) {
             _timeoutTimer?.cancel();
 
@@ -87,7 +89,10 @@ class SearchingDriverViewModel extends ChangeNotifier {
       await FirebaseFirestore.instance
           .collection('rideRequests')
           .doc(rideId)
-          .update({'status': 'cancelled'});
+          .update({
+             'status': 'cancelled',
+             'cancelledBy': 'user',
+          });
 
       stopListening();
 
