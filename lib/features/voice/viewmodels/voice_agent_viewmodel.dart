@@ -5,6 +5,8 @@ import '../services/voice_agent_service.dart';
 import '../services/wake_word_detector.dart';
 import '../models/voice_agent_state.dart';
 import '../../../core/services/user_preferences.dart';
+import '../../../core/constants/app_strings.dart';
+import '../../../core/services/language_service.dart';
 
 class VoiceAgentViewModel extends ChangeNotifier {
   final VoiceAgentService _voiceService = VoiceAgentService();
@@ -19,6 +21,18 @@ class VoiceAgentViewModel extends ChangeNotifier {
   
   bool _continuousModeEnabled = false;
   bool get continuousModeEnabled => _continuousModeEnabled;
+
+  String _currentLanguage = 'en';
+  String get currentLanguage => _currentLanguage;
+
+  void updateLanguage(String langCode) {
+    _currentLanguage = langCode;
+    notifyListeners();
+  }
+
+  String _getText(String key) {
+    return AppStrings.translations[key]?[_currentLanguage] ?? key;
+  }
 
   String _lastRecognizedText = "";
   String get lastRecognizedText => _lastRecognizedText;
@@ -57,11 +71,11 @@ class VoiceAgentViewModel extends ChangeNotifier {
       _voiceService.onError = _handleServiceError;
       _voiceService.onResult = _handleSpeechResult;
       
-      // Initialize wake word detector
-      await _wakeWordDetector.init();
-      _wakeWordDetector.onWakeWordDetected = _onWakeWordDetected;
       
-      debugPrint("✅ Voice Agent initialized successfully");
+      // Initialize language
+      _currentLanguage = await LanguageService().getLanguageCode();
+      
+      debugPrint("✅ Voice Agent initialized successfully with language: $_currentLanguage");
     } catch (e) {
       debugPrint("❌ Voice Agent Init Error: $e");
       _lastError = e.toString();
@@ -250,7 +264,7 @@ class VoiceAgentViewModel extends ChangeNotifier {
          if (intent.type == IntentType.confirm) {
            _finalizeBooking();
          } else if (intent.type == IntentType.reject) {
-           speak("Booking cancel kar di hai.");
+           speak(_getText('voice_booking_cancelled'));
            _transitionTo(VoiceAgentState.idle);
          }
          break;
@@ -276,12 +290,8 @@ class VoiceAgentViewModel extends ChangeNotifier {
       
       if (_tempDestination != null) {
           // If we have destination, check fares
-          // This part requires binding to RideSelectionViewModel.
-          // Since we can't inject it easily here without context,
-          // the View (Widget) will listen to this VM and bridge the gap.
-          // We just set the state to "Processing" or "Updating".
       } else {
-          speak("Kahan jaana hai?");
+          speak(_getText('voice_where_to'));
           _transitionTo(VoiceAgentState.booking);
       }
   }
@@ -349,16 +359,16 @@ class VoiceAgentViewModel extends ChangeNotifier {
     _transitionTo(VoiceAgentState.speaking);
 
     // 1. Intro
-    await _speakChunk("Aapka pickup location hai $pickup.");
+    await _speakChunk(_getText('voice_pickup_is').replaceAll('{pickup}', pickup));
     if (!_isAnnouncing) return;
 
-    await _speakChunk("Destination hai $destination.");
+    await _speakChunk(_getText('voice_destination_is').replaceAll('{destination}', destination));
     if (!_isAnnouncing) return;
 
-    await _speakChunk("Doori hai ${distanceKm.toStringAsFixed(1)} kilometer.");
+    await _speakChunk(_getText('voice_distance_is').replaceAll('{distance}', distanceKm.toStringAsFixed(1)));
     if (!_isAnnouncing) return;
 
-    await _speakChunk("Available vehicles aur unka kiraya hai.");
+    await _speakChunk(_getText('voice_vehicles_available'));
     if (!_isAnnouncing) return;
 
     // 2. Sequential Vehicle Announcements
@@ -373,7 +383,9 @@ class VoiceAgentViewModel extends ChangeNotifier {
       _highlightedElementId = fare; // Assuming ID matches keys like 'bike', 'auto'
       notifyListeners();
 
-      await _speakChunk("$name ka kiraya $price rupay.");
+      await _speakChunk(_getText('voice_fare_result')
+          .replaceAll('{name}', name)
+          .replaceAll('{price}', price.toString()));
       
       // Small pause between items for better UX
       await Future.delayed(const Duration(milliseconds: 500));
@@ -406,49 +418,48 @@ class VoiceAgentViewModel extends ChangeNotifier {
 
   void _triggerSOS() {
     _transitionTo(VoiceAgentState.sosActivated);
-    _voiceService.speak("Emergency alert bhej diya gaya hai. Help is on the way.");
+    speak(_getText('voice_sos_activated'));
   }
   
   void startProfileCreation() {
     _transitionTo(VoiceAgentState.askName);
-    speak("Namaste. RURBOO me swagat hai. Apna poora naam batayein?");
+    speak(_getText('voice_greeting'));
   }
   
   void _askAge() {
      _transitionTo(VoiceAgentState.askAge);
-     speak("Aapki umar kya hai?");
+     speak(_getText('voice_ask_age'));
   }
   
   void _askCategory() {
     _transitionTo(VoiceAgentState.askCategory);
-    speak("Aap kya hain? Student, Adult, ya Senior?");
+    speak(_getText('voice_ask_category'));
   }
   
   Future<void> _completeProfile() async {
     _transitionTo(VoiceAgentState.idle);
-    await speak("Profile ban gayi hai. Shukriya $_tempName.");
+    await speak(_getText('voice_profile_complete').replaceAll('{name}', _tempName ?? ""));
   }
   
   void confirmBookingIntent({int? fare, double? distance, String? vehicle}) {
     _transitionTo(VoiceAgentState.confirmingFare);
-    String msg = "";
-    if (vehicle != null) msg += "$vehicle available hai.";
-    if (distance != null) msg += " Distance ${distance.toStringAsFixed(1)} kilometer.";
-    if (fare != null) msg += " Kiraya $fare rupay hoga.";
-    msg += " Confirm karein?";
+    String msg = _getText('voice_confirm_booking')
+        .replaceAll('{vehicle}', vehicle ?? "")
+        .replaceAll('{distance}', distance?.toStringAsFixed(1) ?? "")
+        .replaceAll('{fare}', fare?.toString() ?? "");
     
     speak(msg);
   }
   
   void _finalizeBooking() {
      _transitionTo(VoiceAgentState.searchingDriver);
-     speak("Auto book ho raha hai. Please wait.");
+     speak(_getText('voice_booking_finalize'));
   }
 
   VoiceIntent? get lastIntent => _lastIntent;
 
   void _handleCancelCommand() {
-     speak("Booking cancel kar di gayi hai.");
+     speak(_getText('voice_booking_cancelled'));
      _transitionTo(VoiceAgentState.cancellingRide);
      Future.delayed(const Duration(seconds: 3), () {
         if (_state == VoiceAgentState.cancellingRide) {

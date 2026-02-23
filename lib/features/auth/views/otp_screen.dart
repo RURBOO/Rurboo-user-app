@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import 'package:rurboo/features/language/viewmodels/language_vm.dart';
 import '../../../core/services/user_preferences.dart';
 import '../../../core/services/notification_service.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/theme/app_colors.dart';
 import 'create_profile_screen.dart';
 import 'location_disclosure_screen.dart';
 
@@ -29,9 +31,7 @@ class _OtpScreenState extends State<OtpScreen> {
     (_) => TextEditingController(),
   );
 
-  String title = "Enter the OTP";
-  String subtitle = "We have sent an OTP to";
-  String resend = "Resend OTP in";
+  // Removed hardcoded strings used for translation
 
   int seconds = 30;
   Timer? _timer;
@@ -44,7 +44,6 @@ class _OtpScreenState extends State<OtpScreen> {
 
     _verificationId = widget.verificationId;
     _startTimer();
-    _translateTexts();
   }
 
   void _startTimer() {
@@ -61,25 +60,14 @@ class _OtpScreenState extends State<OtpScreen> {
     });
   }
 
-  Future<void> _translateTexts() async {
-    final lang = Provider.of<LanguageViewModel>(context, listen: false);
-    final res = await lang.translate([title, subtitle, resend]);
-
-    if (!mounted) return;
-    setState(() {
-      title = res[0];
-      subtitle = res[1];
-      resend = res[2];
-    });
-  }
+  // Removed _translateTexts as it is replaced by lang.getText in build
 
   Future<void> _verifyOtp() async {
     final otp = _controllers.map((c) => c.text).join();
 
-    if (otp.length != 6) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Enter 6-digit OTP")));
+      ).showSnackBar(SnackBar(content: Text(lang.getText('enter_6_digit_otp'))));
       return;
     }
 
@@ -141,8 +129,8 @@ class _OtpScreenState extends State<OtpScreen> {
           SnackBar(
             content: Text(
               e.code == 'invalid-verification-code'
-                  ? "Invalid OTP"
-                  : "Authentication failed: ${e.code}",
+                  ? lang.getText('invalid_otp')
+                  : lang.getText('auth_failed').replaceAll('{error}', e.code),
             ),
           ),
         );
@@ -153,7 +141,7 @@ class _OtpScreenState extends State<OtpScreen> {
         debugPrint("OTP Error: $e");
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("OTP verification failed: $e")),
+          SnackBar(content: Text(lang.getText('auth_failed').replaceAll('{error}', e.toString()))),
         );
       }
     }
@@ -170,9 +158,8 @@ class _OtpScreenState extends State<OtpScreen> {
         phoneNumber: '+91${widget.phone}',
         forceResendingToken: _resendToken,
         verificationCompleted: (PhoneAuthCredential credential) {},
-        verificationFailed: (FirebaseAuthException e) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Resend failed: ${e.message}")),
+            SnackBar(content: Text(lang.getText('otp_resend_failed'))),
           );
         },
         codeSent: (String verificationId, int? resendToken) {
@@ -181,7 +168,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text("OTP Resent")));
+          ).showSnackBar(SnackBar(content: Text(lang.getText('otp_resent'))));
         },
         codeAutoRetrievalTimeout: (String verificationId) {
           _verificationId = verificationId;
@@ -191,7 +178,7 @@ class _OtpScreenState extends State<OtpScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Failed to resend OTP")));
+      ).showSnackBar(SnackBar(content: Text(lang.getText('otp_resend_failed'))));
     }
   }
 
@@ -207,13 +194,17 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageViewModel>(context);
+    final theme = Theme.of(context);
 
     if (lang.loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: const Center(child: CircularProgressIndicator()),
+      );
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -222,14 +213,16 @@ class _OtpScreenState extends State<OtpScreen> {
             children: [
               const SizedBox(height: 40),
               Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+                lang.getText('otp_title'),
+                style: theme.textTheme.headlineLarge,
+              ).animate().fade(duration: 400.ms).slideY(begin: 0.1),
+              
               const SizedBox(height: 8),
-              Text("$subtitle ${widget.phone}"),
+              Text(
+                "${lang.getText('otp_subtitle')} ${widget.phone}",
+                style: theme.textTheme.bodyMedium,
+              ).animate().fade(delay: 200.ms).slideY(begin: 0.1),
+              
               const SizedBox(height: 40),
 
               Row(
@@ -237,29 +230,29 @@ class _OtpScreenState extends State<OtpScreen> {
                 children: List.generate(
                   6,
                   (i) => SizedBox(
-                    width: 40,
+                    width: 45,
                     child: TextField(
                       controller: _controllers[i],
                       maxLength: 1,
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+                      style: theme.textTheme.headlineMedium,
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: Colors.grey[200],
+                        fillColor: AppColors.surface,
                         counterText: "",
-                        contentPadding: const EdgeInsets.all(8),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.black12),
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.dividerColor),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.black12),
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.dividerColor),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.black, width: 2),
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.primary, width: 2),
                         ),
                       ),
                       onChanged: (val) {
@@ -270,34 +263,34 @@ class _OtpScreenState extends State<OtpScreen> {
                         }
                       },
                     ),
-                  ),
+                  ).animate().fade(delay: (300 + (i * 50)).ms).slideY(begin: 0.2),
                 ),
               ),
 
-              const SizedBox(height: 20),
-              seconds == 0
-                  ? TextButton(
-                      onPressed: _resendOtp,
-                      child: const Text(
-                        "Resend OTP",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+              const SizedBox(height: 32),
+              Center(
+                child: seconds == 0
+                    ? TextButton(
+                        onPressed: _resendOtp,
+                        child: Text(
+                          lang.getText('resend_otp_btn'),
+                          style: theme.textTheme.titleMedium?.copyWith(color: AppColors.primary),
+                        ),
+                      )
+                    : Text(
+                        lang.getText('resend_otp_msg').replaceAll('{seconds}', seconds.toString()),
+                        style: theme.textTheme.bodyMedium,
                       ),
-                    )
-                  : Text(
-                      "Resend OTP in ${seconds}s",
-                      style: const TextStyle(color: Colors.grey),
-                    ),
+              ).animate().fade(delay: 600.ms),
 
               const Spacer(),
               ElevatedButton(
                 onPressed: _verifyOtp,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 50),
+                  minimumSize: const Size(double.infinity, 56),
                 ),
-                child: const Text("Verify"),
-              ),
+                child: Text(lang.getText('verify')),
+              ).animate().fade(delay: 700.ms).slideY(begin: 0.2),
             ],
           ),
         ),

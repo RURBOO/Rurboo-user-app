@@ -126,8 +126,14 @@ Future<void> main() async {
           ),
           
           // VOICE AGENT
-          ChangeNotifierProvider<VoiceAgentViewModel>(
+          ChangeNotifierProxyProvider<LanguageViewModel, VoiceAgentViewModel>(
             create: (_) => VoiceAgentViewModel()..init(),
+            update: (_, lang, voice) {
+              if (voice != null) {
+                voice.updateLanguage(lang.language);
+              }
+              return voice ?? VoiceAgentViewModel();
+            },
           ),
         ],
         child: const MyApp(),

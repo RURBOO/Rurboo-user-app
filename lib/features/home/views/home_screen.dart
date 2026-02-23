@@ -37,7 +37,8 @@ class _HomeScreenState extends State<HomeScreen>
       // Welcome announcement
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
-          voice.speak("रुर-बू mein aapka swagat hai. Apni manzil chunein");
+          final lang = Provider.of<LanguageViewModel>(context, listen: false);
+          voice.speak(lang.getText('welcome_msg'));
         }
       });
     });
@@ -221,34 +222,59 @@ class HomeBody extends StatelessWidget {
 
   Widget _confirmRideBottomSheet(BuildContext context, HomeViewModel vm) {
     final lang = Provider.of<LanguageViewModel>(context);
+    final theme = Theme.of(context);
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 12)],
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 24,
+              offset: const Offset(0, -4),
+            ),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              title: Text(
-                vm.destination?.address ?? "",
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              trailing: IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => vm.clearDestination(),
-              ),
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.location_on, color: AppColors.primary, size: 20),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    vm.destination?.address ?? "",
+                    style: theme.textTheme.titleMedium,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                  onPressed: () => vm.clearDestination(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 50),
+                minimumSize: const Size(double.infinity, 54),
               ),
               onPressed: () {
                 if (vm.pickupLatLng == null || vm.destinationLatLng == null) {
@@ -276,7 +302,7 @@ class HomeBody extends StatelessWidget {
                   ),
                 );
               },
-              child: Text(lang.getText('confirm_ride'), style: const TextStyle(fontSize: 16)),
+              child: Text(lang.getText('confirm_ride')),
             ),
           ],
         ),
@@ -286,13 +312,14 @@ class HomeBody extends StatelessWidget {
 
   Widget _searchBottomSheet(BuildContext context, HomeViewModel vm) {
     final lang = Provider.of<LanguageViewModel>(context);
+    final theme = Theme.of(context);
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
-        height: 320, // Slightly taller for better spacing
+        height: 320,
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
           boxShadow: [
             BoxShadow(
@@ -321,9 +348,9 @@ class HomeBody extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5F7FA), // Premium Light Background
+                  color: const Color(0xFFF4F7F6),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey[200]!),
+                  border: Border.all(color: AppColors.dividerColor),
                 ),
                 child: Row(
                   children: [
@@ -331,11 +358,7 @@ class HomeBody extends StatelessWidget {
                     const SizedBox(width: 16),
                     Text(
                       lang.getText('where_to'),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
+                      style: theme.textTheme.titleMedium?.copyWith(color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -344,14 +367,51 @@ class HomeBody extends StatelessWidget {
             
             const SizedBox(height: 24),
             
+            // Home/Work shortcuts
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: Row(
+                children: [
+                  _shortcutChip(
+                    context,
+                    icon: Icons.home_rounded,
+                    label: lang.getText('home'),
+                    color: Colors.blue,
+                    location: vm.homeLocation,
+                    onTap: () {
+                      if (vm.homeLocation != null) {
+                        vm.selectDestination(vm.homeLocation!);
+                      } else {
+                        _openSearch(context, isDestination: true);
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                  _shortcutChip(
+                    context,
+                    icon: Icons.work_rounded,
+                    label: lang.getText('work'),
+                    color: Colors.orange,
+                    location: vm.workLocation,
+                    onTap: () {
+                      if (vm.workLocation != null) {
+                        vm.selectDestination(vm.workLocation!);
+                      } else {
+                        _openSearch(context, isDestination: true);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+
             // Recent Destinations Title
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 lang.getText('recent_destinations'),
-                style: const TextStyle(
-                  fontSize: 14, 
-                  fontWeight: FontWeight.bold,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                   letterSpacing: 0.5,
                 ),
@@ -370,7 +430,7 @@ class HomeBody extends StatelessWidget {
                           const SizedBox(height: 8),
                           Text(
                             lang.getText('no_recent_destinations'),
-                            style: TextStyle(color: Colors.grey[400]),
+                            style: theme.textTheme.bodyMedium,
                           ),
                         ],
                       ),
@@ -394,10 +454,10 @@ class HomeBody extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[100],
+                                  color: AppColors.background,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.location_on_outlined, size: 20, color: AppColors.textPrimary),
+                                child: const Icon(Icons.location_on_outlined, size: 20, color: AppColors.primary),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -406,13 +466,13 @@ class HomeBody extends StatelessWidget {
                                   children: [
                                     Text(
                                       destination.address.split(',').first,
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                      style: theme.textTheme.titleMedium,
                                     ),
                                     Text(
                                       destination.address,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                      style: theme.textTheme.bodySmall,
                                     ),
                                   ],
                                 ),
@@ -426,6 +486,55 @@ class HomeBody extends StatelessWidget {
           ],
         ),
       ).animate().slideY(begin: 0.3, end: 0, duration: 400.ms, curve: Curves.easeOutQuad),
+    );
+  }
+
+  }
+
+  Widget _shortcutChip(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color color,
+    LocationResult? location,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color.withValues(alpha: 0.1)),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                    Text(
+                      location?.address.split(',').first ?? Provider.of<LanguageViewModel>(context).getText('add_favorite'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

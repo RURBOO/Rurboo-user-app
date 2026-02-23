@@ -108,14 +108,13 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
     };
 
     vm.onTimeout = () {
+      final lang = Provider.of<LanguageViewModel>(context, listen: false);
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (_) => AlertDialog(
-          title: const Text("No Drivers Available"),
-          content: const Text(
-            "We couldn't find a driver nearby. Please try again later.",
-          ),
+          title: Text(lang.getText('no_drivers_available')),
+          content: Text(lang.getText('no_drivers_desc')),
           actions: [
             TextButton(
               onPressed: () {
@@ -126,7 +125,7 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
                   (r) => false,
                 );
               },
-              child: const Text("OK"),
+              child: Text(lang.getText('ok')),
             ),
           ],
         ),
@@ -153,6 +152,7 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
   @override
   Widget build(BuildContext context) {
     final vm = Provider.of<SearchingDriverViewModel>(context);
+    final lang = Provider.of<LanguageViewModel>(context);
 
      return PopScope(
       canPop: false,
@@ -160,9 +160,9 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
         if (didPop) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Please cancel the ride to go back"),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text(lang.getText('cancel_to_go_back')),
+            duration: const Duration(seconds: 2),
           ),
         );
       },
@@ -208,10 +208,10 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
 
                     const SizedBox(height: 18),
 
-                    const Text(
-                      "Contacting nearby drivers...",
+                    Text(
+                      lang.getText('searching_driver'),
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w600,
                       ),
@@ -276,7 +276,7 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                         child: Text(
-                          "Cancel Ride",
+                          lang.getText('cancel_ride'),
                           style: TextStyle(
                             color: Colors.red.shade400,
                             fontSize: 16,

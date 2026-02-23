@@ -57,4 +57,57 @@ class UserPreferences {
     }
     return null;
   }
+
+  // Work Location
+  static const String _keyWorkLocation = 'work_location';
+
+  static Future<void> saveWorkLocation(LocationResult location) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyWorkLocation, jsonEncode(location.toJson()));
+  }
+
+  static Future<LocationResult?> getWorkLocation() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? jsonString = prefs.getString(_keyWorkLocation);
+    if (jsonString != null) {
+      try {
+        return LocationResult.fromJson(jsonDecode(jsonString));
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  // Favorites
+  static const String _keyFavorites = 'favorite_locations';
+
+  static Future<void> saveFavorite(LocationResult location) async {
+    final prefs = await SharedPreferences.getInstance();
+    final favorites = await getFavorites();
+    
+    // Avoid duplicates by address
+    favorites.removeWhere((item) => item.address == location.address);
+    favorites.insert(0, location);
+    
+    final List<String> encoded = favorites.map((e) => jsonEncode(e.toJson())).toList();
+    await prefs.setStringList(_keyFavorites, encoded);
+  }
+
+  static Future<List<LocationResult>> getFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String>? list = prefs.getStringList(_keyFavorites);
+    if (list != null) {
+      return list.map((e) => LocationResult.fromJson(jsonDecode(e))).toList();
+    }
+    return [];
+  }
+
+  static Future<void> removeFavorite(String address) async {
+    final prefs = await SharedPreferences.getInstance();
+    final favorites = await getFavorites();
+    favorites.removeWhere((item) => item.address == address);
+    final List<String> encoded = favorites.map((e) => jsonEncode(e.toJson())).toList();
+    await prefs.setStringList(_keyFavorites, encoded);
+  }
 }

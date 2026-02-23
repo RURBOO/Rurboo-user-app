@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:rurboo/features/language/viewmodels/language_vm.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/theme/app_colors.dart';
 import 'otp_screen.dart';
-
 class PhoneInputScreen extends StatefulWidget {
   const PhoneInputScreen({super.key});
 
@@ -37,15 +38,15 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
       },
       verificationFailed: (FirebaseAuthException e) {
         Navigator.pop(context);
-        String msg = "Verification failed";
+        String msg = lang.getText('verification_failed');
         if (e.code == 'invalid-phone-number') {
-          msg = "Invalid phone number format.";
+          msg = lang.getText('invalid_phone_format');
         } else if (e.code == 'quota-exceeded') {
-          msg = "SMS quota exceeded. Please try again later.";
+          msg = lang.getText('sms_quota_exceeded');
         } else if (e.code == 'billing-not-enabled') {
-          msg = "Firebase billing not enabled (dev error).";
+          msg = lang.getText('firebase_billing_error');
         } else {
-          msg = "Error: ${e.message}";
+          msg = "${lang.getText('error')}: ${e.message}";
         }
         debugPrint("🔥 Phone Auth Error: ${e.code} - ${e.message}");
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
@@ -67,9 +68,10 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
   @override
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageViewModel>(context);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -78,58 +80,57 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
             children: [
               const SizedBox(height: 20),
               Center(
-                child: Image.asset(
-                  "assets/images/app_logo.jpg",
-                  height: 60,
-                  errorBuilder: (c, e, s) => const SizedBox(),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Image.asset(
+                    "assets/images/app_logo.jpg",
+                    height: 50,
+                    errorBuilder: (c, e, s) => const Icon(Icons.local_taxi, size: 50, color: AppColors.primary),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
+              ).animate().fade(duration: 500.ms).scale(curve: Curves.easeOutBack),
+              
+              const SizedBox(height: 32),
               Text(
                 lang.getText('login_title'),
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+                style: theme.textTheme.headlineLarge,
+              ).animate().fade(delay: 200.ms).slideY(begin: 0.2),
+              
               const SizedBox(height: 8),
               Text(
                 lang.getText('login_subtitle'),
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 30),
+                style: theme.textTheme.bodyMedium,
+              ).animate().fade(delay: 300.ms).slideY(begin: 0.2),
+              
+              const SizedBox(height: 40),
               TextField(
                 controller: phoneCtrl,
                 keyboardType: TextInputType.phone,
                 maxLength: 10,
+                style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(10),
                 ],
                 decoration: InputDecoration(
                   prefixIcon: Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(16),
                     margin: const EdgeInsets.only(right: 8),
-                    child: const Text(
+                    child: Text(
                       "🇮🇳 +91",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
+                      style: theme.textTheme.titleMedium,
                     ),
                   ),
                   prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
                   hintText: lang.getText('enter_phone_hint'),
                   counterText: "",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
                 ),
-              ),
+              ).animate().fade(delay: 400.ms).slideY(begin: 0.2),
+              
               const Spacer(),
               ElevatedButton(
                 onPressed: () {
@@ -143,15 +144,12 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                   _next();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 50),
+                  minimumSize: const Size(double.infinity, 56),
                 ),
                 child: Text(
                   lang.getText('proceed'),
-                  style: const TextStyle(fontSize: 16),
                 ),
-              ),
+              ).animate().fade(delay: 600.ms).slideY(begin: 0.3),
             ],
           ),
         ),

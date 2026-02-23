@@ -33,6 +33,9 @@ class HomeViewModel extends ChangeNotifier {
   bool get hasLocationError => _hasLocationError;
 
   List<RecentPlace> recentDestinations = [];
+  LocationResult? homeLocation;
+  LocationResult? workLocation;
+  List<LocationResult> favoriteLocations = [];
 
   HomeViewModel(this.repo);
 
@@ -124,9 +127,40 @@ class HomeViewModel extends ChangeNotifier {
     }
 
     recentDestinations = await repo.loadDestinations();
+    await _loadSavedLocations();
 
     loadingLocation = false;
     _updateMarkers();
+    notifyListeners();
+  }
+
+  Future<void> _loadSavedLocations() async {
+    homeLocation = await UserPreferences.getHomeLocation();
+    workLocation = await UserPreferences.getWorkLocation();
+    favoriteLocations = await UserPreferences.getFavorites();
+  }
+
+  Future<void> saveAsHome(LocationResult loc) async {
+    await UserPreferences.saveHomeLocation(loc);
+    homeLocation = loc;
+    notifyListeners();
+  }
+
+  Future<void> saveAsWork(LocationResult loc) async {
+    await UserPreferences.saveWorkLocation(loc);
+    workLocation = loc;
+    notifyListeners();
+  }
+
+  Future<void> toggleFavorite(LocationResult loc) async {
+    final isFav = favoriteLocations.any((e) => e.address == loc.address);
+    if (isFav) {
+      await UserPreferences.removeFavorite(loc.address);
+      favoriteLocations.removeWhere((e) => e.address == loc.address);
+    } else {
+      await UserPreferences.saveFavorite(loc);
+      favoriteLocations.insert(0, loc);
+    }
     notifyListeners();
   }
 
@@ -166,14 +200,16 @@ class HomeViewModel extends ChangeNotifier {
     
     try {
       // 1. Check for Shortcuts
-      if (text.toLowerCase() == "home") {
-         // Check User Preferences for Home
-         final homeData = await UserPreferences.getHomeLocation(); // Hypothetical method
-         if (homeData != null) {
-            return homeData;
-         }
-         // If no home saved, fall through to normal search or return null
-         // return LocationResult(address: "Home", coordinates: const LatLng(25.5941, 85.1376)); // Patna REMOVED
+      if (text.toLowerCase() == "home" || text.toLowerCase() == "ghar") {
+         if (homeLocation != null) return homeLocation;
+      }
+      if (text.toLowerCase() == "work" || text.toLowerCase() == "office") {
+         if (workLocation != null) return workLocation;
+      }
+      
+      // Check favorites by label or address? For now, just generic.
+      for (var fav in favoriteLocations) {
+        if (text.toLowerCase() == fav.address.toLowerCase()) return fav;
       }
       
       // 2. Perform Search with Location Bias

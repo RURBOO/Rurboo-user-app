@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
 import '../../../features/navigation/views/main_navigator.dart';
+import '../../language/viewmodels/language_vm.dart';
 
 class LocationDisclosureScreen extends StatelessWidget {
   const LocationDisclosureScreen({super.key});
 
-  Future<void> _handleAllow(BuildContext context) async {
+  Future<void> _handleAllow(BuildContext context, LanguageViewModel lang) async {
     LocationPermission permission = await Geolocator.requestPermission();
 
     if (permission == LocationPermission.whileInUse ||
@@ -23,29 +25,27 @@ class LocationDisclosureScreen extends StatelessWidget {
         );
       }
     } else if (permission == LocationPermission.deniedForever) {
-      if (context.mounted) _showOpenSettingsDialog(context);
+      if (context.mounted) _showOpenSettingsDialog(context, lang);
     }
   }
 
-  void _showOpenSettingsDialog(BuildContext context) {
+  void _showOpenSettingsDialog(BuildContext context, LanguageViewModel lang) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Permission Required"),
-        content: const Text(
-          "Location is permanently denied. Please enable it in settings to book rides.",
-        ),
+        title: Text(lang.getText('permission_required')),
+        content: Text(lang.getText('location_denied_forever')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
+            child: Text(lang.getText('cancel')),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               openAppSettings();
             },
-            child: const Text("Open Settings"),
+            child: Text(lang.getText('open_settings')),
           ),
         ],
       ),
@@ -54,6 +54,7 @@ class LocationDisclosureScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageViewModel>(context);
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -68,15 +69,15 @@ class LocationDisclosureScreen extends StatelessWidget {
                 color: Colors.black,
               ),
               const SizedBox(height: 24),
-              const Text(
-                "Enable Location",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              Text(
+                lang.getText('location_disclosure_title'),
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
 
-              const Text(
-                "Rurboo collects your location data to enable \"Pickup Point Selection\", \"Driver Matching\", and \"Trip Tracking\", even when the app is in use.",
-                style: TextStyle(
+              Text(
+                lang.getText('location_disclosure_desc'),
+                style: const TextStyle(
                   fontSize: 16,
                   height: 1.5,
                   color: Colors.black87,
@@ -84,9 +85,9 @@ class LocationDisclosureScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 24),
-              _buildBullet("Set your exact pickup location easily."),
-              _buildBullet("Find the nearest available drivers."),
-              _buildBullet("Track your ride in real-time."),
+              _buildBullet(lang.getText('location_benefit_1')),
+              _buildBullet(lang.getText('location_benefit_2')),
+              _buildBullet(lang.getText('location_benefit_3')),
 
               const Spacer(),
 
@@ -98,10 +99,10 @@ class LocationDisclosureScreen extends StatelessWidget {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  onPressed: () => _handleAllow(context),
-                  child: const Text(
-                    "Allow Location Access",
-                    style: TextStyle(fontSize: 16),
+                  onPressed: () => _handleAllow(context, lang),
+                  child: Text(
+                    lang.getText('allow_location_access'),
+                    style: const TextStyle(fontSize: 16),
                   ),
                 ),
               ),
@@ -115,9 +116,9 @@ class LocationDisclosureScreen extends StatelessWidget {
                       (route) => false,
                     );
                   },
-                  child: const Text(
-                    "Maybe Later",
-                    style: TextStyle(color: Colors.grey),
+                  child: Text(
+                    lang.getText('maybe_later'),
+                    style: const TextStyle(color: Colors.grey),
                   ),
                 ),
               ),

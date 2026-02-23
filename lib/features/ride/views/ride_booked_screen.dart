@@ -101,21 +101,29 @@ class _RideBookedScreenState extends State<RideBookedScreen> {
     _lastStage = vm.stage;
     final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
     
+    final lang = Provider.of<LanguageViewModel>(context, listen: false);
+    
     // Announce ride updates with comprehensive information
     if (vm.stage == RideStage.arriving) {
        // Driver found - announce with ETA
-       final eta = vm.eta; // e.g., "5 min"
-       voice.speak("Driver mil gya hai. Driver ${vm.rideDetails?.driverName ?? ''} gaadi number ${vm.rideDetails?.carNumber ?? ''} se aa rahe hain. Vo aapke paas $eta mein pahuch jayenge.");
+       final eta = vm.eta; 
+       String msg = lang.getText('driver_arriving_voice');
+       msg = msg.replaceAll('{0}', vm.rideDetails?.driverName ?? '');
+       msg = msg.replaceAll('{1}', vm.rideDetails?.carNumber ?? '');
+       msg = msg.replaceAll('{2}', eta);
+       voice.speak(msg);
        
        // Check for Proactive Safety Alert on Arrival/Start
        _triggerSafetyVoiceCheck(vm, voice);
     } else if (vm.stage == RideStage.inProgress) {
        // Ride started - announce with destination ETA
-       final eta = vm.eta; // e.g., "15 min"
-       voice.speak("Aapki ride start ho gyi hai. Aap lagbhag $eta mein apne destination par pahuch jayenge. Safe journey.");
+       final eta = vm.eta; 
+       String msg = lang.getText('ride_started_voice');
+       msg = msg.replaceAll('{0}', eta);
+       voice.speak(msg);
     } else if (vm.stage == RideStage.completed) {
        // Ride completed - thank you message
-       voice.speak("Aapki yatra puri ho gyi. रुर-बू par safar karne ke liye shukriya.");
+       voice.speak(lang.getText('ride_completed_voice'));
     }
   }
   
@@ -128,7 +136,8 @@ class _RideBookedScreenState extends State<RideBookedScreen> {
         // We delay slightly so it doesn't overlap with "Driver Arriving"
         Future.delayed(const Duration(seconds: 4), () {
            if (mounted && vm.stage == RideStage.arriving) {
-             voice.speak("Aapki ride safety mode me hai. Guardian ko update bhej diya gaya hai.");
+             final lang = Provider.of<LanguageViewModel>(context, listen: false);
+             voice.speak(lang.getText('safety_mode_voice'));
            }
         });
      }
@@ -576,8 +585,8 @@ class _RideBookedContent extends StatelessWidget {
                                       Icon(Icons.discount, size: 12, color: Colors.green),
                                       SizedBox(width: 4),
                                       Text(
-                                        "Referral Discount Applied (-₹${vm.rideDetails!.discountAmount.toInt()})",
-                                        style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold),
+                                        "${lang.getText('referral_discount_applied')} (-₹${vm.rideDetails!.discountAmount.toInt()})",
+                                        style: const TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold),
                                       ),
                                     ],
                                   ),

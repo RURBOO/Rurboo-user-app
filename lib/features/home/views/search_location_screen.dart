@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rurboo/core/services/user_preferences.dart';
+import 'package:rurboo/features/language/viewmodels/language_vm.dart';
 
 import '../viewmodels/search_location_viewmodel.dart';
 import '../repositories/search_repository.dart';
@@ -36,10 +38,11 @@ class _SearchLocationBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = Provider.of<SearchLocationViewModel>(context);
+    final lang = Provider.of<LanguageViewModel>(context);
 
     final title = vm.isDestinationMode
-        ? "Set Destination"
-        : "Set Pickup Location";
+        ? lang.getText('set_destination')
+        : lang.getText('set_pickup');
 
     return Scaffold(
       appBar: AppBar(
@@ -50,14 +53,14 @@ class _SearchLocationBody extends StatelessWidget {
       ),
       body: Column(
         children: [
-          _searchBox(vm),
+          _searchBox(vm, lang),
           
           // "Choose on Map" Option
           ListTile(
             leading: const Icon(Icons.map, color: Colors.blue),
-            title: const Text(
-              "Choose on Map", 
-              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+            title: Text(
+              lang.getText('choose_on_map'), 
+              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.blue),
             onTap: () async {
@@ -71,6 +74,9 @@ class _SearchLocationBody extends StatelessWidget {
                }
             },
           ),
+          const Divider(height: 1),
+
+          _favoriteButtons(context, vm, lang),
           const Divider(height: 1),
 
           if (vm.loading) const LinearProgressIndicator(minHeight: 2),
@@ -109,7 +115,7 @@ class _SearchLocationBody extends StatelessWidget {
     );
   }
 
-  Widget _searchBox(SearchLocationViewModel vm) {
+  Widget _searchBox(SearchLocationViewModel vm, LanguageViewModel lang) {
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -125,9 +131,10 @@ class _SearchLocationBody extends StatelessWidget {
             readOnly: vm.isDestinationMode,
             focusNode: vm.pickupFocus,
             onChanged: vm.isDestinationMode ? null : vm.onTextChanged,
-            decoration: const InputDecoration(
-              hintText: "Pickup location",
+            decoration: InputDecoration(
+              hintText: lang.getText('pickup_location'),
               border: InputBorder.none,
+              prefixIcon: const Icon(Icons.circle, color: Colors.green, size: 14),
             ),
           ),
 
@@ -138,12 +145,50 @@ class _SearchLocationBody extends StatelessWidget {
             readOnly: !vm.isDestinationMode,
             focusNode: vm.destinationFocus,
             onChanged: vm.isDestinationMode ? vm.onTextChanged : null,
-            decoration: const InputDecoration(
-              hintText: "Destination",
+            decoration: InputDecoration(
+              hintText: lang.getText('where_to'),
               border: InputBorder.none,
+              prefixIcon: const Icon(Icons.square, color: Colors.red, size: 14),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _favoriteButtons(BuildContext context, SearchLocationViewModel vm, LanguageViewModel lang) {
+    return Row(
+      children: [
+        _favItem(
+          icon: Icons.home,
+          label: lang.getText('home'),
+          onTap: () async {
+            final loc = await UserPreferences.getHomeLocation();
+            if (loc != null && context.mounted) {
+              Navigator.pop(context, loc);
+            }
+          },
+        ),
+        _favItem(
+          icon: Icons.work,
+          label: lang.getText('work'),
+          onTap: () async {
+            final loc = await UserPreferences.getWorkLocation();
+            if (loc != null && context.mounted) {
+              Navigator.pop(context, loc);
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _favItem({required IconData icon, required String label, required VoidCallback onTap}) {
+    return Expanded(
+      child: ListTile(
+        leading: Icon(icon, color: Colors.grey),
+        title: Text(label),
+        onTap: onTap,
       ),
     );
   }

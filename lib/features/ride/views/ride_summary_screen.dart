@@ -175,16 +175,16 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
               title: Text(lang.getText('report_issue')),
               content: TextField(
                 controller: reportController,
-                decoration: const InputDecoration(
-                  hintText: 'Describe the issue...',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  hintText: lang.getText('report_hint'),
+                  border: const OutlineInputBorder(),
                 ),
                 maxLines: 4,
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Cancel'),
+                  child: Text(lang.getText('cancel')),
                 ),
                 ElevatedButton(
                   onPressed: isSubmittingReport
@@ -210,10 +210,10 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
 
                             if (dialogContext.mounted) {
                               Navigator.pop(dialogContext);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('Report submitted successfully!')),
-                              );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(lang.getText('report_success'))),
+                                );
                             }
                           } catch (e) {
                             if (dialogContext.mounted) {
@@ -230,7 +230,7 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Submit'),
+                      : Text(lang.getText('submit')),
                 ),
               ],
             );
@@ -317,7 +317,7 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
                                 Padding(
                                   padding: const EdgeInsets.only(top: 4),
                                   child: Text(
-                                    "Referral Discount Applied (-₹${_discountAmount.toStringAsFixed(0)})",
+                                    "${lang.getText('referral_discount_applied')} (-₹${_discountAmount.toStringAsFixed(0)})",
                                     style: const TextStyle(
                                       color: Colors.green,
                                       fontSize: 12,

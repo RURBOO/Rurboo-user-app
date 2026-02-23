@@ -812,7 +812,9 @@ class RideSelectionBody extends StatelessWidget {
                    Icon(Icons.person, size: 12, color: Colors.grey[600]),
                    const SizedBox(width: 4),
                    Text(
-                     ride.seats == 0 ? "Cargo" : "${ride.seats} seat${ride.seats > 1 ? 's' : ''}", 
+                     ride.seats == 0 
+                       ? lang.getText('cargo') 
+                       : "${ride.seats} ${ride.seats > 1 ? lang.getText('seats') : lang.getText('seat')}", 
                      style: TextStyle(fontSize: 12, color: Colors.grey[600])
                    ),
                    const SizedBox(width: 8),
@@ -841,7 +843,7 @@ class RideSelectionBody extends StatelessWidget {
                margin: const EdgeInsets.only(top: 4),
                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                decoration: BoxDecoration(color: AppColors.success, borderRadius: BorderRadius.circular(4)),
-               child: const Text("Best Value", style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+               child: Text(lang.getText('best_value'), style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
             )
           ],
         ),
@@ -856,18 +858,18 @@ class RideSelectionBody extends StatelessWidget {
     showDialog(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text("Book for Someone Else"),
+        title: Text(lang.getText('book_for_someone_else')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameController,
-              decoration: const InputDecoration(labelText: "Passenger Name", prefixIcon: Icon(Icons.person)),
+              decoration: InputDecoration(labelText: lang.getText('passenger_name'), prefixIcon: const Icon(Icons.person)),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: phoneController,
-              decoration: const InputDecoration(labelText: "Phone Number", prefixIcon: Icon(Icons.phone)),
+              decoration: InputDecoration(labelText: lang.getText('phone_number'), prefixIcon: const Icon(Icons.phone)),
               keyboardType: TextInputType.phone,
             ),
           ],
@@ -878,7 +880,7 @@ class RideSelectionBody extends StatelessWidget {
                vm.setBookForOthers(false);
                Navigator.pop(c);
             },
-            child: const Text("Cancel"),
+            child: Text(lang.getText('cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -887,12 +889,12 @@ class RideSelectionBody extends StatelessWidget {
                 Navigator.pop(c);
               } else {
                  ScaffoldMessenger.of(context).showSnackBar(
-                   const SnackBar(content: Text("Please enter valid details")),
+                   SnackBar(content: Text(lang.getText('invalid_details'))),
                  );
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
-            child: const Text("Confirm"),
+            child: Text(lang.getText('confirm')),
           )
         ],
       ),
@@ -932,7 +934,7 @@ Future<void> bookRideTransaction(
     // 🔒 SECURTIY CHECK
     if (userId == null || authUser == null || userId != authUser.uid) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Session Expired. Please login again.")),
+        SnackBar(content: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('session_expired'))),
       );
       return; 
     }

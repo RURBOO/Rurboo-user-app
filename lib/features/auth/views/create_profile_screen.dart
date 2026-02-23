@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:rurboo/features/language/viewmodels/language_vm.dart';
 import '../../../core/services/user_preferences.dart';
 import '../../../core/services/notification_service.dart';
+import '../../../core/theme/app_colors.dart';
 import 'location_disclosure_screen.dart';
 import '../../voice/viewmodels/voice_agent_viewmodel.dart';
 
@@ -50,18 +52,11 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
     return false;
   }
 
-  String title = "Create your profile";
-  String subtitle = "Please create your account.";
-  String fullNameLbl = "Full Name";
-  String genderLbl = "Gender";
-  String emergencyLbl = "Emergency Number";
-  String whatsappLbl = "Receive important updates on WhatsApp";
-  String proceed = "Proceed";
+  // Removed hardcoded strings used for translation
 
   @override
   void initState() {
     super.initState();
-    _translateTexts();
     
     // Setup focus listeners for placeholder announcements
     _setupFocusListeners();
@@ -77,31 +72,31 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
   void _setupFocusListeners() {
     nameFocus.addListener(() {
       if (nameFocus.hasFocus) {
-        _announceField("Full name darj karein. Apna pura naam likhein.");
+        _announceField(lang.getText('profile_name_voice'));
       }
     });
     
     ageFocus.addListener(() {
       if (ageFocus.hasFocus) {
-        _announceField("Apni umar darj karein.");
+        _announceField(lang.getText('profile_age_voice'));
       }
     });
     
     emergencyFocus.addListener(() {
       if (emergencyFocus.hasFocus) {
-        _announceField("Emergency contact number darj karein. 10 digit ka number.");
+        _announceField(lang.getText('profile_emergency_voice'));
       }
     });
     
     guardianNameFocus.addListener(() {
       if (guardianNameFocus.hasFocus) {
-        _announceField("Guardian ka naam darj karein.");
+        _announceField(lang.getText('profile_guardian_name_voice'));
       }
     });
     
     guardianPhoneFocus.addListener(() {
       if (guardianPhoneFocus.hasFocus) {
-        _announceField("Guardian ka phone number darj karein. 10 digit ka number.");
+        _announceField(lang.getText('profile_guardian_phone_voice'));
       }
     });
   }
@@ -147,30 +142,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
      // For now, let's keep it manual save or via "Confirm" voice command later
   }
 
-  Future<void> _translateTexts() async {
-    final lang = Provider.of<LanguageViewModel>(context, listen: false);
-    final res = await lang.translate([
-      title,
-      subtitle,
-      fullNameLbl,
-      genderLbl,
-      emergencyLbl,
-      whatsappLbl,
-      proceed,
-    ]);
-
-    if (!mounted) return;
-
-    setState(() {
-      title = res[0];
-      subtitle = res[1];
-      fullNameLbl = res[2];
-      genderLbl = res[3];
-      emergencyLbl = res[4];
-      whatsappLbl = res[5];
-      proceed = res[6];
-    });
-  }
+  // Removed _translateTexts as it is replaced by lang.getText in build
 
   String _generateReferralCode(String name) {
     String prefix = name.trim().replaceAll(" ", "").toUpperCase();
@@ -229,7 +201,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
       if (gender.isEmpty) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text("Please select gender")));
+        ).showSnackBar(SnackBar(content: Text(lang.getText('select_gender'))));
       }
       return;
     }
@@ -247,8 +219,8 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Authentication Error. Please login again."),
+            SnackBar(
+              content: Text(lang.getText('auth_error_login_again')),
             ),
           );
         }
@@ -303,7 +275,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
         Navigator.pop(context);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text("Failed to create profile: $e")));
+        ).showSnackBar(SnackBar(content: Text(lang.getText('create_profile_failed').replaceAll('{error}', e.toString()))));
       }
     }
   }
@@ -311,14 +283,15 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageViewModel>(context);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: lang.loading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: AppColors.primary))
           : SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 child: SingleChildScrollView(
                   child: Form(
                     key: formKey,
@@ -327,43 +300,34 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                       children: [
                         const SizedBox(height: 20),
                         Text(
-                          title,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                          lang.getText('create_profile_title'),
+                          style: theme.textTheme.headlineLarge,
+                        ).animate().fade(duration: 400.ms).slideY(begin: 0.1),
                         const SizedBox(height: 8),
                         Text(
-                          subtitle,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
+                          lang.getText('create_profile_subtitle'),
+                          style: theme.textTheme.bodyMedium,
+                        ).animate().fade(delay: 150.ms).slideY(begin: 0.1),
+                        const SizedBox(height: 28),
 
                         TextFormField(
                           controller: nameController,
                           focusNode: nameFocus,
                           textCapitalization: TextCapitalization.words,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                              RegExp(r'[a-zA-Z\s]'),
-                            ),
+                            FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
                           ],
                           decoration: InputDecoration(
-                            labelText: fullNameLbl,
-                            border: const OutlineInputBorder(),
-                            prefixIcon: const Icon(Icons.person_outline),
+                            labelText: lang.getText('full_name_label'),
+                            prefixIcon: const Icon(Icons.person_outline, color: AppColors.textSecondary),
                           ),
                           validator: (v) {
-                            if (v == null || v.isEmpty) return "Enter full name";
-                            if (v.trim().split(' ').length < 2) return "Enter First and Last name";
+                            if (v == null || v.isEmpty) return lang.getText('enter_full_name');
+                            if (v.trim().split(' ').length < 2) return lang.getText('enter_first_last_name');
                             return null;
                           },
-                        ),
-                        const SizedBox(height: 20),
+                        ).animate().fade(delay: 200.ms).slideY(begin: 0.1),
+                        const SizedBox(height: 16),
 
                         // --- AGE & GENDER ROW ---
                         Row(
@@ -378,16 +342,15 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                                   FilteringTextInputFormatter.digitsOnly,
                                   LengthLimitingTextInputFormatter(3),
                                 ],
-                                decoration: const InputDecoration(
-                                  labelText: "Age",
-                                  border: OutlineInputBorder(),
-                                  prefixIcon: Icon(Icons.calendar_today),
+                                decoration: InputDecoration(
+                                  labelText: lang.getText('age_label'),
+                                  prefixIcon: const Icon(Icons.calendar_today, color: AppColors.textSecondary),
                                 ),
                                 onChanged: (v) => setState(() {}),
                                 validator: (v) {
-                                  if (v == null || v.isEmpty) return "Required";
+                                  if (v == null || v.isEmpty) return lang.getText('required');
                                   int? age = int.tryParse(v);
-                                  if (age == null || age < 5 || age > 100) return "Invalid";
+                                  if (age == null || age < 5 || age > 100) return lang.getText('invalid');
                                   return null;
                                 },
                               ),
@@ -396,95 +359,88 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                             Expanded(
                               flex: 3,
                               child: DropdownButtonFormField<String>(
-                                initialValue: gender.isEmpty ? null : gender, // Use initialValue to fix deprecation
+                                initialValue: gender.isEmpty ? null : gender,
                                 decoration: InputDecoration(
-                                  labelText: genderLbl,
-                                  border: const OutlineInputBorder(),
+                                  labelText: lang.getText('gender_label'),
                                 ),
-                                items: ["Male", "Woman", "Other"].map((g) => 
-                                  DropdownMenuItem(value: g, child: Text(g))).toList(),
+                                items: ["Male", "Woman", "Other"].map((g) =>
+                                  DropdownMenuItem(value: g, child: Text(lang.getText(g.toLowerCase())))).toList(),
                                 onChanged: (v) => setState(() => gender = v!),
-                                validator: (v) => v == null ? "Required" : null,
+                                validator: (v) => v == null ? lang.getText('required') : null,
                               ),
                             ),
                           ],
-                        ),
+                        ).animate().fade(delay: 250.ms).slideY(begin: 0.1),
 
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
 
                         // --- USER CATEGORY ---
                         DropdownButtonFormField<String>(
-                          initialValue: userCategory, // Use initialValue to fix deprecation
-                          decoration: const InputDecoration(
-                            labelText: "Category",
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.category_outlined),
+                          initialValue: userCategory,
+                          decoration: InputDecoration(
+                            labelText: lang.getText('category_label'),
+                            prefixIcon: const Icon(Icons.category_outlined, color: AppColors.textSecondary),
                           ),
-                          items: ["Adult", "Woman", "Student", "Child"].map((c) => 
-                            DropdownMenuItem(value: c, child: Text(c))).toList(),
+                          items: ["Adult", "Woman", "Student", "Child"].map((c) =>
+                            DropdownMenuItem(value: c, child: Text(lang.getText(c.toLowerCase())))).toList(),
                           onChanged: (v) => setState(() => userCategory = v!),
-                          validator: (v) => v == null ? "Required" : null,
-                        ),
+                          validator: (v) => v == null ? lang.getText('required') : null,
+                        ).animate().fade(delay: 300.ms).slideY(begin: 0.1),
 
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
 
                         // --- GUARDIAN DETAILS (Conditional) ---
                         if (_isGuardianRequired()) ...[
-                           Container(
+                          Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.orange.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                              color: Colors.orange.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Row(
+                                Row(
                                   children: [
-                                    Icon(Icons.shield, color: Colors.orange, size: 20),
-                                    SizedBox(width: 8),
+                                    const Icon(Icons.shield, color: Colors.orange, size: 20),
+                                    const SizedBox(width: 8),
                                     Text(
-                                      "Guardian Details Required",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold, 
-                                        color: Colors.orange,
-                                      ),
+                                      lang.getText('guardian_required_title'),
+                                      style: theme.textTheme.titleMedium?.copyWith(color: Colors.orange),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 16),
-                                TextFormField(
-                                  controller: guardianNameController,
-                                  focusNode: guardianNameFocus,
-                                  decoration: const InputDecoration(
-                                    labelText: "Guardian Name",
-                                    border: OutlineInputBorder(),
-                                    filled: true,
-                                    fillColor: Colors.white,
+                                  TextFormField(
+                                    controller: guardianNameController,
+                                    focusNode: guardianNameFocus,
+                                    decoration: InputDecoration(
+                                      labelText: lang.getText('guardian_name_label'),
+                                      fillColor: AppColors.surface,
+                                      filled: true,
+                                    ),
+                                    validator: (v) => _isGuardianRequired() && (v == null || v.isEmpty)
+                                        ? lang.getText('required') : null,
                                   ),
-                                  validator: (v) => _isGuardianRequired() && (v == null || v.isEmpty) 
-                                      ? "Required" : null,
-                                ),
                                 const SizedBox(height: 16),
                                 TextFormField(
                                   controller: guardianPhoneController,
                                   focusNode: guardianPhoneFocus,
                                   keyboardType: TextInputType.phone,
                                   inputFormatters: [LengthLimitingTextInputFormatter(10)],
-                                  decoration: const InputDecoration(
-                                    labelText: "Guardian Phone",
-                                    border: OutlineInputBorder(),
-                                    filled: true,
-                                    fillColor: Colors.white,
+                                    decoration: InputDecoration(
+                                      labelText: lang.getText('guardian_phone_label'),
+                                      fillColor: AppColors.surface,
+                                      filled: true,
+                                    ),
+                                    validator: (v) => _isGuardianRequired() && (v == null || v.length != 10)
+                                        ? lang.getText('invalid') : null,
                                   ),
-                                  validator: (v) => _isGuardianRequired() && (v == null || v.length != 10) 
-                                      ? "Valid phone required" : null,
-                                ),
                               ],
                             ),
-                           ),
-                           const SizedBox(height: 20),
+                          ).animate().fade().scale(begin: const Offset(0.95, 0.95)),
+                          const SizedBox(height: 16),
                         ],
 
                         TextFormField(
@@ -496,56 +452,51 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                             LengthLimitingTextInputFormatter(10),
                           ],
                           decoration: InputDecoration(
-                            labelText: emergencyLbl,
-                            border: const OutlineInputBorder(),
-                            prefixIcon: const Icon(Icons.contact_emergency),
+                            labelText: lang.getText('emergency_contact_label'),
+                            prefixIcon: const Icon(Icons.contact_emergency, color: AppColors.textSecondary),
                           ),
                           validator: (v) {
-                            if (v == null || v.isEmpty) return "Enter emergency contact";
-                            if (v.length != 10) return "Enter valid 10-digit number";
+                            if (v == null || v.isEmpty) return lang.getText('required');
+                            if (v.length != 10) return lang.getText('invalid');
                             return null;
                           },
-                        ),
-                        // ... Checkbox and Button ...
-                        const SizedBox(height: 20),
-                          Row(
-                            children: [
-                              Checkbox(
-                                value: whatsappUpdates,
-                                onChanged: (v) => setState(() => whatsappUpdates = v!),
-                              ),
-                              Expanded(child: Text(whatsappLbl)),
-                            ],
-                          ),
-                          
-                          const SizedBox(height: 10),
-                          
-                          // Referral Code Input
-                          TextFormField(
-                            controller: referralController,
-                            textCapitalization: TextCapitalization.characters,
-                            decoration: const InputDecoration(
-                              labelText: "Referral Code (Optional)",
-                              border: OutlineInputBorder(),
-                              prefixIcon: Icon(Icons.confirmation_number_outlined),
-                              hintText: "e.g. ADAR1234",
-                            ),
-                          ),
+                        ).animate().fade(delay: 350.ms).slideY(begin: 0.1),
 
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: whatsappUpdates,
+                              activeColor: AppColors.primary,
+                              onChanged: (v) => setState(() => whatsappUpdates = v!),
+                            ),
+                            Expanded(child: Text(lang.getText('whatsapp_updates_label'), style: theme.textTheme.bodyMedium)),
+                          ],
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Referral Code Input
+                        TextFormField(
+                          controller: referralController,
+                          textCapitalization: TextCapitalization.characters,
+                          decoration: InputDecoration(
+                            labelText: lang.getText('referral_code_optional'),
+                            prefixIcon: const Icon(Icons.confirmation_number_outlined, color: AppColors.textSecondary),
+                            hintText: "e.g. ADAR1234",
+                          ),
+                        ).animate().fade(delay: 400.ms).slideY(begin: 0.1),
+
+                        const SizedBox(height: 32),
 
                         ElevatedButton(
                           onPressed: submit,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size(double.infinity, 50),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            minimumSize: const Size(double.infinity, 56),
                           ),
-                          child: Text(proceed, style: const TextStyle(fontSize: 16)),
-                        ),
+                          child: Text(lang.getText('proceed')),
+                        ).animate().fade(delay: 500.ms).slideY(begin: 0.2),
+                        const SizedBox(height: 24),
                       ],
                     ),
                   ),

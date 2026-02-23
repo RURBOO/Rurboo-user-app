@@ -1,11 +1,14 @@
-import 'package:flutter/material.dart';
-import 'package:rurboo/features/navigation/views/main_navigator.dart';
+import 'package:provider/provider.dart';
+import '../../language/viewmodels/language_vm.dart';
+import '../../navigation/views/main_navigator.dart';
 
 class LocationPermissionScreen extends StatelessWidget {
   const LocationPermissionScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageViewModel>(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -14,15 +17,15 @@ class LocationPermissionScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                "Turn your location on",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              Text(
+                lang.getText('location_permission_title'),
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-              const Text(
-                "To enjoy our fast delivery, please allow us to detect your location.",
+              Text(
+                lang.getText('location_permission_desc'),
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey, fontSize: 14),
+                style: const TextStyle(color: Colors.grey, fontSize: 14),
               ),
               const SizedBox(height: 40),
               ElevatedButton(
@@ -38,12 +41,12 @@ class LocationPermissionScreen extends StatelessWidget {
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 50),
                 ),
-                child: const Text("Turn on location service"),
+                child: Text(lang.getText('turn_on_location')),
               ),
               const SizedBox(height: 10),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text("Not now"),
+                child: Text(lang.getText('not_now')),
               ),
             ],
           ),
