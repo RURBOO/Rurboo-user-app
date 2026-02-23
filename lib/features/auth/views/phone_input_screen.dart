@@ -38,6 +38,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
       },
       verificationFailed: (FirebaseAuthException e) {
         Navigator.pop(context);
+        final lang = Provider.of<LanguageViewModel>(context, listen: false);
         String msg = lang.getText('verification_failed');
         if (e.code == 'invalid-phone-number') {
           msg = lang.getText('invalid_phone_format');

@@ -63,7 +63,10 @@ class _OtpScreenState extends State<OtpScreen> {
   // Removed _translateTexts as it is replaced by lang.getText in build
 
   Future<void> _verifyOtp() async {
+    final lang = Provider.of<LanguageViewModel>(context, listen: false);
     final otp = _controllers.map((c) => c.text).join();
+
+    if (otp.length < 6) {
 
       ScaffoldMessenger.of(
         context,
@@ -158,11 +161,14 @@ class _OtpScreenState extends State<OtpScreen> {
         phoneNumber: '+91${widget.phone}',
         forceResendingToken: _resendToken,
         verificationCompleted: (PhoneAuthCredential credential) {},
+        verificationFailed: (FirebaseAuthException e) {
+          final lang = Provider.of<LanguageViewModel>(context, listen: false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(lang.getText('otp_resend_failed'))),
           );
         },
         codeSent: (String verificationId, int? resendToken) {
+          final lang = Provider.of<LanguageViewModel>(context, listen: false);
           _verificationId = verificationId;
           _resendToken = resendToken;
 
@@ -176,6 +182,7 @@ class _OtpScreenState extends State<OtpScreen> {
       );
     } catch (e) {
       if (!mounted) return;
+      final lang = Provider.of<LanguageViewModel>(context, listen: false);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(lang.getText('otp_resend_failed'))));

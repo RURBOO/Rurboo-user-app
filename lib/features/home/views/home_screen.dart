@@ -489,8 +489,6 @@ class HomeBody extends StatelessWidget {
     );
   }
 
-  }
-
   Widget _shortcutChip(
     BuildContext context, {
     required IconData icon,

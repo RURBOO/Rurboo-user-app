@@ -70,6 +70,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
   }
   
   void _setupFocusListeners() {
+    final lang = Provider.of<LanguageViewModel>(context, listen: false);
     nameFocus.addListener(() {
       if (nameFocus.hasFocus) {
         _announceField(lang.getText('profile_name_voice'));
@@ -197,6 +198,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
   }
 
   void submit() async {
+    final lang = Provider.of<LanguageViewModel>(context, listen: false);
     if (!formKey.currentState!.validate() || gender.isEmpty) {
       if (gender.isEmpty) {
         ScaffoldMessenger.of(

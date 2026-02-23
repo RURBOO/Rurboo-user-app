@@ -3,7 +3,7 @@ class AppStrings {
     // --- Common ---
     'app_name': {
       'en': 'RURBOO',
-      'hi': 'रुरबू',
+      'hi': 'रु-रबू',
     },
     'proceed': {
       'en': 'Proceed',
@@ -179,10 +179,6 @@ class AppStrings {
     'enable_gps': {
       'en': 'Please enable GPS and allow location permissions.',
       'hi': 'कृपया GPS सक्षम करें और स्थान अनुमति दें।',
-    },
-    'open_settings': {
-      'en': 'Open Phone Settings',
-      'hi': 'फोन सेटिंग्स खोलें',
     },
     
     // --- Ride Selection ---
@@ -671,17 +667,13 @@ class AppStrings {
     'invalid_phone_format': {'en': 'Invalid phone number format.', 'hi': 'अमान्य फ़ोन नंबर प्रारूप।'},
     'sms_quota_exceeded': {'en': 'SMS quota exceeded. Please try again later.', 'hi': 'SMS कोटा समाप्त हो गया है। कृपया बाद में पुनः प्रयास करें।'},
     'firebase_billing_error': {'en': 'Firebase billing not enabled (dev error).', 'hi': 'Firebase बिलिंग सक्षम नहीं है (dev error)।'},
-    'book_for_someone_else': {'en': 'Book for someone else', 'hi': 'किसी और के लिए बुक करें'},
+    // 'book_for_someone_else' key removed to prevent duplication
     'passenger_name': {'en': 'Passenger Name', 'hi': 'यात्री का नाम'},
     'phone_number': {'en': 'Phone Number', 'hi': 'फ़ोन नंबर'},
-    'invalid_details': {'en': 'Please enter valid details', 'hi': 'कृपया सही विवरण दर्ज करें'},
+    // 'invalid_details' removed to prevent duplication
     'booking_for': {'en': 'Booking for {name}', 'hi': '{name} के लिए बुकिंग'},
     'adult': {'en': 'Adult', 'hi': 'वयस्क'},
-    'woman': {'en': 'Woman', 'hi': 'महिला'},
     'student': {'en': 'Student', 'hi': 'छात्र'},
-    'child': {'en': 'Child', 'hi': 'बच्चा'},
-    'male': {'en': 'Male', 'hi': 'पुरुष'},
-    'other': {'en': 'Other', 'hi': 'अन्य'},
     'location_disclosure_title': {'en': 'Enable Location', 'hi': 'स्थान सक्षम करें'},
     'location_disclosure_desc': {'en': 'Rurboo collects your location data to enable "Pickup Point Selection", "Driver Matching", and "Trip Tracking", even when the app is in use.', 'hi': 'रूरबू "पिकअप पॉइंट चयन", "ड्राइवर मिलान" और "ट्रिप ट्रैकिंग" को सक्षम करने के लिए आपका स्थान डेटा एकत्र करता है, भले ही ऐप उपयोग में हो।'},
     'location_benefit_1': {'en': 'Set your exact pickup location easily.', 'hi': 'अपनी सटीक पिकअप लोकेशन आसानी से सेट करें।'},
@@ -714,13 +706,11 @@ class AppStrings {
     'voice_not_available': {'en': '{vehicle} is not available.', 'hi': '{vehicle} उपलब्ध नहीं है।'},
     'cancel_to_go_back': {'en': 'Please cancel the ride to go back', 'hi': 'वापस जाने के लिए कृपया सवारी रद्द करें'},
     'enter_details_hint': {'en': 'Enter Details', 'hi': 'विवरण दर्ज करें'},
-    'passenger_name': {'en': 'Passenger Name', 'hi': 'यात्री का नाम'},
-    'phone_number': {'en': 'Phone Number', 'hi': 'फोन नंबर'},
+
     'cargo': {'en': 'Cargo', 'hi': 'कार्गो'},
     'seats': {'en': 'Seats', 'hi': 'सीटें'},
     'seat': {'en': 'Seat', 'hi': 'सीट'},
-    'best_value': {'en': 'Best Value', 'hi': 'सर्वोत्तम'},
-    'cancel': {'en': 'Cancel', 'hi': 'रद्द करें'},
+
     'submit': {'en': 'Submit', 'hi': 'सबमिट करें'},
     'report_hint': {'en': 'Describe the issue...', 'hi': 'समस्या का वर्णन करें...'},
     'report_success': {'en': 'Report submitted successfully!', 'hi': 'रिपोर्ट सफलतापूर्वक दर्ज की गई!'},

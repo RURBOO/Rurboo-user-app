@@ -1,3 +1,4 @@
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/voice_intent_parser.dart';
@@ -6,7 +7,6 @@ import '../services/wake_word_detector.dart';
 import '../models/voice_agent_state.dart';
 import '../../../core/services/user_preferences.dart';
 import '../../../core/constants/app_strings.dart';
-import '../../../core/services/language_service.dart';
 
 class VoiceAgentViewModel extends ChangeNotifier {
   final VoiceAgentService _voiceService = VoiceAgentService();
@@ -71,9 +71,12 @@ class VoiceAgentViewModel extends ChangeNotifier {
       _voiceService.onError = _handleServiceError;
       _voiceService.onResult = _handleSpeechResult;
       
+      // Wire wake word callback
+      _wakeWordDetector.onWakeWordDetected = _onWakeWordDetected;
       
-      // Initialize language
-      _currentLanguage = await LanguageService().getLanguageCode();
+      
+      // Initialize language (wired via main.dart)
+      _currentLanguage = 'en'; // Default, will be updated by VM sync in main.dart
       
       debugPrint("✅ Voice Agent initialized successfully with language: $_currentLanguage");
     } catch (e) {

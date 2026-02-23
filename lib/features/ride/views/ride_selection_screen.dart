@@ -43,6 +43,7 @@ class RideSelectionScreen extends StatefulWidget {
 
 class _RideSelectionScreenState extends State<RideSelectionScreen> {
   bool _isInit = false;
+  VoiceAgentViewModel? _voiceVM; // Keep ref for dispose
 
   @override
   Widget build(BuildContext context) {
@@ -84,8 +85,8 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
               });
               
               // Voice Listener
-              final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
-              voice.addListener(_onVoiceUpdate);
+              _voiceVM = Provider.of<VoiceAgentViewModel>(context, listen: false);
+              _voiceVM!.addListener(_onVoiceUpdate);
             }
           });
 
@@ -182,10 +183,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
 
   @override
   void dispose() {
-    // We can't easily remove listener here if provider is disposed, 
-    // but usually checking mounted inside listener is enough.
-    // However, best practice is to remove if we added it.
-    // Since we access via context, ensure context is valid.
+    _voiceVM?.removeListener(_onVoiceUpdate);
     super.dispose();
   }
 
@@ -360,8 +358,8 @@ class RideSelectionBody extends StatelessWidget {
                                      BoxShadow(color: AppColors.primary.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4))
                                   ] : []),
                                 ),
-                                child: _rideTile(ride, selected, AppColors.primary),
-                              ),
+                                  child: _rideTile(ride, selected, AppColors.primary, lang),
+                                ),
                             ).animate(target: isHighlighted ? 1 : 0).scale(begin: const Offset(1,1), end: const Offset(1.05, 1.05));
                           },
                         ),
@@ -398,7 +396,7 @@ class RideSelectionBody extends StatelessWidget {
                     const SizedBox(height: 12),
 
                    // Book for Others Toggle
-                   _bookForOthersOption(context, vm, lang),
+                   _bookForOthersToggle(context, vm, lang),
                    const SizedBox(height: 12),
                    
                    // Payment Method Display
@@ -406,7 +404,7 @@ class RideSelectionBody extends StatelessWidget {
                    const SizedBox(height: 12),
                    
                    // Confirm Button (contains Schedule)
-                   _confirmButton(context, vm, AppColors.primary, lang, parent),
+                   _confirmButton(context, vm, lang),
                 ],
               ),
             ),
@@ -477,12 +475,11 @@ class RideSelectionBody extends StatelessWidget {
   Widget _confirmButton(
     BuildContext context,
     RideSelectionViewModel vm,
-    Color yellow,
     LanguageViewModel lang,
-    RideSelectionScreen parent,
   ) {
     final bool isButtonDisabled =
         vm.isBooking || vm.isOutstationRide || vm.selectedRide == null;
+    const Color yellow = Color(0xFFFBC02D); // Material Amber 700
 
     final rideName = vm.selectedRide != null ? lang.getText(vm.selectedRide!.name) : "";
 
@@ -521,10 +518,11 @@ class RideSelectionBody extends StatelessWidget {
                     }
 
                     await vm.bookRide(() async {
+                      final parent = context.findAncestorWidgetOfExactType<RideSelectionScreen>();
                       await bookRideTransaction(
                         context, 
                         vm, 
-                        pickupText: parent.pickupText, 
+                        pickupText: parent!.pickupText, 
                         destinationText: parent.destinationText
                       );
                     });
@@ -644,56 +642,56 @@ class RideSelectionBody extends StatelessWidget {
     ),
   );
 
-  Widget _bookForOthersOption(BuildContext context, RideSelectionViewModel vm, LanguageViewModel lang) {
-     return InkWell(
-        onTap: () {
-           if (!vm.isBookForOthers) {
-              vm.setBookForOthers(true);
-              _showBookForOthersDialog(context, vm);
-           } else {
-              vm.setBookForOthers(false);
-           }
-        },
-        child: Container(
-           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-           decoration: BoxDecoration(
-             color: vm.isBookForOthers ? AppColors.primary.withValues(alpha: 0.1) : Colors.grey[50],
-             borderRadius: BorderRadius.circular(12),
-             border: Border.all(color: vm.isBookForOthers ? AppColors.primary : Colors.grey[200]!)
-           ),
-           child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                 Row(
-                   children: [
-                      Icon(Icons.person_add_alt, color: vm.isBookForOthers ? AppColors.primary : Colors.grey),
-                      const SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(lang.getText('book_for_someone_else'), style: const TextStyle(fontWeight: FontWeight.w600)),
-                          if (vm.isBookForOthers && vm.receiverName != null)
-                             Text(
-                               "${vm.receiverName} (${vm.receiverPhone})",
-                               style: const TextStyle(fontSize: 12, color: Colors.grey),
-                             )
-                        ],
-                      ),
-                   ],
-                 ),
-                 Switch(
-                   value: vm.isBookForOthers,
-                   onChanged: (val) {
-                      vm.setBookForOthers(val);
-                      if (val) _showBookForOthersDialog(context, vm);
-                   },
-                   activeTrackColor: AppColors.primary,
-                   activeThumbColor: AppColors.primary,
-                 )
-              ],
-           ),
+  Widget _bookForOthersToggle(BuildContext context, RideSelectionViewModel vm, LanguageViewModel lang) {
+    return InkWell(
+      onTap: () {
+        if (!vm.isBookForOthers) {
+          vm.setBookForOthers(true);
+          _showBookForOthersDialog(context, vm);
+        } else {
+          vm.setBookForOthers(false);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: vm.isBookForOthers ? AppColors.primary.withValues(alpha: 0.1) : Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: vm.isBookForOthers ? AppColors.primary : Colors.grey[200]!)
         ),
-     );
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.person_add_alt, color: vm.isBookForOthers ? AppColors.primary : Colors.grey),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(lang.getText('book_for_someone_else'), style: const TextStyle(fontWeight: FontWeight.w600)),
+                    if (vm.isBookForOthers && vm.receiverName != null)
+                      Text(
+                        "${vm.receiverName} (${vm.receiverPhone})",
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      )
+                  ],
+                ),
+              ],
+            ),
+            Switch(
+              value: vm.isBookForOthers,
+              onChanged: (val) {
+                vm.setBookForOthers(val);
+                if (val) _showBookForOthersDialog(context, vm);
+              },
+              activeTrackColor: AppColors.primary,
+              activeThumbColor: AppColors.primary,
+            )
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _couponSection(BuildContext context, RideSelectionViewModel vm, LanguageViewModel lang) {
@@ -784,7 +782,7 @@ class RideSelectionBody extends StatelessWidget {
     );
   }
 
-  Widget _rideTile(RideOption ride, bool selected, Color color) {
+  Widget _rideTile(RideOption ride, bool selected, Color color, LanguageViewModel lang) {
     return Row(
       children: [
         // ICON
@@ -854,6 +852,7 @@ class RideSelectionBody extends StatelessWidget {
   void _showBookForOthersDialog(BuildContext context, RideSelectionViewModel vm) {
     final nameController = TextEditingController(text: vm.receiverName);
     final phoneController = TextEditingController(text: vm.receiverPhone);
+    final lang = Provider.of<LanguageViewModel>(context, listen: false);
 
     showDialog(
       context: context,
@@ -931,8 +930,9 @@ Future<void> bookRideTransaction(
     final userId = await UserPreferences.getUserId();
     final authUser = FirebaseAuth.instance.currentUser;
 
-    // 🔒 SECURTIY CHECK
+    // 🔒 SECURITY CHECK
     if (userId == null || authUser == null || userId != authUser.uid) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('session_expired'))),
       );
