@@ -243,7 +243,6 @@ class _OtpScreenState extends State<OtpScreen> {
                       maxLength: 1,
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineMedium,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: AppColors.surface,
@@ -262,6 +261,11 @@ class _OtpScreenState extends State<OtpScreen> {
                           borderSide: const BorderSide(color: AppColors.primary, width: 2),
                         ),
                       ),
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      cursorColor: AppColors.primary,
                       onChanged: (val) {
                         if (val.isNotEmpty && i < 5) {
                           FocusScope.of(context).nextFocus();

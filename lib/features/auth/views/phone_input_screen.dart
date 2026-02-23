@@ -112,7 +112,6 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                 controller: phoneCtrl,
                 keyboardType: TextInputType.phone,
                 maxLength: 10,
-                style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(10),
@@ -123,12 +122,20 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                     margin: const EdgeInsets.only(right: 8),
                     child: Text(
                       "🇮🇳 +91",
-                      style: theme.textTheme.titleMedium,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
                   prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
                   hintText: lang.getText('enter_phone_hint'),
+                  hintStyle: TextStyle(color: Colors.grey.shade400),
                   counterText: "",
+                ),
+                cursorColor: AppColors.primary,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
                 ),
               ).animate().fade(delay: 400.ms).slideY(begin: 0.2),
               

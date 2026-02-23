@@ -182,6 +182,12 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
                   icon: BitmapDescriptor.defaultMarkerWithHue(
                     BitmapDescriptor.hueGreen,
                   ),
+                  infoWindow: InfoWindow(
+                    title: lang.getText('pickup_label'),
+                    snippet: (widget.pickupAddress == 'current_location' || widget.pickupAddress == 'Current Location')
+                        ? lang.getText('current_location')
+                        : widget.pickupAddress,
+                  ),
                 ),
               },
               zoomControlsEnabled: false,
@@ -249,7 +255,9 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(
-                            widget.pickupAddress,
+                            (widget.pickupAddress == 'current_location' || widget.pickupAddress == 'Current Location')
+                                ? lang.getText('current_location')
+                                : widget.pickupAddress,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,

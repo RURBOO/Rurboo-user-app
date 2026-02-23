@@ -336,6 +336,22 @@ class AppStrings {
       'en': 'Auto Rickshaw',
       'hi': 'ऑटो रिक्शा',
     },
+    'E-Rickshaw': {
+      'en': 'E-Rickshaw',
+      'hi': 'ई-रिक्शा',
+    },
+    'Comfort Car': {
+      'en': 'Comfort Car',
+      'hi': 'कंफर्ट कार',
+    },
+    'Big Car (XL)': {
+      'en': 'Big Car (XL)',
+      'hi': 'बड़ी कार (XL)',
+    },
+    'Carrier Truck': {
+      'en': 'Carrier Truck',
+      'hi': 'कैरियर ट्रक',
+    },
     'Cab': {
       'en': 'Cab',
       'hi': 'कैब',
@@ -623,7 +639,7 @@ class AppStrings {
     'ticket_status_processing': {'en': 'Processing', 'hi': 'प्रक्रियाधीन'},
     'ticket_status_completed': {'en': 'Completed', 'hi': 'पूर्ण'},
     'apply_btn_label': {'en': 'APPLY', 'hi': 'लागू करें'},
-    'welcome_msg': {'en': 'Welcome to RURBOO. Choose your destination', 'hi': 'रुरबू में आपका स्वागत है। अपनी मंज़िल चुनें'},
+    'welcome_msg': {'en': 'Welcome to Roor booo. Choose your destination', 'hi': 'रु-रबू में आपका स्वागत है। अपनी मंज़िल चुनें'},
     'location_permission_title': {'en': 'Location Permission', 'hi': 'स्थान की अनुमति'},
     'location_permission_desc': {'en': 'Rurboo needs your location to connect you with nearby drivers and ensure ride safety.', 'hi': 'रुरबू को आपको नजदीकी ड्राइवरों से जोड़ने और सवारी सुरक्षा सुनिश्चित करने के लिए आपकी लोकेशन की आवश्यकता है।'},
     'turn_on_location': {'en': 'Turn on location service', 'hi': 'लोकेशन सेवा चालू करें'},
@@ -689,7 +705,7 @@ class AppStrings {
     'profile_emergency_voice': {'en': 'Please enter emergency contact number. 10 digit number.', 'hi': 'Emergency contact number darj karein. 10 digit ka number.'},
     'profile_guardian_name_voice': {'en': 'Please enter guardian name.', 'hi': 'Guardian ka naam darj karein.'},
     'profile_guardian_phone_voice': {'en': 'Please enter guardian phone number. 10 digit number.', 'hi': 'Guardian ka phone number darj karein. 10 digit ka number.'},
-    'voice_greeting': {'en': 'Namaste. Welcome to RURBOO. Tell me your full name?', 'hi': 'Namaste. RURBOO me swagat hai. Apna poora naam batayein?'},
+    'voice_greeting': {'en': 'Namaste. Welcome to Roor booo. Tell me your full name?', 'hi': 'Namaste. Roor booo me swagat hai. Apna poora naam batayein?'},
     'voice_ask_age': {'en': 'What is your age?', 'hi': 'Aapki umar kya hai?'},
     'voice_ask_category': {'en': 'What are you? Student, Adult, or Senior?', 'hi': 'Aap kya hain? Student, Adult, ya Senior?'},
     'voice_profile_complete': {'en': 'Profile created. Thank you {name}.', 'hi': 'Profile ban gayi hai. Shukriya {name}.'},
@@ -724,12 +740,48 @@ class AppStrings {
       'hi': 'आपकी राइड स्टार्ट हो गई है। आप लगभग {0} में अपनी मंज़िल पर पहुँच जाएंगे। शुभ यात्रा।'
     },
     'ride_completed_voice': {
-      'en': 'Your journey is complete. Thank you for traveling with RURBOO.',
+      'en': 'Your journey is complete. Thank you for traveling with Roor booo.',
       'hi': 'आपकी यात्रा पूरी हो गई है। रुरबू पर सफ़र करने के लिए शुक्रिया।'
     },
     'safety_mode_voice': {
       'en': 'Your ride is in safety mode. An update has been sent to your guardian.',
       'hi': 'आपकी राइड सेफ्टी मोड में है। आपके अभिभावक को अपडेट भेज दिया गया है।'
+    },
+    'voice_vehicle_selected': {
+      'en': 'Alright, {vehicle} selected.',
+      'hi': 'ठीक है, {vehicle} चुन लिया गया है।'
+    },
+    'voice_no_other_vehicles': {
+      'en': 'No other vehicles are available.',
+      'hi': 'कोई और गाड़ी उपलब्ध नहीं है।'
+    },
+    'voice_fare_confirm': {
+      'en': '{vehicle} selected. Fare is {fare} rupees. Confirm?',
+      'hi': '{vehicle} चुन लिया गया है। किराया {fare} रुपये है। क्या आप इसे पुष्ट करना चाहते हैं?'
+    },
+    'voice_vehicle_not_available': {
+      'en': '{vehicle} is not available.',
+      'hi': '{vehicle} उपलब्ध नहीं है।'
+    },
+    'voice_booking_confirmed': {
+      'en': 'Confirming your booking.',
+      'hi': 'आपकी बुकिंग की पुष्टि कर रहे हैं।'
+    },
+    'voice_selection_cancelled': {
+      'en': 'Ride selection cancelled.',
+      'hi': 'राइड चयन रद्द कर दिया गया है।'
+    },
+    'search_results_hint': {
+      'en': 'Search to see results',
+      'hi': 'परिणाम देखने के लिए खोजें',
+    },
+    'pickup_label': {
+      'en': 'Pickup',
+      'hi': 'पिकअप'
+    },
+    'drop_label': {
+      'en': 'Drop',
+      'hi': 'ड्रॉप'
     },
   };
 }

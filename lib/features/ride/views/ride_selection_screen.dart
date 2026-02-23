@@ -100,6 +100,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
      if (!mounted) return;
      final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
      final vm = Provider.of<RideSelectionViewModel>(context, listen: false);
+     final lang = Provider.of<LanguageViewModel>(context, listen: false);
      
      // 1. Vehicle Logic: Selection OR Negation
      if (voice.lastIntent?.type == IntentType.booking) {
@@ -119,9 +120,11 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                
                if (fallback != null) {
                   vm.selectRide(fallback);
-                  voice.speak("Thik hai, ${fallback.name} select kar diya.");
+                  final msg = lang.getText('voice_vehicle_selected')
+                      .replaceAll('{vehicle}', lang.getText(fallback.name));
+                  voice.speak(msg);
                } else {
-                  voice.speak("Aur koi gadi available nahi hai.");
+                  voice.speak(lang.getText('voice_no_other_vehicles'));
                }
                voice.consumeIntent();
                return; // Exit
@@ -140,14 +143,18 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                
                if (vm.selectedRide != ride) {
                  vm.selectRide(ride);
-                 // Feedback: "Auto select kar diya. Kiraya 120 rupay hai."
-                 voice.speak("${ride.name} select kar diya. Kiraya ${ride.fare.toInt()} rupay hai. Confirm?");
+                 final msg = lang.getText('voice_fare_confirm')
+                     .replaceAll('{vehicle}', lang.getText(ride.name))
+                     .replaceAll('{fare}', ride.fare.toInt().toString());
+                 voice.speak(msg);
                  voice.consumeIntent(); // Prevent Loop
                }
             } catch (e) {
                // Vehicle not found
                if (voice.state != VoiceAgentState.speaking) {
-                   voice.speak("$requestedVehicle available nahi hai.");
+                   final msg = lang.getText('voice_vehicle_not_available')
+                       .replaceAll('{vehicle}', requestedVehicle);
+                   voice.speak(msg);
                    voice.consumeIntent();
                }
             }
@@ -157,7 +164,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
      // 2. Handle Confirmation ("Haan", "Thik hai") -> Book
      if (voice.lastIntent?.type == IntentType.confirm && voice.state == VoiceAgentState.confirmingFare) {
          if (!vm.isBooking && vm.selectedRide != null) {
-            voice.speak("Booking confirm kar raha hoon.");
+            voice.speak(lang.getText('voice_booking_confirmed'));
             voice.consumeIntent();
             
             vm.bookRide(() async {
@@ -174,7 +181,7 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
      // 3. Handle Cancellation ("Cancel karo")
      if (voice.lastIntent?.type == IntentType.cancel) {
         if (!vm.isBooking) {
-            voice.speak("Ride selection cancel kar diya.");
+            voice.speak(lang.getText('voice_selection_cancelled'));
             voice.consumeIntent();
             Navigator.pop(context); // Go back to home
         }
@@ -797,7 +804,7 @@ class RideSelectionBody extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                ride.name,
+                lang.getText(ride.name),
                 style: TextStyle(
                   fontWeight: FontWeight.bold, 
                   fontSize: 16,
@@ -816,10 +823,10 @@ class RideSelectionBody extends StatelessWidget {
                      style: TextStyle(fontSize: 12, color: Colors.grey[600])
                    ),
                    const SizedBox(width: 8),
-                   Text(
-                     ride.description, 
-                     style: TextStyle(fontSize: 12, color: Colors.grey[600])
-                   ),
+                    Text(
+                      ride.description, // Now this only contains ETA from VM
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600])
+                    ),
                 ],
               )
             ],
@@ -1038,12 +1045,12 @@ String _generateSecureOTP() {
 String _getVehicleCategory(String rideName) {
   final name = rideName.toLowerCase();
   
-  // Strictly ordered checks
-  if (name.contains("bike") || name.contains("moto")) return "Bike";
-  if (name.contains("rickshaw") && name.contains("e-")) return "E-Rickshaw";
-  if (name.contains("auto") || name.contains("rickshaw")) return "Auto";
+  // Strictly ordered checks to match Driver App registration options
+  if (name.contains("bike") || name.contains("moto")) return "Bike taxi";
+  if (name.contains("rickshaw") && name.contains("e-")) return "E-Rikshaw";
+  if (name.contains("auto") || name.contains("rickshaw")) return "Auto Rikshaw";
   if (name.contains("big car") || name.contains("suv") || name.contains("sedan")) return "Big Car";
   
-  // Default to Car if nothing specific matches
-  return "Car";
+  // Default to Comfort Car if nothing specific matches
+  return "Comfort Car";
 }

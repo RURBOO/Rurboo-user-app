@@ -528,7 +528,7 @@ class _RideBookedContent extends StatelessWidget {
                            ),
                         ),
 
-                        _buildTripLine(vm),
+                        _buildTripLine(context, vm),
 
                         const SizedBox(height: 20),
                         
@@ -549,7 +549,12 @@ class _RideBookedContent extends StatelessWidget {
                                     children: [
                                       Icon(Icons.payment, color: Colors.indigo, size: 20),
                                       SizedBox(width: 8),
-                                      Text(vm.rideDetails?.paymentMethod ?? "Cash", style: TextStyle(fontWeight: FontWeight.bold)),
+                                      Text(
+                                        (vm.rideDetails?.paymentMethod.toLowerCase() == "cash")
+                                          ? Provider.of<LanguageViewModel>(context).getText('cash')
+                                          : (vm.rideDetails?.paymentMethod ?? Provider.of<LanguageViewModel>(context).getText('cash')), 
+                                        style: TextStyle(fontWeight: FontWeight.bold)
+                                      ),
                                     ],
                                   ),
                                   Column(
@@ -643,7 +648,7 @@ class _RideBookedContent extends StatelessWidget {
     }
   }
 
-  Widget _buildTripLine(RideBookedViewModel vm) {
+  Widget _buildTripLine(BuildContext context, RideBookedViewModel vm) {
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -668,14 +673,18 @@ class _RideBookedContent extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  vm.pickupAddress,
+                  (vm.pickupAddress == 'current_location' || vm.pickupAddress == 'Current Location')
+                    ? Provider.of<LanguageViewModel>(context).getText('current_location')
+                    : vm.pickupAddress,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: Colors.black87, fontSize: 14),
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  vm.destinationAddress,
+                  (vm.destinationAddress == 'current_location' || vm.destinationAddress == 'Current Location')
+                    ? Provider.of<LanguageViewModel>(context).getText('current_location')
+                    : vm.destinationAddress,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: Colors.black87, fontSize: 14),

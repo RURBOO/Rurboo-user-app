@@ -7,7 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import '../viewmodels/home_viewmodel.dart';
 import '../../ride/views/ride_selection_screen.dart';
 import '../models/location_result.dart';
-import 'package:rurboo/features/home/views/search_destination_screen.dart';
+import 'package:rurboo/features/home/views/search_location_screen.dart';
 import '../../voice/viewmodels/voice_agent_viewmodel.dart';
 import '../../../core/theme/app_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -187,7 +187,9 @@ class HomeBody extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            vm.pickup?.address ?? lang.getText('current_location'),
+                            vm.pickup?.address == 'current_location' 
+                              ? lang.getText('current_location') 
+                              : (vm.pickup?.address ?? lang.getText('current_location')),
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 15,
@@ -293,8 +295,10 @@ class HomeBody extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (_) => RideSelectionScreen(
-                      pickupText: vm.pickupAddress!,
-                      destinationText: vm.destinationAddress!,
+                      pickupText: vm.pickupAddress == 'current_location' 
+                          ? lang.getText('current_location') 
+                          : (vm.pickupAddress ?? ""),
+                      destinationText: vm.destinationAddress ?? "",
                       pickupLoc: vm.pickup!,
                       destinationLoc: vm.destination!,
                       distanceKm: distanceInKm,

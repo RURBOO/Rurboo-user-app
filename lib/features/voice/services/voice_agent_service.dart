@@ -199,20 +199,21 @@ class VoiceAgentService {
     if (!_isInitialized) await init();
     
     // Stop listening if active
-    if (_speech.isListening) {
-      await _speech.stop();
-    }
+    // Phonetic correction for "RURBOO" so TTS pronounces it as a word
+    final processedText = text.replaceAll("RURBOO", "Roor booo");
     
-    await _tts.speak(text);
+    await _tts.speak(processedText);
   }
-  
+
   Future<void> speakWithCompletion(String text, VoidCallback onComplete) async {
     if (!_isInitialized) await init();
-    
     if (_speech.isListening) await _speech.stop();
-    
+
+    // Phonetic correction for "RURBOO" so TTS pronounces it as a word
+    final processedText = text.replaceAll("RURBOO", "Roor booo");
+
     _tts.setCompletionHandler(onComplete);
-    await _tts.speak(text);
+    await _tts.speak(processedText);
   }
 
   /// Stop Speaking (Interrupt)

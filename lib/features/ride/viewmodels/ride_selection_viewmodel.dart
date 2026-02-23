@@ -198,9 +198,7 @@ class RideSelectionViewModel extends ChangeNotifier {
   }
 
   String _getVehicleDescription(String key, FareResult fare) {
-    int seats = _getSeatsForVehicle(key);
-    String seatText = seats > 0 ? "$seats seats" : "Cargo";
-    return "$seatText • ₹${fare.totalFare.toInt()}";
+    return _calculateEta(key);
   }
 
   String _calculateEta(String key) {

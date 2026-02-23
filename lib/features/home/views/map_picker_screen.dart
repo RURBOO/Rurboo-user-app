@@ -54,6 +54,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   }
 
   Future<void> _getAddress(LatLng point) async {
+    // Capture lang reference BEFORE any await to avoid deactivated widget error
     final lang = Provider.of<LanguageViewModel>(context, listen: false);
     if (!_isLoadingAddress) setState(() => _isLoadingAddress = true);
     try {

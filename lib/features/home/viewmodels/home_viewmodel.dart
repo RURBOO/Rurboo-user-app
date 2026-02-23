@@ -2,8 +2,10 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/services/user_preferences.dart';
+import '../../language/viewmodels/language_vm.dart';
 import '../../ride/models/ride_booking.dart';
 import '../../ride/views/ride_booked_screen.dart';
 import '../../searching/views/searching_driver_screen.dart';
@@ -107,7 +109,7 @@ class HomeViewModel extends ChangeNotifier {
       if (address.contains(RegExp(r'^\d+\.\d+,\s*\d+\.\d+'))) {
         // If it's just coordinates, use "Current Location" instead
         pickup = LocationResult(
-          address: "Current Location",
+          address: "current_location",
           coordinates: currentLocation,
         );
       } else {
@@ -115,7 +117,7 @@ class HomeViewModel extends ChangeNotifier {
       }
     } catch (_) {
       pickup = LocationResult(
-        address: "Current Location",
+        address: "current_location",
         coordinates: currentLocation,
       );
     }
@@ -130,7 +132,7 @@ class HomeViewModel extends ChangeNotifier {
     await _loadSavedLocations();
 
     loadingLocation = false;
-    _updateMarkers();
+    _updateMarkers(context: context.mounted ? context : null);
     notifyListeners();
   }
 
@@ -164,10 +166,10 @@ class HomeViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> setPickupLocation(LocationResult loc) async {
+  Future<void> setPickupLocation(LocationResult loc, {BuildContext? context}) async {
     pickup = loc;
 
-    _updateMarkers();
+    _updateMarkers(context: (context != null && context.mounted) ? context : null);
 
     if (destination != null) {
       await _drawRoute();
@@ -180,7 +182,7 @@ class HomeViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> selectDestination(LocationResult loc) async {
+  Future<void> selectDestination(LocationResult loc, {BuildContext? context}) async {
     destination = loc;
 
     if (loc.coordinates != null) {
@@ -189,7 +191,7 @@ class HomeViewModel extends ChangeNotifier {
       );
     }
 
-    _updateMarkers();
+    _updateMarkers(context: (context != null && context.mounted) ? context : null);
     await _drawRoute();
     notifyListeners();
   }
@@ -292,8 +294,19 @@ class HomeViewModel extends ChangeNotifier {
     );
   }
 
-  void _updateMarkers() {
+  void _updateMarkers({BuildContext? context}) {
     markers.clear();
+    
+    String pickupLabel = "Pickup";
+    String dropLabel = "Drop";
+    
+    if (context != null) {
+      try {
+        final lang = Provider.of<LanguageViewModel>(context, listen: false);
+        pickupLabel = lang.getText('pickup_label');
+        dropLabel = lang.getText('drop_label');
+      } catch (_) {}
+    }
 
     if (pickup?.coordinates != null) {
       markers.add(
@@ -303,7 +316,7 @@ class HomeViewModel extends ChangeNotifier {
           icon: BitmapDescriptor.defaultMarkerWithHue(
             BitmapDescriptor.hueGreen,
           ),
-          infoWindow: InfoWindow(title: "Pickup", snippet: pickup!.address),
+          infoWindow: InfoWindow(title: pickupLabel, snippet: pickup!.address == 'current_location' ? pickupLabel : pickup!.address),
         ),
       );
     }
@@ -314,7 +327,7 @@ class HomeViewModel extends ChangeNotifier {
           markerId: const MarkerId('dest'),
           position: destination!.coordinates!,
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-          infoWindow: InfoWindow(title: "Drop", snippet: destination!.address),
+          infoWindow: InfoWindow(title: dropLabel, snippet: destination!.address),
         ),
       );
     }

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:rurboo/core/services/user_preferences.dart';
 import 'package:rurboo/features/language/viewmodels/language_vm.dart';
 
+import '../viewmodels/home_viewmodel.dart';
 import '../viewmodels/search_location_viewmodel.dart';
 import '../repositories/search_repository.dart';
 import '../models/location_result.dart';
@@ -32,8 +33,26 @@ class SearchLocationScreen extends StatelessWidget {
   }
 }
 
-class _SearchLocationBody extends StatelessWidget {
+class _SearchLocationBody extends StatefulWidget {
   const _SearchLocationBody();
+
+  @override
+  State<_SearchLocationBody> createState() => _SearchLocationBodyState();
+}
+
+class _SearchLocationBodyState extends State<_SearchLocationBody> {
+  List<LocationResult> _savedFavourites = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavourites();
+  }
+
+  Future<void> _loadFavourites() async {
+    final favs = await UserPreferences.getFavorites();
+    if (mounted) setState(() => _savedFavourites = favs);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,17 +95,23 @@ class _SearchLocationBody extends StatelessWidget {
           ),
           const Divider(height: 1),
 
-          _favoriteButtons(context, vm, lang),
+          _quickAccessButtons(context, vm, lang),
           const Divider(height: 1),
+
+          // Saved Favourites Section
+          if (_savedFavourites.isNotEmpty) ...[
+            _savedFavouritesSection(context, lang),
+            const Divider(height: 1),
+          ],
 
           if (vm.loading) const LinearProgressIndicator(minHeight: 2),
 
           Expanded(
             child: vm.suggestions.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
-                      "Search to see results",
-                      style: TextStyle(color: Colors.black54),
+                      lang.getText('search_results_hint'),
+                      style: const TextStyle(color: Colors.black54),
                     ),
                   )
                 : ListView.builder(
@@ -97,11 +122,18 @@ class _SearchLocationBody extends StatelessWidget {
                       return ListTile(
                         leading: const Icon(Icons.location_on_outlined),
                         title: Text(place.address),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.bookmark_border, color: Colors.grey),
+                          tooltip: 'Save location',
+                          onPressed: () async {
+                            final LocationResult? result = await vm.selectPlace(place.placeId!);
+                            if (result != null && context.mounted) {
+                              _showSaveLocationSheet(context, result, lang, onSaved: _loadFavourites);
+                            }
+                          },
+                        ),
                         onTap: () async {
-                          final LocationResult? result = await vm.selectPlace(
-                            place.placeId!,
-                          );
-
+                          final LocationResult? result = await vm.selectPlace(place.placeId!);
                           if (result != null && context.mounted) {
                             Navigator.pop(context, result);
                           }
@@ -156,10 +188,11 @@ class _SearchLocationBody extends StatelessWidget {
     );
   }
 
-  Widget _favoriteButtons(BuildContext context, SearchLocationViewModel vm, LanguageViewModel lang) {
+  /// Home + Work quick access buttons
+  Widget _quickAccessButtons(BuildContext context, SearchLocationViewModel vm, LanguageViewModel lang) {
     return Row(
       children: [
-        _favItem(
+        _quickItem(
           icon: Icons.home,
           label: lang.getText('home'),
           onTap: () async {
@@ -169,7 +202,7 @@ class _SearchLocationBody extends StatelessWidget {
             }
           },
         ),
-        _favItem(
+        _quickItem(
           icon: Icons.work,
           label: lang.getText('work'),
           onTap: () async {
@@ -183,7 +216,7 @@ class _SearchLocationBody extends StatelessWidget {
     );
   }
 
-  Widget _favItem({required IconData icon, required String label, required VoidCallback onTap}) {
+  Widget _quickItem({required IconData icon, required String label, required VoidCallback onTap}) {
     return Expanded(
       child: ListTile(
         leading: Icon(icon, color: Colors.grey),
@@ -192,4 +225,149 @@ class _SearchLocationBody extends StatelessWidget {
       ),
     );
   }
+
+  /// Horizontally scrollable saved favourites chips
+  Widget _savedFavouritesSection(BuildContext context, LanguageViewModel lang) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+          child: Text(
+            lang.getText('favorites'),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+          ),
+        ),
+        SizedBox(
+          height: 80,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: _savedFavourites.length,
+            itemBuilder: (context, index) {
+              final fav = _savedFavourites[index];
+              return GestureDetector(
+                onTap: () => Navigator.pop(context, fav),
+                onLongPress: () async {
+                  // Long press to delete
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: Text(lang.getText('delete')),
+                      content: Text(fav.address, maxLines: 2, overflow: TextOverflow.ellipsis),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true) {
+                    await UserPreferences.removeFavorite(fav.address);
+                    _loadFavourites();
+                  }
+                },
+                child: Container(
+                  width: 120,
+                  margin: const EdgeInsets.only(right: 10),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurple.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.deepPurple.withValues(alpha: 0.3)),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.favorite, size: 20, color: Colors.deepPurple),
+                      const SizedBox(height: 4),
+                      Text(
+                        fav.address,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Shows a bottom sheet to save a location as Home, Work, or Favourite.
+void _showSaveLocationSheet(
+  BuildContext context,
+  LocationResult result,
+  LanguageViewModel lang, {
+  VoidCallback? onSaved,
+}) {
+  final homeVM = Provider.of<HomeViewModel>(context, listen: false);
+
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (ctx) => Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(lang.getText('save_location'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Text(result.address, style: const TextStyle(fontSize: 13, color: Colors.grey), maxLines: 2, overflow: TextOverflow.ellipsis),
+          const Divider(height: 24),
+          ListTile(
+            leading: const Icon(Icons.home, color: Colors.blue),
+            title: Text(lang.getText('home')),
+            onTap: () async {
+              await homeVM.saveAsHome(result);
+              if (ctx.mounted) {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(lang.getText('location_saved'))),
+                );
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.work, color: Colors.orange),
+            title: Text(lang.getText('work')),
+            onTap: () async {
+              await homeVM.saveAsWork(result);
+              if (ctx.mounted) {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(lang.getText('location_saved'))),
+                );
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.favorite, color: Colors.red),
+            title: Text(lang.getText('favorites')),
+            onTap: () async {
+              await homeVM.toggleFavorite(result);
+              if (ctx.mounted) {
+                Navigator.pop(ctx);
+                onSaved?.call(); // Refresh favourites list
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(lang.getText('location_saved'))),
+                );
+              }
+            },
+          ),
+        ],
+      ),
+    ),
+  );
 }
