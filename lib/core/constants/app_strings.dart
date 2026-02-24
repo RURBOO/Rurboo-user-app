@@ -2,8 +2,8 @@ class AppStrings {
   static const Map<String, Map<String, String>> translations = {
     // --- Common ---
     'app_name': {
-      'en': 'RURBOO',
-      'hi': 'रु-रबू',
+      'en': 'RURBOO - SAATHI',
+      'hi': 'रूरबू - साथी',
     },
     'proceed': {
       'en': 'Proceed',

@@ -28,10 +28,10 @@
     </queries>
 
     <application
-        android:label="RURBOO"
+        android:label="RURBOO - SAATHI"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="false">
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
