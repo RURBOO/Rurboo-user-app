@@ -35,3 +35,9 @@
 -keep class kotlin.** { *; }
 -keep class kotlinx.** { *; }
 -dontwarn kotlin.**
+
+# Flutter Play Core (referenced by Flutter embedder, not used in project)
+-dontwarn com.google.android.play.core.splitcompat.**
+-dontwarn com.google.android.play.core.splitinstall.**
+-dontwarn com.google.android.play.core.tasks.**
+-dontwarn com.google.android.play.core.**
