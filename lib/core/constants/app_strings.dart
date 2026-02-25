@@ -3,7 +3,7 @@ class AppStrings {
     // --- Common ---
     'app_name': {
       'en': 'RURBOO - SAATHI',
-      'hi': 'रूरबू - साथी',
+      'hi': 'रू-रबू - साथी',
     },
     'proceed': {
       'en': 'Proceed',
