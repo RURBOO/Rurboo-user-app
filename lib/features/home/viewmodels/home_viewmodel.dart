@@ -55,10 +55,20 @@ class HomeViewModel extends ChangeNotifier {
     super.dispose();
   }
 
-  void _startLocationSync() {
+  void _startLocationSync() async {
     _locationSubscription?.cancel();
     
     debugPrint("📍 UserApp: Starting Location Sync...");
+
+    // Sync initial location immediately
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.balanced),
+      );
+      _syncLocationToFirestore(position);
+    } catch (e) {
+      debugPrint("⚠️ UserApp: Initial sync failed: $e");
+    }
     
     _locationSubscription = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
