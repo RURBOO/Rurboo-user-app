@@ -39,12 +39,61 @@ class HomeViewModel extends ChangeNotifier {
   LocationResult? workLocation;
   List<LocationResult> favoriteLocations = [];
 
+  StreamSubscription<Position>? _locationSubscription;
+  DateTime _lastSyncTime = DateTime.now().subtract(const Duration(minutes: 1));
+
   HomeViewModel(this.repo);
 
   LatLng? get pickupLatLng => pickup?.coordinates;
   LatLng? get destinationLatLng => destination?.coordinates;
   String? get pickupAddress => pickup?.address;
   String? get destinationAddress => destination?.address;
+
+  @override
+  void dispose() {
+    _stopLocationSync();
+    super.dispose();
+  }
+
+  void _startLocationSync() {
+    _locationSubscription?.cancel();
+    
+    debugPrint("📍 UserApp: Starting Location Sync...");
+    
+    _locationSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.balanced,
+        distanceFilter: 20, // Only sync if moved 20m
+      ),
+    ).listen((Position position) {
+      final now = DateTime.now();
+      if (now.difference(_lastSyncTime).inSeconds > 15) { // Sync every 15s max
+        _lastSyncTime = now;
+        _syncLocationToFirestore(position);
+      }
+    });
+  }
+
+  void _stopLocationSync() {
+    _locationSubscription?.cancel();
+    _locationSubscription = null;
+  }
+
+  Future<void> _syncLocationToFirestore(Position position) async {
+    try {
+      final userId = await UserPreferences.getUserId();
+      if (userId == null) return;
+
+      debugPrint("📡 UserApp: Syncing location to Firestore for $userId");
+      
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'currentLocation': GeoPoint(position.latitude, position.longitude),
+        'lastLocationUpdate': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      debugPrint("❌ UserApp: Location Sync Error: $e");
+    }
+  }
 
   void onMapCreated(GoogleMapController controller) async {
     mapController = controller;
@@ -133,6 +182,9 @@ class HomeViewModel extends ChangeNotifier {
 
     loadingLocation = false;
     _updateMarkers(context: context.mounted ? context : null);
+    
+    _startLocationSync();
+    
     notifyListeners();
   }
 
