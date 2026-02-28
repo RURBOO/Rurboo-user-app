@@ -27,6 +27,7 @@ class VoiceAgentViewModel extends ChangeNotifier {
 
   void updateLanguage(String langCode) {
     _currentLanguage = langCode;
+    _voiceService.setTtsLanguage(langCode);
     notifyListeners();
   }
 

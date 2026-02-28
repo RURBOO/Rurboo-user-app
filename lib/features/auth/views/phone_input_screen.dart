@@ -16,7 +16,11 @@ class PhoneInputScreen extends StatefulWidget {
 class _PhoneInputScreenState extends State<PhoneInputScreen> {
   final phoneCtrl = TextEditingController();
 
+  bool _isLoading = false;
+
   void _next() async {
+    if (_isLoading) return;
+
     final phone = phoneCtrl.text.trim();
     if (phone.length != 10) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -25,45 +29,67 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
       return;
     }
 
+    setState(() => _isLoading = true);
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => const Center(child: CircularProgressIndicator()),
     );
 
-    await FirebaseAuth.instance.verifyPhoneNumber(
-      phoneNumber: '+91$phone',
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        await FirebaseAuth.instance.signInWithCredential(credential);
-      },
-      verificationFailed: (FirebaseAuthException e) {
+    try {
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: '+91$phone',
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          await FirebaseAuth.instance.signInWithCredential(credential);
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          if (mounted) {
+            Navigator.pop(context);
+            setState(() => _isLoading = false);
+            final lang = Provider.of<LanguageViewModel>(context, listen: false);
+            String msg = lang.getText('verification_failed');
+            if (e.code == 'invalid-phone-number') {
+              msg = lang.getText('invalid_phone_format');
+            } else if (e.code == 'quota-exceeded') {
+              msg = lang.getText('sms_quota_exceeded');
+            } else if (e.code == 'billing-not-enabled') {
+              msg = lang.getText('firebase_billing_error');
+            } else {
+              msg = "${lang.getText('error')}: ${e.message}";
+            }
+            debugPrint("🔥 Phone Auth Error: ${e.code} - ${e.message}");
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+          }
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          if (mounted) {
+            Navigator.pop(context);
+            setState(() => _isLoading = false);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    OtpScreen(phone: phone, verificationId: verificationId),
+              ),
+            );
+          }
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          if (mounted) {
+            setState(() => _isLoading = false);
+          }
+        },
+      );
+    } catch (e) {
+      if (mounted) {
         Navigator.pop(context);
-        final lang = Provider.of<LanguageViewModel>(context, listen: false);
-        String msg = lang.getText('verification_failed');
-        if (e.code == 'invalid-phone-number') {
-          msg = lang.getText('invalid_phone_format');
-        } else if (e.code == 'quota-exceeded') {
-          msg = lang.getText('sms_quota_exceeded');
-        } else if (e.code == 'billing-not-enabled') {
-          msg = lang.getText('firebase_billing_error');
-        } else {
-          msg = "${lang.getText('error')}: ${e.message}";
-        }
-        debugPrint("🔥 Phone Auth Error: ${e.code} - ${e.message}");
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-      },
-      codeSent: (String verificationId, int? resendToken) {
-        Navigator.pop(context);
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                OtpScreen(phone: phone, verificationId: verificationId),
-          ),
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e")),
         );
-      },
-      codeAutoRetrievalTimeout: (String verificationId) {},
-    );
+      }
+    }
   }
 
   @override

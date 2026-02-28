@@ -172,8 +172,17 @@ class ProfileViewModel extends ChangeNotifier {
 
       if (image == null) return;
 
-      _isLoading = true;
-      notifyListeners();
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext c) {
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            );
+          },
+        );
+      }
 
       final userId = await UserPreferences.getUserId();
       if (userId == null) throw Exception("User ID not found");
@@ -194,6 +203,7 @@ class ProfileViewModel extends ChangeNotifier {
       _photoUrl = downloadUrl;
 
       if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop(); // Dismiss loading
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Profile Updated Successfully! 📸")),
         );
@@ -201,8 +211,9 @@ class ProfileViewModel extends ChangeNotifier {
     } catch (e) {
       debugPrint("Upload Error: $e");
       if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop(); // Dismiss loading on error
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e")),
+          SnackBar(content: Text("Failed to update profile: $e")),
         );
       }
     } finally {

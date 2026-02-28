@@ -23,3 +23,5 @@ plugins {
 }
 
 include(":app")
+
+rootProject.name = "rurboo_user_app_android"

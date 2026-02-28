@@ -140,6 +140,20 @@ class HomeBody extends StatelessWidget {
               bottom: vm.destination == null ? 280 : 200,
             ),
           ),
+          
+          // Debug Overlay
+          Positioned(
+            left: 10,
+            bottom: 300,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              color: Colors.black54,
+              child: const Text(
+                "Debug: Sync Active",
+                style: TextStyle(color: Colors.white, fontSize: 8),
+              ),
+            ),
+          ),
 
           Positioned(
             top: 60,
@@ -228,7 +242,7 @@ class HomeBody extends StatelessWidget {
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -320,8 +334,8 @@ class HomeBody extends StatelessWidget {
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
-        height: 320,
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+        height: 320 + MediaQuery.of(context).padding.bottom,
+        padding: EdgeInsets.fromLTRB(24, 12, 24, MediaQuery.of(context).padding.bottom + 24),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),

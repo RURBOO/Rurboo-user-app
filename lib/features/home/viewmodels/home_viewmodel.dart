@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../../core/services/user_preferences.dart';
 import '../../language/viewmodels/language_vm.dart';
@@ -63,7 +64,7 @@ class HomeViewModel extends ChangeNotifier {
     // Sync initial location immediately
     try {
       Position position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.balanced),
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
       _syncLocationToFirestore(position);
     } catch (e) {
@@ -72,7 +73,7 @@ class HomeViewModel extends ChangeNotifier {
     
     _locationSubscription = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.balanced,
+        accuracy: LocationAccuracy.high,
         distanceFilter: 20, // Only sync if moved 20m
       ),
     ).listen((Position position) {
@@ -96,10 +97,13 @@ class HomeViewModel extends ChangeNotifier {
 
       debugPrint("📡 UserApp: Syncing location to Firestore for $userId");
       
-      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+      await FirebaseFirestore.instance.collection('users').doc(userId).set({
         'currentLocation': GeoPoint(position.latitude, position.longitude),
         'lastLocationUpdate': FieldValue.serverTimestamp(),
-      });
+        'isOnline': true,
+        'lastSeen': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      debugPrint("✅ UserApp: Location sync successful for $userId");
     } catch (e) {
       debugPrint("❌ UserApp: Location Sync Error: $e");
     }

@@ -384,7 +384,10 @@ class RideSelectionBody extends StatelessWidget {
             right: 0,
             bottom: 0,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12), // Reduced vertical padding
+              padding: EdgeInsets.only(
+                top: 12,
+                bottom: MediaQuery.of(context).padding.bottom + 16, // Extra space for navigation bar
+              ),
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
@@ -398,19 +401,21 @@ class RideSelectionBody extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                    // Coupons Section
-                    _couponSection(context, vm, lang),
-                    const SizedBox(height: 12),
-
                    // Book for Others Toggle
-                   _bookForOthersToggle(context, vm, lang),
+                   Padding(
+                     padding: const EdgeInsets.symmetric(horizontal: 20),
+                     child: _bookForOthersToggle(context, vm, lang),
+                   ),
                    const SizedBox(height: 12),
                    
                    // Payment Method Display
-                   _paymentDisplay(lang),
+                   Padding(
+                     padding: const EdgeInsets.symmetric(horizontal: 20),
+                     child: _paymentDisplay(lang),
+                   ),
                    const SizedBox(height: 12),
                    
-                   // Confirm Button (contains Schedule)
+                   // Confirm Button
                    _confirmButton(context, vm, lang),
                 ],
               ),
@@ -486,89 +491,108 @@ class RideSelectionBody extends StatelessWidget {
   ) {
     final bool isButtonDisabled =
         vm.isBooking || vm.isOutstationRide || vm.selectedRide == null;
-    const Color yellow = Color(0xFFFBC02D); // Material Amber 700
 
     final rideName = vm.selectedRide != null ? lang.getText(vm.selectedRide!.name) : "";
 
-    return SizedBox(
-      width: double.infinity,
-      child: Column(
+    return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Schedule Button
           if (!vm.isOutstationRide && !vm.isBooking)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: TextButton.icon(
-                 icon: Icon(Icons.calendar_today, 
-                   color: vm.scheduledTime != null ? Colors.green : Colors.grey[700], size: 20),
-                 label: Text(
-                   vm.scheduledTime == null 
-                     ? lang.getText('schedule_later') // "Schedule for Later"
-                     : "${lang.getText('schedule_later')}: ${_formatDate(vm.scheduledTime!)}",
-                   style: TextStyle(
-                     color: vm.scheduledTime != null ? Colors.green : Colors.grey[700],
-                     fontWeight: FontWeight.w600,
-                   ),
-                 ),
-                 onPressed: () => _pickDateTime(context, vm),
-              ),
-            ),
-
-          ElevatedButton(
-            onPressed: isButtonDisabled
-                ? null
-                : () async {
-                    if (vm.isBookForOthers && (vm.receiverName == null || vm.receiverPhone == null)) {
-                       _showBookForOthersDialog(context, vm);
-                       return;
-                    }
-
-                    await vm.bookRide(() async {
-                      final parent = context.findAncestorWidgetOfExactType<RideSelectionScreen>();
-                      await bookRideTransaction(
-                        context, 
-                        vm, 
-                        pickupText: parent!.pickupText, 
-                        destinationText: parent.destinationText
-                      );
-                    });
-                  },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: yellow,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: InkWell(
+                onTap: () => _pickDateTime(context, vm),
                 borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[200]!),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.calendar_today_outlined, 
+                        color: vm.scheduledTime != null ? AppColors.primary : Colors.grey[600], size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        vm.scheduledTime == null 
+                          ? lang.getText('schedule_later')
+                          : "${lang.getText('schedule_later')}: ${_formatDate(vm.scheduledTime!)}",
+                        style: TextStyle(
+                          color: vm.scheduledTime != null ? AppColors.primary : Colors.grey[700],
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-            child: vm.isBooking
-                ? const SizedBox(
-                    height: 22,
-                    width: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Text(
-                    vm.isOutstationRide
-                        ? lang.getText('beyond_service_limit')
-                        : (vm.selectedRide == null
-                              ? lang.getText('select_ride')
-                              : vm.scheduledTime != null 
-                                  ? "${lang.getText('book_now')} $rideName"
-                                  : "${lang.getText('book_now')} $rideName"),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 17,
-                    ),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: SizedBox(
+              width: double.infinity,
+              height: 58, 
+              child: ElevatedButton(
+                onPressed: isButtonDisabled
+                    ? null
+                    : () async {
+                        if (vm.isBookForOthers && (vm.receiverName == null || vm.receiverPhone == null)) {
+                           _showBookForOthersDialog(context, vm);
+                           return;
+                        }
+
+                        await vm.bookRide(() async {
+                          final parent = context.findAncestorWidgetOfExactType<RideSelectionScreen>();
+                          await bookRideTransaction(
+                            context, 
+                            vm, 
+                            pickupText: parent!.pickupText, 
+                            destinationText: parent.destinationText
+                          );
+                        });
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  disabledBackgroundColor: Colors.grey[300],
+                  elevation: 6,
+                  shadowColor: AppColors.primary.withValues(alpha: 0.4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
+                ),
+                child: vm.isBooking
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        vm.isOutstationRide
+                            ? lang.getText('beyond_service_limit')
+                            : (vm.selectedRide == null
+                                  ? lang.getText('select_ride')
+                                  : "${lang.getText('book_now')} $rideName"),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+              ),
+            ),
           ),
         ],
-      ),
-    );
+      );
   }
 
   Future<void> _pickDateTime(BuildContext context, RideSelectionViewModel vm) async {
@@ -701,93 +725,17 @@ class RideSelectionBody extends StatelessWidget {
     );
   }
 
+/* 
   Widget _couponSection(BuildContext context, RideSelectionViewModel vm, LanguageViewModel lang) {
-    bool hasCoupon = vm.appliedCoupon != null;
-    
-    return InkWell(
-      onTap: () => _showCouponSheet(context, vm),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        decoration: BoxDecoration(
-          color: hasCoupon ? Colors.green.withValues(alpha: 0.1) : Colors.grey[50], // Fixed
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: hasCoupon ? Colors.green : Colors.grey[200]!),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.discount, color: hasCoupon ? Colors.green : Colors.orange, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  hasCoupon 
-                    ? "${lang.getText('coupon_applied')} (-₹${vm.appliedCoupon!.amount.toInt()})" 
-                    : lang.getText('apply_coupon'),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600, 
-                    color: hasCoupon ? Colors.green : Colors.black87
-                  ),
-                ),
-              ],
-            ),
-            if (hasCoupon)
-               IconButton(
-                 icon: const Icon(Icons.close, size: 16, color: Colors.grey),
-                 onPressed: () => vm.removeCoupon(),
-                 constraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-                 padding: EdgeInsets.zero,
-               )
-            else
-               const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
-          ],
-        ),
-      ),
-    );
+    ...
   }
+*/
 
+/*
   void _showCouponSheet(BuildContext context, RideSelectionViewModel vm) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) {
-         return Padding(
-           padding: const EdgeInsets.all(20),
-           child: Column(
-             mainAxisSize: MainAxisSize.min,
-             crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(Provider.of<LanguageViewModel>(context, listen: false).getText('available_coupons'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 20),
-                
-                if (vm.coupons.isEmpty)
-                  Center(child: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('no_coupons_available'), style: const TextStyle(color: Colors.grey)))
-                else
-                  ...vm.coupons.map((coupon) {
-                    return ListTile(
-                      leading: const Icon(Icons.local_offer, color: Colors.orange),
-                      title: Text("${Provider.of<LanguageViewModel>(context, listen: false).getText('save')} ₹${coupon.amount.toInt()}"),
-                      subtitle: Text("${Provider.of<LanguageViewModel>(context, listen: false).getText('coupon_applicable_on')} ₹100"),
-                      trailing: TextButton(
-                        onPressed: () {
-                          vm.applyCoupon(coupon);
-                          Navigator.pop(context);
-                          if (vm.couponError != null) {
-                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(vm.couponError!)));
-                          }
-                        },
-                        child: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('apply_btn_label')),
-                      ),
-                    );
-                  }),
-                 
-               const SizedBox(height: 20),
-             ],
-           ),
-         );
-      },
-    );
+    ...
   }
+*/
 
   Widget _rideTile(RideOption ride, bool selected, Color color, LanguageViewModel lang) {
     return Row(

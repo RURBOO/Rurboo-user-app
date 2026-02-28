@@ -255,9 +255,11 @@ class _RideBookedContent extends StatelessWidget {
                 elevation: 3,
                 child: const Icon(Icons.share, size: 20),
                 onPressed: () {
+                   final box = context.findRenderObject() as RenderBox?;
                    // ignore: deprecated_member_use
                    Share.share(
                      "${Provider.of<LanguageViewModel>(context, listen: false).getText('share_msg_text')}\nhttps://rurboo.app/track?id=${vm.rideId}",
+                     sharePositionOrigin: box != null ? box.localToGlobal(Offset.zero) & box.size : null,
                    );
                 },
               ),
@@ -809,9 +811,12 @@ void _showSafetyShield(BuildContext context, RideBookedViewModel vm) {
               subtitle: Text(Provider.of<LanguageViewModel>(context, listen: false).getText('send_tracking_link')),
               onTap: () {
                 Navigator.pop(ctx);
+                final box = context.findRenderObject() as RenderBox?;
                 // ignore: deprecated_member_use
                 Share.share(
-                    "${Provider.of<LanguageViewModel>(context, listen: false).getText('share_msg_text')}\nhttps://rurboo.app/track?id=${vm.rideId}");
+                    "${Provider.of<LanguageViewModel>(context, listen: false).getText('share_msg_text')}\nhttps://rurboo.app/track?id=${vm.rideId}",
+                    sharePositionOrigin: box != null ? box.localToGlobal(Offset.zero) & box.size : null,
+                );
               },
             ),
             const Divider(),

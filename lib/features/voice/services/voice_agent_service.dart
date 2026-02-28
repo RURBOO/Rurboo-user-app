@@ -95,7 +95,8 @@ class VoiceAgentService {
 
     // 3. Initialize Text to Speech with enhanced configuration
     try {
-      await _tts.setLanguage("hi-IN");
+      await _tts.setLanguage("hi-IN"); // Default, but can be updated
+      await setTtsLanguage("hi-IN"); // Set default explicitly
       await _tts.setSpeechRate(0.5); // Moderate pace for clarity
       await _tts.setVolume(1.0);
       await _tts.setPitch(1.0);
@@ -187,6 +188,23 @@ class VoiceAgentService {
   Future<void> setLocale(String localeId) async {
     _currentLocale = localeId;
     debugPrint("🌐 Locale changed to: $localeId");
+  }
+
+  /// Switch TTS language dynamically
+  Future<void> setTtsLanguage(String langCode) async {
+    if (!_isInitialized) await init();
+    try {
+      // Map basic codes to TTS locales
+      String ttsLocale = "en-US";
+      if (langCode == 'hi' || langCode.contains('hi')) ttsLocale = "hi-IN";
+      if (langCode == 'mr' || langCode.contains('mr')) ttsLocale = "mr-IN";
+      if (langCode == 'bn' || langCode.contains('bn')) ttsLocale = "bn-IN";
+      
+      await _tts.setLanguage(ttsLocale);
+      debugPrint("🔊 TTS Language set to: $ttsLocale");
+    } catch (e) {
+      debugPrint("⚠️ TTS setLanguage error: $e");
+    }
   }
 
   /// Stop Listening
