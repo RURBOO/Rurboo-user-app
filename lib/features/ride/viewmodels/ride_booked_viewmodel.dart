@@ -32,7 +32,7 @@ class RideBookedViewModel extends ChangeNotifier {
   Set<Polyline> polylines = {};
   bool isLoading = true;
 
-  String eta = "~ 5 minutes";
+  String eta = "5"; // Store raw minutes as string for display
   bool kIsSosTestMode = true;
 
   StreamSubscription<DocumentSnapshot>? _rideStream;
@@ -176,6 +176,9 @@ class RideBookedViewModel extends ChangeNotifier {
             if (newStage == RideStage.arriving || newStage == RideStage.inProgress) {
                _checkForAutoShare();
             }
+          } else if (stage == RideStage.inProgress && driverLocation != null) {
+            // Periodic update during trip if driver moves
+            _fetchPolyline(driverLocation!, destinationLatLng, 'trip_route');
           }
 
           notifyListeners();
@@ -260,7 +263,8 @@ class RideBookedViewModel extends ChangeNotifier {
     if (stage == RideStage.arriving && driverLocation != null) {
       await _fetchPolyline(driverLocation!, pickupLatLng, 'driver_to_pickup');
     } else if (stage == RideStage.inProgress) {
-      await _fetchPolyline(pickupLatLng, destinationLatLng, 'trip_route');
+      // Use driverLocation if available for the trip start during progress
+      await _fetchPolyline(driverLocation ?? pickupLatLng, destinationLatLng, 'trip_route');
     }
   }
 
@@ -281,9 +285,9 @@ class RideBookedViewModel extends ChangeNotifier {
         );
 
         if (route.durationMins < 1) {
-          eta = "Arriving now";
+          eta = "0"; // Special value for 'Arriving now' or 'Nearly there'
         } else {
-          eta = "${route.durationMins.toInt()} minutes";
+          eta = route.durationMins.toInt().toString();
         }
 
         _fitCamera(route.points);

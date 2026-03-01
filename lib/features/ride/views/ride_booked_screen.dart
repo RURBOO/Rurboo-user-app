@@ -106,20 +106,24 @@ class _RideBookedScreenState extends State<RideBookedScreen> {
     // Announce ride updates with comprehensive information
     if (vm.stage == RideStage.arriving) {
        // Driver found - announce with ETA
-       final eta = vm.eta; 
+       final etaText = (vm.eta == "0") 
+         ? lang.getText('status_arriving_now') 
+         : "${vm.eta} ${lang.getText('minutes')}";
        String msg = lang.getText('driver_arriving_voice');
        msg = msg.replaceAll('{0}', vm.rideDetails?.driverName ?? '');
        msg = msg.replaceAll('{1}', vm.rideDetails?.carNumber ?? '');
-       msg = msg.replaceAll('{2}', eta);
+       msg = msg.replaceAll('{2}', etaText);
        voice.speak(msg);
        
        // Check for Proactive Safety Alert on Arrival/Start
        _triggerSafetyVoiceCheck(vm, voice);
     } else if (vm.stage == RideStage.inProgress) {
        // Ride started - announce with destination ETA
-       final eta = vm.eta; 
+       final etaText = (vm.eta == "0") 
+         ? lang.getText('status_nearly_there') 
+         : "${vm.eta} ${lang.getText('minutes')}";
        String msg = lang.getText('ride_started_voice');
-       msg = msg.replaceAll('{0}', eta);
+       msg = msg.replaceAll('{0}', etaText);
        voice.speak(msg);
     } else if (vm.stage == RideStage.completed) {
        // Ride completed - thank you message
@@ -412,7 +416,11 @@ class _RideBookedContent extends StatelessWidget {
                              ),
                              if (vm.stage == RideStage.arriving || vm.stage == RideStage.inProgress)
                                Text(
-                                 vm.eta,
+                                 (vm.eta == "0")
+                                   ? (vm.stage == RideStage.inProgress 
+                                       ? Provider.of<LanguageViewModel>(context).getText('status_nearly_there')
+                                       : Provider.of<LanguageViewModel>(context).getText('status_arriving_now'))
+                                   : "${vm.eta} ${Provider.of<LanguageViewModel>(context).getText('minutes')}",
                                  style: const TextStyle(
                                    color: AppColors.textSecondary,
                                    fontWeight: FontWeight.w600,

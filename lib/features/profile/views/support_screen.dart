@@ -111,6 +111,53 @@ class _SupportScreenBodyState extends State<SupportScreenBody> with SingleTicker
               maxLines: 5,
               validator: (val) => val!.isEmpty ? 'Required' : null,
             ),
+            const SizedBox(height: 16),
+            // --- Attachment UI ---
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey[300]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.attach_file, size: 18, color: Colors.grey[600]),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            vm.selectedImage == null 
+                                ? lang.getText('attach_screenshot_optional')
+                                : vm.selectedImage!.name,
+                            style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (vm.selectedImage != null)
+                          GestureDetector(
+                            onTap: vm.clearImage,
+                            child: const Icon(Icons.close, size: 18, color: Colors.red),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: vm.pickImage,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey[200],
+                    foregroundColor: Colors.black87,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Icon(Icons.add_a_photo, size: 20),
+                ),
+              ],
+            ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -213,28 +260,43 @@ class _SupportScreenBodyState extends State<SupportScreenBody> with SingleTicker
                             Text(lang.getText('ticket_desc_label'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
                             const SizedBox(height: 4),
                             Text(ticket.description),
-                            if (ticket.adminResponse != null) ...[
-                               const SizedBox(height: 12),
-                               Container(
-                                 width: double.infinity,
-                                 padding: const EdgeInsets.all(12),
-                                 decoration: BoxDecoration(
-                                   color: Colors.green.withValues(alpha: 0.05),
-                                   borderRadius: BorderRadius.circular(8),
-                                   border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
-                                 ),
-                                 child: Column(
-                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                   children: [
-                                      Text(lang.getText('admin_response'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.green)),
-                                      const SizedBox(height: 4),
-                                      Text(ticket.adminResponse!),
-                                   ],
-                                 ),
-                               )
-                            ]
-                         ],
-                       ),
+                             if (ticket.adminResponse != null) ...[
+                                const SizedBox(height: 12),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withValues(alpha: 0.05),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                       Text(lang.getText('admin_response'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.green)),
+                                       const SizedBox(height: 4),
+                                       Text(ticket.adminResponse!),
+                                    ],
+                                  ),
+                                )
+                             ],
+                             if (ticket.imageUrl != null) ...[
+                                const SizedBox(height: 12),
+                                Text(lang.getText('attachment_label'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                                const SizedBox(height: 8),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    ticket.imageUrl!,
+                                    height: 150,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => const Text("Failed to load image"),
+                                  ),
+                                ),
+                             ]
+                          ],
+                        ),
                      )
                   ],
                 ),

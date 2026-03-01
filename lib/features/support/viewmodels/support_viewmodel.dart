@@ -3,6 +3,9 @@ import '../models/ticket_model.dart';
 import '../repositories/support_repository.dart';
 import '../../../core/services/user_preferences.dart';
 import 'package:uuid/uuid.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 
 class SupportViewModel extends ChangeNotifier {
   final SupportRepository _repository = SupportRepository();
@@ -11,6 +14,23 @@ class SupportViewModel extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  XFile? _selectedImage;
+  XFile? get selectedImage => _selectedImage;
+
+  void pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (image != null) {
+      _selectedImage = image;
+      notifyListeners();
+    }
+  }
+
+  void clearImage() {
+    _selectedImage = null;
+    notifyListeners();
+  }
 
   Stream<List<TicketModel>> getUserTickets() {
     return Stream.fromFuture(UserPreferences.getUserId()).asyncExpand((userId) {
@@ -34,6 +54,17 @@ class SupportViewModel extends ChangeNotifier {
       final userId = await UserPreferences.getUserId();
       if (userId == null) throw Exception("User not logged in");
 
+      String? imageUrl;
+      if (_selectedImage != null) {
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child('support_tickets')
+            .child('${const Uuid().v4()}.jpg');
+        
+        await storageRef.putFile(File(_selectedImage!.path));
+        imageUrl = await storageRef.getDownloadURL();
+      }
+
       final ticket = TicketModel(
         id: const Uuid().v4(),
         userId: userId,
@@ -42,9 +73,12 @@ class SupportViewModel extends ChangeNotifier {
         description: description,
         createdAt: DateTime.now(),
         status: 'Open',
+        imageUrl: imageUrl,
+        userType: 'user',
       );
 
       await _repository.createTicket(ticket);
+      _selectedImage = null;
       _setLoading(false);
       return true;
     } catch (e) {

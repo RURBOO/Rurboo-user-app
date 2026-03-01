@@ -617,6 +617,8 @@ class AppStrings {
     'no_tickets_found': {'en': 'No support tickets found.', 'hi': 'कोई सहायता टिकट नहीं मिला।'},
     'ticket_id': {'en': 'Ticket ID', 'hi': 'टिकट आईडी'},
     'admin_response': {'en': 'Admin Response', 'hi': 'एडमिन प्रतिक्रिया'},
+    'attach_screenshot_optional': {'en': 'Attach screenshot (Optional)', 'hi': 'स्क्रीनशॉट संलग्न करें (वैकल्पिक)'},
+    'attachment_label': {'en': 'Attachment', 'hi': 'संलग्नक'},
     
     // --- Feedback Extra ---
     'suggestions_desc_text': {
@@ -635,6 +637,9 @@ class AppStrings {
     'no_coupons_available': {'en': 'No coupons available', 'hi': 'कोई कूपन उपलब्ध नहीं है'},
     'available_coupons': {'en': 'Available Coupons', 'hi': 'उपलब्ध कूपन'},
     'coupon_applicable_on': {'en': 'Applicable on rides above', 'hi': 'से अधिक की सवारी पर लागू'},
+    'status_nearly_there': {'en': 'Nearly there', 'hi': 'बस पहुँचने वाले हैं'},
+    'status_arriving_now': {'en': 'Arriving now', 'hi': 'बस पहुँचने वाले हैं'},
+    'minutes': {'en': 'minutes', 'hi': 'मिनट'},
     'ticket_status_pending': {'en': 'Pending', 'hi': 'लंबित'},
     'ticket_status_processing': {'en': 'Processing', 'hi': 'प्रक्रियाधीन'},
     'ticket_status_completed': {'en': 'Completed', 'hi': 'पूर्ण'},

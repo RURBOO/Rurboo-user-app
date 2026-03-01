@@ -9,6 +9,8 @@ class TicketModel {
   final String status; // 'Open', 'In Progress', 'Closed'
   final DateTime createdAt;
   final String? adminResponse;
+  final String? imageUrl;
+  final String userType;
 
   TicketModel({
     required this.id,
@@ -19,6 +21,8 @@ class TicketModel {
     this.status = 'Open',
     required this.createdAt,
     this.adminResponse,
+    this.imageUrl,
+    this.userType = 'user',
   });
 
   Map<String, dynamic> toJson() {
@@ -31,6 +35,8 @@ class TicketModel {
       'status': status,
       'createdAt': Timestamp.fromDate(createdAt),
       'adminResponse': adminResponse,
+      'imageUrl': imageUrl,
+      'userType': userType,
     };
   }
 
@@ -44,6 +50,8 @@ class TicketModel {
       status: json['status'] ?? 'Open',
       createdAt: (json['createdAt'] as Timestamp).toDate(),
       adminResponse: json['adminResponse'],
+      imageUrl: json['imageUrl'],
+      userType: json['userType'] ?? 'user',
     );
   }
 }
