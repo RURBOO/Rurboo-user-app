@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
-import '../../../core/utils/fare_calc.dart';
+
 import '../../../core/services/user_preferences.dart';
 import '../models/ride_options.dart';
 import '../models/coupon_model.dart'; // Added
@@ -124,7 +125,7 @@ class RideSelectionViewModel extends ChangeNotifier {
         rates = null;
       }
 
-      _createRideOptions(rates);
+      await _createRideOptions(rates);
     }
     
     // Fetch Coupons
@@ -138,41 +139,50 @@ class RideSelectionViewModel extends ChangeNotifier {
     }
   }
 
-  void _createRideOptions(Map<String, dynamic>? rates) {
+  Future<void> _createRideOptions(Map<String, dynamic>? rates) async {
     List<RideOption> newOptions = [];
-    
-    // 1. Determine which keys to iterate
-    // If we have rates from Firestore, use those keys (except metadata keys)
-    // If not, use default keys.
     List<String> vehicleKeys = [];
     
     if (rates != null && rates.isNotEmpty) {
       vehicleKeys = rates.keys.where((k) => k != 'commission_percent').toList();
     } else {
-      // Offline fallback
       vehicleKeys = ['bike', 'auto', 'car', 'erickshaw', 'bigcar', 'carriertruck'];
     }
 
-    // Sort keys to ensure consistent order (optional, or rely on Firestore)
-    // For better UX, we might want a priority list, but for now simple sort or list is fine.
-    
-    for (String key in vehicleKeys) {
-      final FareResult result = calculateFare(
-        vehicleKey: key,
-        distanceKm: _distanceKm,
-        firestoreRates: rates,
-      );
+    // Call Cloud Function to get secure fares
+    final HttpsCallable callable = FirebaseFunctions.instanceFor(region: 'asia-south1').httpsCallable('provideFare');
 
-      newOptions.add(RideOption(
-        id: key,
-        name: _formatVehicleName(key),
-        description: _getVehicleDescription(key, result),
-        eta: _calculateEta(key),
-        fare: result.totalFare,
-        icon: _getIconForVehicle(key),
-        iconColor: _getColorForVehicle(key),
-        seats: _getSeatsForVehicle(key),
-      ));
+    try {
+      // Fetch all fares in parallel for better performance
+      final List<Future<void>> fareRequests = vehicleKeys.map((key) async {
+        try {
+          final result = await callable.call({
+            'vehicleKey': key,
+            'distanceKm': _distanceKm,
+          });
+
+          final double secureFare = (result.data['fare'] as num).toDouble();
+          
+          newOptions.add(RideOption(
+            id: key,
+            name: _formatVehicleName(key),
+            description: _calculateEta(key),
+            eta: _calculateEta(key),
+            fare: secureFare,
+            icon: _getIconForVehicle(key),
+            iconColor: _getColorForVehicle(key),
+            seats: _getSeatsForVehicle(key),
+          ));
+        } catch (e) {
+          debugPrint("❌ Failed to fetch secure fare for $key: $e");
+          // Fallback to local calculation if needed, but in production this should be a hard requirement
+          // For now, if one fails, we just don't add it or log error.
+        }
+      }).toList();
+
+      await Future.wait(fareRequests);
+    } catch (e) {
+      debugPrint("❌ Global fare calculation error: $e");
     }
     
     // Sort options by Price Low -> High
@@ -197,9 +207,7 @@ class RideSelectionViewModel extends ChangeNotifier {
     }
   }
 
-  String _getVehicleDescription(String key, FareResult fare) {
-    return _calculateEta(key);
-  }
+
 
   String _calculateEta(String key) {
     // Estimations: Bike is fastest, Truck is slowest

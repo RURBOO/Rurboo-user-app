@@ -783,5 +783,29 @@ class AppStrings {
       'en': 'Drop',
       'hi': 'ड्रॉप'
     },
+    'tut_pickup_title': {
+      'en': 'Your Location',
+      'hi': 'आपकी लोकेशन'
+    },
+    'tut_pickup_body': {
+      'en': 'Tap here to change your pickup point if needed.',
+      'hi': 'यदि आवश्यकता हो तो अपना पिकअप स्थान बदलने के लिए यहां टैप करें।'
+    },
+    'tut_search_title': {
+      'en': 'Where to go?',
+      'hi': 'कहाँ जाना है?'
+    },
+    'tut_search_body': {
+      'en': 'Search and select your destination to see available rides and fares.',
+      'hi': 'उपलब्ध सवारी और किराया देखने के लिए अपना गंतव्य खोजें और चुनें।'
+    },
+    'tut_nav_title': {
+      'en': 'Navigation Bar',
+      'hi': 'नेविगेशन बार'
+    },
+    'tut_nav_body': {
+      'en': 'Switch between Map, History, and Profile to see your past rides and account details.',
+      'hi': 'अपनी पिछली सवारी और खाते की जानकारी के लिए मैप, इतिहास और प्रोफाइल के बीच स्विच करें।'
+    },
   };
 }

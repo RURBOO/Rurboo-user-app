@@ -83,9 +83,31 @@ class ProfileViewModel extends ChangeNotifier {
         _age = data?['age'];
         _phoneNumber = data?['phoneNumber'] ?? '+91';
         _photoUrl = data?['photoUrl'];
-         _totalRides = data?['totalRides'] ?? 0;
+        _totalRides = data?['totalRides'] ?? 0;
         _avgRating = (data?['rating'] ?? 5.0).toDouble();
         _myReferralCode = data?['referralCode'];
+
+        // --- Fetch Dynamic Ride Count (Fallback/Sync) ---
+        try {
+          final querySnapshot = await _firestore
+              .collection('rideRequests')
+              .where('userId', isEqualTo: userId)
+              .get();
+          
+          int completedRides = 0;
+          for (var doc in querySnapshot.docs) {
+            final status = doc.data()['status'];
+            if (status == 'completed' || status == 'closed') {
+              completedRides++;
+            }
+          }
+          
+          if (completedRides > _totalRides) {
+            _totalRides = completedRides;
+          }
+        } catch (e) {
+          debugPrint("Error counting dynamic rides: $e");
+        }
 
         // --- Fetch Referral Stats ---
         // 1. Count Users referred by me

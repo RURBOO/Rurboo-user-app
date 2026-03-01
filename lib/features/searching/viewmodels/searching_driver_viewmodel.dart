@@ -77,6 +77,75 @@ class SearchingDriverViewModel extends ChangeNotifier {
   }
 
   Future<void> cancelRide(BuildContext context) async {
+    // Show reason dialog first
+    final reasons = [
+      'Change of plans',
+      'Driver is too far',
+      'Found another ride',
+      'Booked by mistake',
+      'Other',
+    ];
+    String? selectedReason;
+
+    if (!context.mounted) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) {
+        String? pickedReason;
+        return StatefulBuilder(
+          builder: (ctx, setDlgState) {
+            return AlertDialog(
+              title: const Text('Cancel Ride?'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Please select a reason for cancellation:',
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
+                  const SizedBox(height: 12),
+                  RadioGroup<String>(
+                    groupValue: pickedReason,
+                    onChanged: (v) => setDlgState(() => pickedReason = v),
+                    child: Column(
+                      children: reasons.map((r) => ListTile(
+                        title: Text(r),
+                        leading: Radio<String>(value: r),
+                        contentPadding: EdgeInsets.zero,
+                        onTap: () => setDlgState(() => pickedReason = r),
+                      )).toList(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogCtx, false),
+                  child: const Text('Back'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: pickedReason == null
+                      ? null
+                      : () {
+                          selectedReason = pickedReason;
+                          Navigator.pop(dialogCtx, true);
+                        },
+                  child: const Text('Cancel Ride'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
     try {
       _timeoutTimer?.cancel();
 
@@ -92,12 +161,13 @@ class SearchingDriverViewModel extends ChangeNotifier {
           .update({
              'status': 'cancelled',
              'cancelledBy': 'user',
+             'cancelReason': selectedReason ?? 'Other',
           });
 
       stopListening();
 
       if (context.mounted) {
-        Navigator.pop(context);
+        Navigator.pop(context); // dismiss progress
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const MainNavigator()),

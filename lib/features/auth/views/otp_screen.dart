@@ -55,7 +55,18 @@ class _OtpScreenState extends State<OtpScreen> {
     });
   }
 
+  bool _isVerifying = false;
+
   Future<void> _verifyOtp() async {
+    if (_isVerifying) return;
+    
+    // Check if already authenticated by auto-retrieval
+    if (FirebaseAuth.instance.currentUser != null) {
+      debugPrint("User already authenticated via auto-retrieval");
+      _handleAuthSuccess(FirebaseAuth.instance.currentUser!.uid);
+      return;
+    }
+
     final lang = Provider.of<LanguageViewModel>(context, listen: false);
     final otp = _pinController.text.trim();
 
@@ -66,6 +77,7 @@ class _OtpScreenState extends State<OtpScreen> {
       return;
     }
 
+    setState(() => _isVerifying = true);
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -85,39 +97,19 @@ class _OtpScreenState extends State<OtpScreen> {
         throw Exception("User is null after OTP verification");
       }
 
-      final uid = userCred.user!.uid;
-      await UserPreferences.saveUserId(uid);
-
-      // Updating FCM Token
-      final token = await NotificationService().getDeviceToken();
-      if (token != null) await NotificationService().saveTokenToDatabase(token);
-
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-
-      if (!mounted) return;
-      Navigator.pop(context);
-
-      if (userDoc.exists) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const LocationDisclosureScreen()),
-          (_) => false,
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => CreateProfileScreen(phoneNumber: widget.phone),
-          ),
-        );
-      }
+      await _handleAuthSuccess(userCred.user!.uid);
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         Navigator.pop(context);
+        setState(() => _isVerifying = false);
         debugPrint("Firebase OTP Error: ${e.code}");
+        
+        // If session-expired but user is actually logged in, just proceed
+        if (e.code == 'session-expired' && FirebaseAuth.instance.currentUser != null) {
+          _handleAuthSuccess(FirebaseAuth.instance.currentUser!.uid);
+          return;
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -131,6 +123,7 @@ class _OtpScreenState extends State<OtpScreen> {
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);
+        setState(() => _isVerifying = false);
         debugPrint("OTP Error: $e");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -142,13 +135,57 @@ class _OtpScreenState extends State<OtpScreen> {
     }
   }
 
+  Future<void> _handleAuthSuccess(String uid) async {
+    await UserPreferences.saveUserId(uid);
+
+    // Updating FCM Token
+    final token = await NotificationService().getDeviceToken();
+    if (token != null) await NotificationService().saveTokenToDatabase(token);
+
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+
+    if (!mounted) return;
+    
+    // Close loading dialog if open
+    if (_isVerifying) {
+      Navigator.pop(context);
+    }
+
+    if (userDoc.exists) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LocationDisclosureScreen()),
+        (_) => false,
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CreateProfileScreen(phoneNumber: widget.phone),
+        ),
+      );
+    }
+  }
+
   Future<void> _resendOtp() async {
     _startTimer();
+    setState(() {
+      _pinController.clear();
+    });
     try {
       await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: '+91${widget.phone}',
         forceResendingToken: _resendToken,
-        verificationCompleted: (PhoneAuthCredential credential) {},
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          // Auto-sign in if triggered during resend
+          final userCred = await FirebaseAuth.instance.signInWithCredential(credential);
+          if (userCred.user != null) {
+            _handleAuthSuccess(userCred.user!.uid);
+          }
+        },
         verificationFailed: (FirebaseAuthException e) {
           if (!mounted) return;
           final lang =

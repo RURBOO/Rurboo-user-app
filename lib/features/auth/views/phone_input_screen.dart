@@ -1,11 +1,15 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:rurboo/features/language/viewmodels/language_vm.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/services/user_preferences.dart';
 import '../../../core/theme/app_colors.dart';
 import 'otp_screen.dart';
+import 'location_disclosure_screen.dart';
+import 'create_profile_screen.dart';
 class PhoneInputScreen extends StatefulWidget {
   const PhoneInputScreen({super.key});
 
@@ -41,7 +45,45 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
       await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: '+91$phone',
         verificationCompleted: (PhoneAuthCredential credential) async {
-          await FirebaseAuth.instance.signInWithCredential(credential);
+          try {
+            final UserCredential userCred = await FirebaseAuth.instance.signInWithCredential(credential);
+            if (userCred.user != null) {
+              if (mounted) {
+                // Remove progress dialog if showing
+                if (_isLoading) {
+                  Navigator.pop(context);
+                  setState(() => _isLoading = false);
+                }
+
+                final uid = userCred.user!.uid;
+                await UserPreferences.saveUserId(uid);
+
+                final userDoc = await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(uid)
+                    .get();
+
+                if (!mounted) return;
+                
+                if (userDoc.exists) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LocationDisclosureScreen()),
+                    (_) => false,
+                  );
+                } else {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CreateProfileScreen(phoneNumber: phone),
+                    ),
+                  );
+                }
+              }
+            }
+          } catch (e) {
+            debugPrint("Auto-verification failed: $e");
+          }
         },
         verificationFailed: (FirebaseAuthException e) {
           if (mounted) {

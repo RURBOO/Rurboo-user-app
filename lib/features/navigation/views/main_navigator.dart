@@ -14,12 +14,19 @@ class MainNavigator extends StatefulWidget {
 
 class _MainNavigatorState extends State<MainNavigator> {
   int _selectedIndex = 0;
+  final GlobalKey _navBarKey = GlobalKey();
 
-  static const List<Widget> _widgetOptions = <Widget>[
-    HomeScreen(),
-    HistoryScreen(),
-    ProfileScreen(),
-  ];
+  late final List<Widget> _widgetOptions;
+
+  @override
+  void initState() {
+    super.initState();
+    _widgetOptions = [
+      HomeScreen(navBarKey: _navBarKey),
+      const HistoryScreen(),
+      const ProfileScreen(),
+    ];
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -40,6 +47,7 @@ class _MainNavigatorState extends State<MainNavigator> {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
+        key: _navBarKey,
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: const Icon(Icons.home_outlined),

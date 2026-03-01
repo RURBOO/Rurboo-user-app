@@ -11,9 +11,12 @@ import 'package:rurboo/features/home/views/search_location_screen.dart';
 import '../../voice/viewmodels/voice_agent_viewmodel.dart';
 import '../../../core/theme/app_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import '../../../core/services/user_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final GlobalKey? navBarKey;
+  const HomeScreen({super.key, this.navBarKey});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -24,26 +27,145 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   bool get wantKeepAlive => true;
 
+  final GlobalKey _pickupKey = GlobalKey();
+  final GlobalKey _searchKey = GlobalKey();
+  late TutorialCoachMark tutorialCoachMark;
+  List<TargetFocus> targets = [];
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       Provider.of<HomeViewModel>(context, listen: false).init(context);
       
-      // Initialize voice service for announcements only (no commands)
       final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
       voice.init();
       
-      // Welcome announcement
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
           final lang = Provider.of<LanguageViewModel>(context, listen: false);
           voice.speak(lang.getText('welcome_msg'));
         }
       });
+
+      // Check for first time onboarding
+      final isFirstTime = await UserPreferences.isFirstTime();
+      if (isFirstTime) {
+        _showOnboarding();
+      }
     });
   }
-  
+
+  void _showOnboarding() {
+    final lang = Provider.of<LanguageViewModel>(context, listen: false);
+    _initTargets(lang);
+    tutorialCoachMark = TutorialCoachMark(
+      targets: targets,
+      colorShadow: AppColors.primary,
+      textSkip: lang.getText('skip'),
+      paddingFocus: 10,
+      opacityShadow: 0.8,
+      onFinish: () {
+        UserPreferences.setFirstTime(false);
+      },
+      onSkip: () {
+        UserPreferences.setFirstTime(false);
+        return true;
+      },
+    )..show(context: context);
+  }
+
+  void _initTargets(LanguageViewModel lang) {
+    targets.add(
+      TargetFocus(
+        identify: "pickup",
+        keyTarget: _pickupKey,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  lang.getText('tut_pickup_title'),
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 20),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 10.0),
+                  child: Text(
+                    lang.getText('tut_pickup_body'),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+
+    targets.add(
+      TargetFocus(
+        identify: "search",
+        keyTarget: _searchKey,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  lang.getText('tut_search_title'),
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 20),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 10.0),
+                  child: Text(
+                    lang.getText('tut_search_body'),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+
+    if (widget.navBarKey != null) {
+      targets.add(
+        TargetFocus(
+          identify: "navBar",
+          keyTarget: widget.navBarKey,
+          contents: [
+            TargetContent(
+              align: ContentAlign.top,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    lang.getText('tut_nav_title'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 20),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10.0),
+                    child: Text(
+                      lang.getText('tut_nav_body'),
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          ],
+        ),
+      );
+    }
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -52,12 +174,14 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return const HomeBody();
+    return HomeBody(pickupKey: _pickupKey, searchKey: _searchKey);
   }
 }
 
 class HomeBody extends StatelessWidget {
-  const HomeBody({super.key});
+  final GlobalKey pickupKey;
+  final GlobalKey searchKey;
+  const HomeBody({super.key, required this.pickupKey, required this.searchKey});
 
   @override
   Widget build(BuildContext context) {
@@ -160,6 +284,7 @@ class HomeBody extends StatelessWidget {
             left: 20,
             right: 20,
             child: GestureDetector(
+              key: pickupKey,
               onTap: () => _openSearch(context, isDestination: false),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -362,6 +487,7 @@ class HomeBody extends StatelessWidget {
             
             // Where to Box
             GestureDetector(
+              key: searchKey,
               onTap: () => _openSearch(context, isDestination: true),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),

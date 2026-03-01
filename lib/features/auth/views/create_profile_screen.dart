@@ -325,7 +325,6 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                           ),
                           validator: (v) {
                             if (v == null || v.isEmpty) return lang.getText('enter_full_name');
-                            if (v.trim().split(' ').length < 2) return lang.getText('enter_first_last_name');
                             return null;
                           },
                         ).animate().fade(delay: 200.ms).slideY(begin: 0.1),
@@ -458,8 +457,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                             prefixIcon: const Icon(Icons.contact_emergency, color: AppColors.textSecondary),
                           ),
                           validator: (v) {
-                            if (v == null || v.isEmpty) return lang.getText('required');
-                            if (v.length != 10) return lang.getText('invalid');
+                            if (v != null && v.isNotEmpty && v.length != 10) return lang.getText('invalid');
                             return null;
                           },
                         ).animate().fade(delay: 350.ms).slideY(begin: 0.1),

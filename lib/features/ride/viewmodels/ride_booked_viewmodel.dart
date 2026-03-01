@@ -32,7 +32,7 @@ class RideBookedViewModel extends ChangeNotifier {
   Set<Polyline> polylines = {};
   bool isLoading = true;
 
-  String eta = "~ 5 mins";
+  String eta = "~ 5 minutes";
   bool kIsSosTestMode = true;
 
   StreamSubscription<DocumentSnapshot>? _rideStream;
@@ -283,7 +283,7 @@ class RideBookedViewModel extends ChangeNotifier {
         if (route.durationMins < 1) {
           eta = "Arriving now";
         } else {
-          eta = "${route.durationMins.toInt()} mins";
+          eta = "${route.durationMins.toInt()} minutes";
         }
 
         _fitCamera(route.points);

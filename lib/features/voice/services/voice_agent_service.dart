@@ -95,21 +95,35 @@ class VoiceAgentService {
 
     // 3. Initialize Text to Speech with enhanced configuration
     try {
-      await _tts.setLanguage("hi-IN"); // Default, but can be updated
-      await setTtsLanguage("hi-IN"); // Set default explicitly
-      await _tts.setSpeechRate(0.5); // Moderate pace for clarity
+      bool isLanguageAvailable = await _tts.isLanguageAvailable("hi-IN");
+      if (isLanguageAvailable) {
+        await _tts.setLanguage("hi-IN");
+        debugPrint("🔊 TTS: Hindi (hi-IN) initialized");
+      } else {
+        await _tts.setLanguage("en-IN");
+        debugPrint("🔊 TTS: Hindi not available, falling back to en-IN");
+      }
+      
+      await _tts.setSpeechRate(0.5); 
       await _tts.setVolume(1.0);
       await _tts.setPitch(1.0);
       
       // iOS specific settings
       if (defaultTargetPlatform == TargetPlatform.iOS) {
         await _tts.setSharedInstance(true);
+        await _tts.setIosAudioCategory(IosTextToSpeechAudioCategory.playback,
+            [
+              IosTextToSpeechAudioCategoryOptions.allowBluetooth,
+              IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
+              IosTextToSpeechAudioCategoryOptions.mixWithOthers
+            ],
+            IosTextToSpeechAudioMode.voicePrompt
+        );
       }
       
-      debugPrint("✅ Text-to-Speech Initialized");
+      debugPrint("✅ Text-to-Speech Initialized successfully");
     } catch (e) {
-      debugPrint("⚠️ TTS Init warning: $e");
-      // TTS failure is non-fatal, continue
+      debugPrint("⚠️ TTS Init error: $e");
     }
     
     _isInitialized = true;
@@ -212,10 +226,18 @@ class VoiceAgentService {
     await _speech.stop();
   }
 
+  bool _hasSpokenOnce = false;
+
   /// Speak Text
   Future<void> speak(String text) async {
     if (!_isInitialized) await init();
     
+    // Slight delay on first run to let audio focus initialize
+    if (!_hasSpokenOnce) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      _hasSpokenOnce = true;
+    }
+
     // Stop listening if active
     // Phonetic correction for "RURBOO" so TTS pronounces it as a word
     final processedText = text.replaceAll("RURBOO", "Roor booo");

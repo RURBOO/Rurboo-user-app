@@ -5,6 +5,7 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
@@ -65,12 +66,12 @@ Future<void> main() async {
   // 🔐 FIREBASE APP CHECK
   // ===============================
   try {
-    // 🔹 Use Play Integrity for Real Devices (Debug & Release)
-    // Ensure SHA-1 & SHA-256 are added to Firebase Console!
     await FirebaseAppCheck.instance.activate(
-      androidProvider: AndroidProvider.playIntegrity,
+      androidProvider: kDebugMode 
+          ? AndroidProvider.debug 
+          : AndroidProvider.playIntegrity,
     );
-    debugPrint('🔐 App Check: Play Integrity active');
+    debugPrint('🔐 App Check: ${kDebugMode ? "Debug" : "Play Integrity"} active');
 
     // ✅ VERY IMPORTANT: prevents token expiry issues
     await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);

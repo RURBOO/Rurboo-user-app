@@ -134,7 +134,7 @@ class SOSService {
       final user = _auth.currentUser;
       if (user == null) return;
 
-      await _firestore.collection('sos_alerts').add({
+      await _firestore.collection('sos_incidents').add({
         'userId': user.uid,
         'timestamp': FieldValue.serverTimestamp(),
         'rideId': rideId,
