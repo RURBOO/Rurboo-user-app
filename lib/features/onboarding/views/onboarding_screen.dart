@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rurboo/features/language/viewmodels/language_vm.dart';
-import '../../auth/views/selection_screen.dart';
+import '../../auth/views/phone_input_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -34,6 +34,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ];
 
     return Scaffold(
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Stack(
           children: [
@@ -49,7 +50,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       child: Image.asset(item['image']!, fit: BoxFit.cover),
                     ),
                     Positioned.fill(
-                      child: Container(color: Colors.black.withValues(alpha: 0.45)),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.1),
+                              Colors.black.withValues(alpha: 0.8),
+                              Colors.black,
+                            ],
+                            stops: const [0.3, 0.6, 1.0],
+                          ),
+                        ),
+                      ),
                     ),
                     Positioned(
                       bottom: 140,
@@ -104,7 +118,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     onTap: () => Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const SelectionScreen(),
+                        builder: (_) => const PhoneInputScreen(),
                       ),
                     ),
                     child: Text(
@@ -145,7 +159,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         } else {
                           Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(builder: (_) => const SelectionScreen()),
+                            MaterialPageRoute(builder: (_) => const PhoneInputScreen()),
                           );
                         }
                     },

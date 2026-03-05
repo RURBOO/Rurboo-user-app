@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/language_service.dart';
 import '../../../core/constants/app_strings.dart';
 
 class LanguageViewModel extends ChangeNotifier {
   final LanguageService _service;
 
-  LanguageViewModel(this._service);
+  LanguageViewModel(this._service) {
+    _loadSavedLanguage();
+  }
 
   String _language = 'en';
   bool _loading = false;
@@ -14,9 +17,22 @@ class LanguageViewModel extends ChangeNotifier {
   String get language => _language;
   bool get loading => _loading;
 
-  void setLanguage(String lang) {
+  Future<void> _loadSavedLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedCode = prefs.getString('app_language');
+    if (savedCode != null && savedCode.isNotEmpty) {
+      _language = savedCode;
+      notifyListeners();
+    }
+  }
+
+  Future<void> setLanguage(String lang) async {
     _language = lang;
     notifyListeners();
+    
+    // Persist language selection
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('app_language', lang);
   }
 
   Future<List<String>> translate(List<String> items) async {

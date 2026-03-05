@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../models/voice_agent_state.dart';
 import '../viewmodels/voice_agent_viewmodel.dart';
+import '../../language/viewmodels/language_vm.dart';
 
 class VoiceAssistantWidget extends StatelessWidget {
   const VoiceAssistantWidget({super.key});
@@ -99,7 +100,7 @@ class _VoiceOverlay extends StatelessWidget {
 
             // Status Text
             Text(
-              _getStatusText(vm.state),
+              _getStatusText(vm.state, Provider.of<LanguageViewModel>(context)),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -181,10 +182,10 @@ class _VoiceOverlay extends StatelessWidget {
                       children: [
                         const Icon(Icons.record_voice_over, size: 20, color: Colors.indigo),
                         const SizedBox(width: 8),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Wake Word ("Hey Rurboo")',
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                            Provider.of<LanguageViewModel>(context).getText('uiWakeWord'),
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                           ),
                         ),
                         Switch.adaptive(
@@ -200,10 +201,10 @@ class _VoiceOverlay extends StatelessWidget {
                       children: [
                         const Icon(Icons.loop, size: 20, color: Colors.orange),
                         const SizedBox(width: 8),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Continuous Conversation',
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                            Provider.of<LanguageViewModel>(context).getText('uiContinuousConversation'),
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                           ),
                         ),
                         Switch.adaptive(
@@ -220,7 +221,7 @@ class _VoiceOverlay extends StatelessWidget {
             const SizedBox(height: 10),
             TextButton(
               onPressed: () => vm.stopSession(),
-              child: const Text("Close", style: TextStyle(color: Colors.grey)),
+              child: Text(Provider.of<LanguageViewModel>(context).getText('uiClose'), style: const TextStyle(color: Colors.grey)),
             ),
           ],
         ),
@@ -228,16 +229,16 @@ class _VoiceOverlay extends StatelessWidget {
     );
   }
 
-  String _getStatusText(VoiceAgentState state) {
+  String _getStatusText(VoiceAgentState state, LanguageViewModel lang) {
     switch (state) {
-      case VoiceAgentState.listening: return "सुन रहा हूं... (Listening)";
-      case VoiceAgentState.processing: return "सोच रहा हूं... (Thinking)";
-      case VoiceAgentState.speaking: return "बोल रहा हूं... (Speaking)";
-      case VoiceAgentState.sosActivated: return "⚠️ SOS ACTIVATED";
-      case VoiceAgentState.error: return "❌ Error - Retrying...";
-      case VoiceAgentState.booking: return "🚗 Booking Ride...";
-      case VoiceAgentState.confirmingFare: return "💰 Confirm Fare?";
-      default: return "Ready";
+      case VoiceAgentState.listening: return lang.getText('voice_state_listening');
+      case VoiceAgentState.processing: return lang.getText('voice_state_processing');
+      case VoiceAgentState.speaking: return lang.getText('voice_state_speaking');
+      case VoiceAgentState.sosActivated: return lang.getText('voice_state_sos');
+      case VoiceAgentState.error: return lang.getText('voice_state_error');
+      case VoiceAgentState.booking: return lang.getText('voice_state_booking');
+      case VoiceAgentState.confirmingFare: return lang.getText('voice_state_confirming');
+      default: return lang.getText('voice_state_ready');
     }
   }
 

@@ -8,7 +8,6 @@ import '../../language/views/language_selection_screen.dart';
 import 'support_screen.dart';
 import 'privacy_policy_screen.dart';
 import 'terms_screen.dart'; // Added
-import 'refund_policy_screen.dart'; // Added
 import 'feedback_screen.dart'; // Added
 import '../../../core/theme/app_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -89,8 +88,6 @@ class _ProfileScreenBody extends StatelessWidget {
                     child: Column(
                       children: [
                         _buildStatsRow(vm, lang),
-                        const SizedBox(height: 24),
-                        _buildReferralDashboard(vm, lang),
                         const SizedBox(height: 24),
                         _buildProfileDetails(vm, lang),
                         const SizedBox(height: 24),
@@ -258,6 +255,7 @@ class _ProfileScreenBody extends StatelessWidget {
     );
   }
 
+  // ignore: unused_element
   Widget _buildReferralDashboard(ProfileViewModel vm, LanguageViewModel lang) {
     return Container(
       width: double.infinity,
@@ -402,9 +400,6 @@ class _ProfileScreenBody extends StatelessWidget {
           _buildMenuItem(context, lang.getText('feedback_suggestions'), Icons.tips_and_updates_outlined, 
               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FeedbackScreen()))),
           _buildDivider(),
-          _buildMenuItem(context, lang.getText('refund_policy_menu'), Icons.receipt_long_outlined, 
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RefundPolicyScreen()))),
-          _buildDivider(),
           _buildMenuItem(context, lang.getText('terms_conditions_menu'), Icons.description_outlined, 
               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsScreen()))),
           _buildDivider(),
@@ -413,7 +408,6 @@ class _ProfileScreenBody extends StatelessWidget {
           _buildDivider(),
           _buildMenuItem(context, lang.getText('logout'), Icons.logout, // "Logout"
               () => _showLogoutDialog(context, vm, lang), isDestructive: true),
-          _buildDivider(),
           _buildDivider(),
           _buildMenuItem(context, lang.getText('delete_account'), Icons.delete_forever, 
               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserDeleteAccountScreen())), isDestructive: true),

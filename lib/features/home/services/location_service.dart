@@ -39,11 +39,18 @@ class LocationService {
     }
 
     try {
+      debugPrint("📍 Trying last known position for instant load...");
+      Position? lastPosition = await Geolocator.getLastKnownPosition();
+      if (lastPosition != null) {
+        debugPrint("✅ Instant location found!");
+        return LatLng(lastPosition.latitude, lastPosition.longitude);
+      }
+      
       debugPrint("📍 Requesting location (High Accuracy)...");
       Position position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 8),
+          timeLimit: Duration(seconds: 4), // Reduced from 8s
         ),
       );
       debugPrint("✅ Location found: ${position.latitude}, ${position.longitude}");

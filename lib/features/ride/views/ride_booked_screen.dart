@@ -284,11 +284,11 @@ class _RideBookedContent extends StatelessWidget {
                     guardianPhone: vm.guardianPhone,
                     trustedContacts: vm.trustedContacts,
                 ),
-                child: const Column(
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.sos, size: 24),
-                    Text("SOS", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)), // SOS is universal usually, but checking AppStrings... yes 'sos' exists
+                    const Icon(Icons.sos, size: 24),
+                    Text(Provider.of<LanguageViewModel>(context).getText('uiSos'), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)), 
                   ],
                 ),
               ),
@@ -460,7 +460,7 @@ class _RideBookedContent extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      vm.rideDetails?.driverName ?? "Connecting...",
+                                      vm.rideDetails?.driverName ?? Provider.of<LanguageViewModel>(context).getText('status_connecting'),
                                       style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,

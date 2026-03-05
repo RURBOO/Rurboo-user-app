@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../language/views/language_selection_screen.dart';
+import '../../../features/language/viewmodels/language_vm.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -14,9 +16,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageViewModel>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Settings"),
+        title: Text(lang.getText('uiSettings')),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 1,
@@ -24,9 +27,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            "Preferences",
-            style: TextStyle(
+          Text(
+            lang.getText('uiPreferences'),
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
               color: Colors.grey,
@@ -37,7 +40,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.translate, color: Colors.black87),
-            title: const Text("App Language"),
+            title: Text(lang.getText('uiAppLanguage')),
             trailing: const Icon(Icons.chevron_right, color: Colors.grey),
             onTap: () {
               Navigator.push(
@@ -53,8 +56,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             activeThumbColor: Colors.black,
-            title: const Text("Push Notifications"),
-            subtitle: const Text("Receive updates about your ride"),
+            title: Text(lang.getText('uiPushNotifications')),
+            subtitle: Text(lang.getText('uiReceiveRideUpdates')),
             value: _pushNotifications,
             onChanged: (val) {
               setState(() => _pushNotifications = val);
@@ -64,7 +67,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             activeThumbColor: Colors.black,
-            title: const Text("Promotional Emails"),
+            title: Text(lang.getText('uiPromotionalEmails')),
             value: _promoEmails,
             onChanged: (val) {
               setState(() => _promoEmails = val);
@@ -74,9 +77,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Divider(),
           const SizedBox(height: 20),
 
-          const Text(
-            "About",
-            style: TextStyle(
+          Text(
+            lang.getText('uiAbout'),
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
               color: Colors.grey,
@@ -84,10 +87,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 10),
 
-          const ListTile(
+          ListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text("App Version"),
-            trailing: Text("1.0.0", style: TextStyle(color: Colors.grey)),
+            title: Text(lang.getText('uiAppVersion')),
+            trailing: const Text("1.0.0", style: TextStyle(color: Colors.grey)),
           ),
         ],
       ),

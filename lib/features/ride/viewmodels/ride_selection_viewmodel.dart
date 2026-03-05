@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 
 
 import '../../../core/services/user_preferences.dart';
@@ -90,52 +89,75 @@ class RideSelectionViewModel extends ChangeNotifier {
 
     _setMarkers();
 
+    // 🚀 Force One-Sided Distance (Geodesic)
+    _distanceKm = distance; 
+    _durationMins = distance * 2.5; // Est. 2.5 mins/km (approx 24km/h)
+
+    // Instantly draw a straight line to not block UI rendering
+    routePoints = [pickup.coordinates!, destination.coordinates!];
+    debugPrint("🚀🚀🚀 Fallback to Straight Line Path for instant load");
+    _setPolyline(routePoints);
+
+    // Call OSRM asynchronously so it doesn't freeze screen transition
+    _fetchActualRoute();
+
+    isOutstationRide = _distanceKm > 200;
+
+    // Set loading to false instantly so the map and basic UI can render.
+    loading = false;
+    notifyListeners();
+    
+    // Fit camera ASAP
+    if (mapController != null) {
+      _fitCameraToRoute(routePoints);
+    }
+    
+    if (!isOutstationRide) {
+      // Await fare calculation so init() completes only after fares are ready
+      // This is crucial for the Voice Assistant to see a populated rideOptions list in the .then() block
+      await _fetchFaresAsync();
+    }
+    
+    // Fetch Coupons asynchronously
+    fetchCoupons();
+  }
+
+  Future<void> _fetchFaresAsync() async {
+    Map<String, dynamic>? rates;
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('config')
+          .doc('rates')
+          .get(const GetOptions(source: Source.serverAndCache)); // Optimized to use cache!
+      rates = doc.data();
+      debugPrint("🚕 DEBUG RATES FETCHED: ${rates?.keys}");
+      if(rates != null) {
+        rates.forEach((k, v) => debugPrint("Rate $k: $v"));
+      }
+    } catch (e) {
+      debugPrint("⚠️ Using offline fare rates");
+      rates = null;
+    }
+
+    await _createRideOptions(rates);
+    notifyListeners(); // Update the UI when fares arrive!
+  }
+
+  Future<void> _fetchActualRoute() async {
     final RouteInfo? routeInfo = await repo.getRouteDetails(
       pickup.coordinates!,
       destination.coordinates!,
     );
 
-    // 🚀 Force One-Sided Distance (Geodesic)
-    // OSRM was returning ~2x distance (likely round trip), causing double fare.
-    _distanceKm = distance; 
-    _durationMins = distance * 2.5; // Est. 2.5 mins/km (approx 24km/h)
-
-    if (routeInfo != null) {
+    if (routeInfo != null && routeInfo.points.isNotEmpty) {
       routePoints = routeInfo.points;
-      debugPrint("🚀🚀🚀 Using OSRM Path (Visual Only). Ignored OSRM Dist: ${routeInfo.distanceKm} km");
-    } else {
-      routePoints = [pickup.coordinates!, destination.coordinates!];
-      debugPrint("🚀🚀🚀 Fallback to Straight Line Path");
-    }
-
-    _setPolyline(routePoints);
-
-    isOutstationRide = _distanceKm > 100;
-
-    if (!isOutstationRide) {
-      Map<String, dynamic>? rates;
-      try {
-        final doc = await FirebaseFirestore.instance
-            .collection('config')
-            .doc('rates')
-            .get();
-        rates = doc.data();
-      } catch (e) {
-        debugPrint("⚠️ Using offline fare rates");
-        rates = null;
+      debugPrint("🚀🚀🚀 OSRM Path loaded asynchronously.");
+      _setPolyline(routePoints);
+      
+      if (mapController != null) {
+        _fitCameraToRoute(routePoints);
       }
-
-      await _createRideOptions(rates);
-    }
-    
-    // Fetch Coupons
-    fetchCoupons();
-
-    loading = false;
-    notifyListeners();
-
-    if (mapController != null) {
-      _fitCameraToRoute(routePoints);
+      notifyListeners();
     }
   }
 
@@ -149,40 +171,40 @@ class RideSelectionViewModel extends ChangeNotifier {
       vehicleKeys = ['bike', 'auto', 'car', 'erickshaw', 'bigcar', 'carriertruck'];
     }
 
-    // Call Cloud Function to get secure fares
-    final HttpsCallable callable = FirebaseFunctions.instanceFor(region: 'asia-south1').httpsCallable('provideFare');
+    // 🚀 Instantly calculate fares locally using the fetched/cached rules
+    for (String key in vehicleKeys) {
+      double secureFare = 50.0; // Fallback minimum fare
+      
+      if (rates != null && rates.containsKey(key)) {
+        final Map<String, dynamic> vRates = rates[key] as Map<String, dynamic>;
+        final double baseFare = (vRates['base_fare'] ?? 0).toDouble();
+        final double perKmRate = (vRates['per_km'] ?? 0).toDouble();
+        
+        // Match the Cloud Function logic locally
+        secureFare = baseFare + (_distanceKm * perKmRate);
+      } else {
+         // Generic Fallbacks if offline or missing
+         switch (key) {
+           case 'bike': secureFare = 20 + (_distanceKm * 5); break;
+           case 'auto': secureFare = 30 + (_distanceKm * 10); break;
+           case 'car': secureFare = 50 + (_distanceKm * 15); break;
+           case 'erickshaw': secureFare = 20 + (_distanceKm * 8); break;
+           case 'bigcar': secureFare = 80 + (_distanceKm * 20); break;
+           case 'carriertruck': secureFare = 150 + (_distanceKm * 40); break;
+         }
+      }
 
-    try {
-      // Fetch all fares in parallel for better performance
-      final List<Future<void>> fareRequests = vehicleKeys.map((key) async {
-        try {
-          final result = await callable.call({
-            'vehicleKey': key,
-            'distanceKm': _distanceKm,
-          });
-
-          final double secureFare = (result.data['fare'] as num).toDouble();
-          
-          newOptions.add(RideOption(
-            id: key,
-            name: _formatVehicleName(key),
-            description: _calculateEta(key),
-            eta: _calculateEta(key),
-            fare: secureFare,
-            icon: _getIconForVehicle(key),
-            iconColor: _getColorForVehicle(key),
-            seats: _getSeatsForVehicle(key),
-          ));
-        } catch (e) {
-          debugPrint("❌ Failed to fetch secure fare for $key: $e");
-          // Fallback to local calculation if needed, but in production this should be a hard requirement
-          // For now, if one fails, we just don't add it or log error.
-        }
-      }).toList();
-
-      await Future.wait(fareRequests);
-    } catch (e) {
-      debugPrint("❌ Global fare calculation error: $e");
+      newOptions.add(RideOption(
+        id: key,
+        name: _formatVehicleName(key),
+        description: _calculateEta(key),
+        eta: _calculateEta(key),
+        fare: secureFare,
+        icon: _getIconForVehicle(key),
+        imageAsset: _getImageAssetForVehicle(key),
+        iconColor: _getColorForVehicle(key),
+        seats: _getSeatsForVehicle(key),
+      ));
     }
     
     // Sort options by Price Low -> High
@@ -222,7 +244,7 @@ class RideSelectionViewModel extends ChangeNotifier {
       factor = 1.2;
     }
 
-    return "${(_durationMins * factor).toInt()} min";
+    return "${(_durationMins * factor).toInt()}";
   }
 
   IconData _getIconForVehicle(String key) {
@@ -232,6 +254,16 @@ class RideSelectionViewModel extends ChangeNotifier {
     if (k.contains('truck') || k.contains('carrier')) return Icons.local_shipping;
     if (k.contains('big') || k.contains('suv')) return Icons.airport_shuttle;
     return Icons.directions_car;
+  }
+
+  String _getImageAssetForVehicle(String key) {
+    final k = key.toLowerCase();
+    if (k.contains('bike') || k.contains('moto')) return 'assets/images/vehicles/bike.png';
+    if (k.contains('erickshaw')) return 'assets/images/vehicles/e_rickshaw.png';
+    if (k.contains('auto') || k.contains('rickshaw')) return 'assets/images/vehicles/auto.png';
+    if (k.contains('truck') || k.contains('carrier')) return 'assets/images/vehicles/truck.png';
+    if (k.contains('big') || k.contains('suv')) return 'assets/images/vehicles/suv.png';
+    return 'assets/images/vehicles/car.png';
   }
 
   Color _getColorForVehicle(String key) {
@@ -293,7 +325,7 @@ class RideSelectionViewModel extends ChangeNotifier {
             southwest: LatLng(minLat, minLng),
             northeast: LatLng(maxLat, maxLng),
           ),
-          100,
+          200,
         ),
       );
     });

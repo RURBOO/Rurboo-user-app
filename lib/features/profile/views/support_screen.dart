@@ -235,7 +235,7 @@ class _SupportScreenBodyState extends State<SupportScreenBody> with SingleTicker
                    crossAxisAlignment: CrossAxisAlignment.start,
                    children: [
                      const SizedBox(height: 4),
-                     Text("${lang.getText('ticket_id')}: ${ticket.id.substring(0, 8)}...", style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                     Text("${lang.getText('ticket_id')}: ${ticket.id.length > 8 ? '${ticket.id.substring(0, 8)}...' : ticket.id}", style: const TextStyle(fontSize: 12, color: Colors.grey)),
                      Text(DateFormat('MMM dd, yyyy').format(ticket.createdAt), style: const TextStyle(fontSize: 12, color: Colors.grey)),
                    ],
                  ),
@@ -291,7 +291,7 @@ class _SupportScreenBodyState extends State<SupportScreenBody> with SingleTicker
                                     height: 150,
                                     width: double.infinity,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) => const Text("Failed to load image"),
+                                    errorBuilder: (context, error, stackTrace) => Text(lang.getText('uiFailedToLoadImage')),
                                   ),
                                 ),
                              ]

@@ -11,6 +11,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_colors.dart';
 import 'create_profile_screen.dart';
 import 'location_disclosure_screen.dart';
+import '../../voice/viewmodels/voice_agent_viewmodel.dart';
 
 class OtpScreen extends StatefulWidget {
   final String phone;
@@ -40,6 +41,11 @@ class _OtpScreenState extends State<OtpScreen> {
     super.initState();
     _verificationId = widget.verificationId;
     _startTimer();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final lang = Provider.of<LanguageViewModel>(context, listen: false);
+      final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
+      voice.speak(lang.getText('voice_enter_otp'));
+    });
   }
 
   void _startTimer() {
@@ -178,6 +184,7 @@ class _OtpScreenState extends State<OtpScreen> {
     try {
       await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: '+91${widget.phone}',
+        timeout: const Duration(seconds: 30), // Reduced from default 60s → 30s
         forceResendingToken: _resendToken,
         verificationCompleted: (PhoneAuthCredential credential) async {
           // Auto-sign in if triggered during resend
@@ -239,15 +246,22 @@ class _OtpScreenState extends State<OtpScreen> {
 
     final defaultPinTheme = PinTheme(
       width: 50,
-      height: 56,
+      height: 60,
       textStyle: theme.textTheme.headlineMedium?.copyWith(
         color: AppColors.textPrimary,
         fontWeight: FontWeight.bold,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.dividerColor),
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.dividerColor.withValues(alpha: 0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
     );
 
@@ -264,84 +278,139 @@ class _OtpScreenState extends State<OtpScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 40),
-              Text(
-                lang.getText('otp_title'),
-                style: theme.textTheme.headlineLarge,
-              ).animate().fade(duration: 400.ms).slideY(begin: 0.1),
-
-              const SizedBox(height: 8),
-              Text(
-                "${lang.getText('otp_subtitle')} ${widget.phone}",
-                style: theme.textTheme.bodyMedium,
-              ).animate().fade(delay: 200.ms).slideY(begin: 0.1),
-
-              const SizedBox(height: 40),
-
-              // ─── Pinput OTP Field ───────────────────────────────────
-              Center(
-                child: Pinput(
-                  length: 6,
-                  controller: _pinController,
-                  focusNode: _pinFocusNode,
-                  autofocus: true,
-                  defaultPinTheme: defaultPinTheme,
-                  focusedPinTheme: focusedPinTheme,
-                  submittedPinTheme: submittedPinTheme,
-                  keyboardType: TextInputType.number,
-                  closeKeyboardWhenCompleted: true,
-                  onCompleted: (_) => _verifyOtp(),
-                  cursor: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 9),
-                        width: 22,
-                        height: 2,
-                        color: AppColors.primary,
-                      ),
-                    ],
-                  ),
-                ).animate().fade(delay: 300.ms).slideY(begin: 0.2),
-              ),
-
-              const SizedBox(height: 32),
-
-              // ─── Countdown / Resend ─────────────────────────────────
-              Center(
-                child: seconds == 0
-                    ? TextButton(
-                        onPressed: _resendOtp,
-                        child: Text(
-                          lang.getText('resend_otp_btn'),
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(color: AppColors.primary),
+        child: CustomScrollView(
+          slivers: [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 40),
+                    // Beautifully styled, uncropped logo
+                    Center(
+                      child: Container(
+                        width: 160,
+                        height: 160,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(40),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.25),
+                              blurRadius: 30,
+                              offset: const Offset(0, 15),
+                            ),
+                          ],
                         ),
-                      )
-                    : Text(
-                        lang
-                            .getText('resend_otp_msg')
-                            .replaceAll('{seconds}', seconds.toString()),
-                        style: theme.textTheme.bodyMedium,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(40),
+                          child: Image.asset(
+                            "assets/images/app_logo.jpg",
+                            fit: BoxFit.contain,
+                            errorBuilder: (c, e, s) => Container(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              child: const Icon(Icons.local_taxi, size: 80, color: AppColors.primary),
+                            ),
+                          ),
+                        ),
                       ),
-              ).animate().fade(delay: 600.ms),
+                    ).animate().fade(duration: 600.ms).scale(curve: Curves.easeOutBack),
+                    
+                    const SizedBox(height: 48),
+                    Text(
+                      lang.getText('otp_title'),
+                      style: theme.textTheme.headlineLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                      ),
+                    ).animate().fade(duration: 400.ms).slideY(begin: 0.1),
 
-              const Spacer(),
+                    const SizedBox(height: 12),
+                    Text(
+                      "${lang.getText('otp_subtitle')} ${widget.phone}",
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: AppColors.textSecondary,
+                        height: 1.5,
+                      ),
+                    ).animate().fade(delay: 200.ms).slideY(begin: 0.1),
 
-              ElevatedButton(
-                onPressed: _verifyOtp,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 56),
+                    const SizedBox(height: 48),
+
+                    // ─── Pinput OTP Field ───────────────────────────────────
+                    Center(
+                      child: Pinput(
+                        length: 6,
+                        controller: _pinController,
+                        focusNode: _pinFocusNode,
+                        autofocus: true,
+                        defaultPinTheme: defaultPinTheme,
+                        focusedPinTheme: focusedPinTheme,
+                        submittedPinTheme: submittedPinTheme,
+                        keyboardType: TextInputType.number,
+                        closeKeyboardWhenCompleted: true,
+                        onCompleted: (_) => _verifyOtp(),
+                        cursor: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 9),
+                              width: 22,
+                              height: 2,
+                              color: AppColors.primary,
+                            ),
+                          ],
+                        ),
+                      ).animate().fade(delay: 300.ms).slideY(begin: 0.2),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // ─── Countdown / Resend ─────────────────────────────────
+                    Center(
+                      child: seconds == 0
+                          ? TextButton(
+                              onPressed: _resendOtp,
+                              child: Text(
+                                lang.getText('resend_otp_btn'),
+                                style: theme.textTheme.titleMedium
+                                    ?.copyWith(color: AppColors.primary),
+                              ),
+                            )
+                          : Text(
+                              lang
+                                  .getText('resend_otp_msg')
+                                  .replaceAll('{seconds}', seconds.toString()),
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                    ).animate().fade(delay: 600.ms),
+
+                    const Spacer(),
+
+                    // Premium Button
+                    ElevatedButton(
+                      onPressed: _verifyOtp,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 60),
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 5,
+                        shadowColor: AppColors.primary.withValues(alpha: 0.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: Text(
+                        lang.getText('verify'),
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.0),
+                      ),
+                    ).animate().fade(delay: 700.ms).slideY(begin: 0.2),
+                  ],
                 ),
-                child: Text(lang.getText('verify')),
-              ).animate().fade(delay: 700.ms).slideY(begin: 0.2),
-            ],
-          ),
+              ),
+            ),
+          ],
         ),
       ),
     );

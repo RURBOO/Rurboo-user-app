@@ -42,6 +42,7 @@ class RideBookedViewModel extends ChangeNotifier {
 
   bool _isCameraLocked = true;
   Timer? _cameraUnlockTimer;
+  Timer? _driverCrossCheckTimer;
 
   bool isEndRideRequested = false;
 
@@ -71,6 +72,45 @@ class RideBookedViewModel extends ChangeNotifier {
     _fetchPolyline(pickupLatLng, destinationLatLng, 'initial_route');
     _listenToRide();
     _fetchSafetySettings();
+    _startDriverCrossCheck();
+  }
+
+  void _startDriverCrossCheck() {
+    _driverCrossCheckTimer?.cancel();
+    _driverCrossCheckTimer = Timer.periodic(const Duration(seconds: 60), (timer) async {
+      if (rideDetails == null || stage == RideStage.completed || stage == RideStage.cancelled) {
+        return;
+      }
+
+      try {
+        // Need to find the driverId from the current ride request data
+        final rideSnap = await FirebaseFirestore.instance.collection('rideRequests').doc(rideId).get();
+        final String? driverId = rideSnap.data()?['driverId'];
+
+        if (driverId != null) {
+          final driverSnap = await FirebaseFirestore.instance.collection('drivers').doc(driverId).get();
+          final bool driverIsOnTrip = driverSnap.data()?['isOnTrip'] == true;
+          final String? driverCurrentRide = driverSnap.data()?['currentRideId'];
+
+          // If driver says they are NOT on a trip, or are on a DIFFERENT trip
+          if (!driverIsOnTrip || (driverCurrentRide != null && driverCurrentRide != rideId)) {
+            debugPrint("🚨 Periodic Check: Driver mismatch detected. Auto-cancelling user ride.");
+            
+            // Update Firestore so other listeners get notified
+            await FirebaseFirestore.instance.collection('rideRequests').doc(rideId).update({
+              'status': 'cancelled',
+              'cancelReason': 'periodic_driver_mismatch',
+              'cancelledBy': 'system',
+            });
+
+            // Local cleanup and navigate home
+            _handleCancellation(isDriver: true);
+          }
+        }
+      } catch (e) {
+        debugPrint("⚠️ Periodic driver cross-check failed: $e");
+      }
+    });
   }
 
   Future<void> _fetchSafetySettings() async {
@@ -443,6 +483,8 @@ class RideBookedViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _rideStream?.cancel();
+    _cameraUnlockTimer?.cancel();
+    _driverCrossCheckTimer?.cancel();
     super.dispose();
   }
 }

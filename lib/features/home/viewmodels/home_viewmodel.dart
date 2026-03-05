@@ -42,6 +42,7 @@ class HomeViewModel extends ChangeNotifier {
 
   StreamSubscription<Position>? _locationSubscription;
   DateTime _lastSyncTime = DateTime.now().subtract(const Duration(minutes: 1));
+  String _currentLanguage = 'en'; // Tracks active language for geocoding
 
   HomeViewModel(this.repo);
 
@@ -127,9 +128,15 @@ class HomeViewModel extends ChangeNotifier {
   Future<void> init(BuildContext context) async {
     if (_initialized) return;
     _initialized = true;
-    
+
+    // Read language BEFORE any await to avoid BuildContext async gap warning
+    String capturedLanguage = 'en';
+    try {
+      capturedLanguage = Provider.of<LanguageViewModel>(context, listen: false).language;
+    } catch (_) {}
+
     // YIELD TO UI: Allow the frame to render before heavy lifting
-    await Future.delayed(Duration.zero); // Keep for now as simple yield, but ideally use addPostFrameCallback in View
+    await Future.delayed(Duration.zero);
 
     loadingLocation = true;
     _hasLocationError = false;
@@ -139,20 +146,9 @@ class HomeViewModel extends ChangeNotifier {
     final userId = await UserPreferences.getUserId();
 
     if (userId != null) {
-      final activeQuery = await FirebaseFirestore.instance
-          .collection('rideRequests')
-          .where('userId', isEqualTo: userId)
-          .where(
-            'status',
-            whereIn: ['pending', 'accepted', 'arrived', 'in_progress'],
-          )
-          .limit(1)
-          .get();
-
-      if (activeQuery.docs.isNotEmpty && context.mounted) {
-        _redirectToActiveRide(context, activeQuery.docs.first);
-        return;
-      }
+      // Fire active ride check asynchronously to not block the map from rendering!
+      // context.mounted check required because this runs after two awaits
+      if (context.mounted) _checkActiveRide(context, userId);
     }
 
     final latLng = await repo.getCurrentLocation();
@@ -160,30 +156,24 @@ class HomeViewModel extends ChangeNotifier {
     if (latLng == null) {
       loadingLocation = false;
       _hasLocationError = true;
+      _initialized = false; // Allow retry when user presses "Try Again"
       notifyListeners();
       return;
     }
 
     currentLocation = latLng;
 
-    try {
-      final address = await searchRepo.reverseGeocode(currentLocation!);
-      // Check if reverse geocoding returned coordinates (which means it failed)
-      if (address.contains(RegExp(r'^\d+\.\d+,\s*\d+\.\d+'))) {
-        // If it's just coordinates, use "Current Location" instead
-        pickup = LocationResult(
-          address: "current_location",
-          coordinates: currentLocation,
-        );
-      } else {
-        pickup = LocationResult(address: address, coordinates: currentLocation);
-      }
-    } catch (_) {
-      pickup = LocationResult(
-        address: "current_location",
-        coordinates: currentLocation,
-      );
-    }
+    // Instantly set pickup with coordinates so UI can render the map immediately
+    pickup = LocationResult(
+      address: "current_location",
+      coordinates: currentLocation,
+    );
+
+    // Use the pre-captured language (avoids BuildContext async gap)
+    _currentLanguage = capturedLanguage;
+
+    // Run reverse geocoding in the background so it doesn't block the UI
+    _fetchAddressInBackground();
 
     if (mapController != null) {
       mapController!.animateCamera(
@@ -202,10 +192,77 @@ class HomeViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> _fetchAddressInBackground() async {
+    if (currentLocation == null) return;
+    try {
+      final address = await searchRepo.reverseGeocode(currentLocation!, language: _currentLanguage);
+      if (!address.contains(RegExp(r'^\d+\.\d+,\s*\d+\.\d+'))) {
+        pickup = LocationResult(address: address, coordinates: currentLocation);
+        _updateMarkers(); // Update marker snippet
+        notifyListeners();
+      }
+    } catch (_) {
+      // Keep "current_location" if it fails
+    }
+  }
+
+  /// Call this when the user changes app language to re-fetch pickup address in new language
+  Future<void> refreshPickupLanguage(String newLanguage) async {
+    if (_currentLanguage == newLanguage) return;
+    _currentLanguage = newLanguage;
+    // Only re-geocode if pickup is at current location (has no custom address)
+    if (currentLocation != null) {
+      _fetchAddressInBackground(); // Re-fetch in new language async
+    }
+  }
+
+  Future<void> _checkActiveRide(BuildContext context, String userId) async {
+    try {
+      final activeQuery = await FirebaseFirestore.instance
+          .collection('rideRequests')
+          .where('userId', isEqualTo: userId)
+          .where(
+            'status',
+            whereIn: ['pending', 'accepted', 'arrived', 'in_progress'],
+          )
+          .orderBy('createdAt', descending: true)
+          .limit(1)
+          .get(const GetOptions(source: Source.serverAndCache)); // Fast check!
+
+      if (activeQuery.docs.isNotEmpty && context.mounted) {
+        final doc = activeQuery.docs.first;
+        final data = doc.data();
+        
+        // Safety Fallback: Ignore stale rides older than 2 hours
+        bool isStale = false;
+        if (data.containsKey('createdAt') && data['createdAt'] != null) {
+          final createdAt = (data['createdAt'] as Timestamp).toDate();
+          if (DateTime.now().difference(createdAt).inHours >= 2) {
+            isStale = true;
+          }
+        }
+        
+        if (!isStale) {
+          _redirectToActiveRide(context, doc);
+        } else {
+          debugPrint("Ignoring stale ride from database: ${doc.id}");
+        }
+      }
+    } catch (e) {
+      debugPrint("Error checking active ride: $e");
+    }
+  }
+
   Future<void> _loadSavedLocations() async {
     homeLocation = await UserPreferences.getHomeLocation();
     workLocation = await UserPreferences.getWorkLocation();
     favoriteLocations = await UserPreferences.getFavorites();
+  }
+
+  /// Public method to reload saved locations (e.g. after saving a new favourite)
+  Future<void> reloadSavedLocations() async {
+    await _loadSavedLocations();
+    notifyListeners();
   }
 
   Future<void> saveAsHome(LocationResult loc) async {
@@ -282,14 +339,14 @@ class HomeViewModel extends ChangeNotifier {
       
       // 2. Perform Search with Location Bias
       // Pass currentLocation to prioritize nearby results
-      final results = await searchRepo.autocomplete(text, focusLocation: currentLocation);
+      final results = await searchRepo.autocomplete(text, focusLocation: currentLocation, language: _currentLanguage);
       
       if (results.isNotEmpty) {
         // Intelligence: Automatically select the FIRST result (Highest Relevance/Nearest)
         final firstMatch = results.first;
         debugPrint("🤖 Auto-Selecting Nearest: ${firstMatch.address}");
         
-        final detail = await searchRepo.getPlaceDetails(firstMatch.placeId!);
+        final detail = await searchRepo.getPlaceDetails(firstMatch.placeId!, language: _currentLanguage);
         if (detail != null) {
           return LocationResult(address: detail.address, coordinates: detail.coordinates);
         }
@@ -459,6 +516,16 @@ class HomeViewModel extends ChangeNotifier {
       maxLng = p.longitude > maxLng ? p.longitude : maxLng;
     }
 
+    // Guard: if pickup and destination are at nearly the same point,
+    // LatLngBounds would have zero area and crash on some devices.
+    const double epsilon = 0.0001;
+    if ((maxLat - minLat).abs() < epsilon && (maxLng - minLng).abs() < epsilon) {
+      mapController!.animateCamera(
+        CameraUpdate.newLatLngZoom(LatLng(minLat, minLng), 15),
+      );
+      return;
+    }
+
     try {
       mapController!.animateCamera(
         CameraUpdate.newLatLngBounds(
@@ -466,7 +533,7 @@ class HomeViewModel extends ChangeNotifier {
             southwest: LatLng(minLat, minLng),
             northeast: LatLng(maxLat, maxLng),
           ),
-          100,
+          80, // Reduced from 200 → 80 to prevent excessive zoom-out
         ),
       );
     } catch (e) {

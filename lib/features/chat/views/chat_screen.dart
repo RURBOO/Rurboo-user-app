@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../services/chat_service.dart';
+import '../../language/viewmodels/language_vm.dart';
 
 class ChatScreen extends StatefulWidget {
   final String rideId;
@@ -26,6 +28,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageViewModel>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
         title: Text("Chat with ${widget.driverName}"),
@@ -43,7 +46,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
                 final docs = snapshot.data!.docs;
                 if (docs.isEmpty) {
-                  return const Center(child: Text("No messages yet. Say Hi! 👋"));
+                  return Center(child: Text(lang.getText('uiNoMessages')));
                 }
 
                 return ListView.builder(

@@ -420,6 +420,20 @@ class AppStrings {
     'nav_home': {'en': 'Home', 'hi': 'होम'},
     'nav_history': {'en': 'History', 'hi': 'इतिहास'},
     'nav_profile': {'en': 'Profile', 'hi': 'प्रोफाइल'},
+    'press_back_again_to_exit': {'en': 'Press back again to exit', 'hi': 'बाहर निकलने के लिए फिर से बैक दबाएं'},
+    'invalid_otp_alert': {'en': 'Invalid OTP', 'hi': 'गलत OTP'},
+    'invalid_otp_desc': {'en': 'The OTP you entered is incorrect. Please try again.', 'hi': 'आपने जो OTP दर्ज किया वह गलत है। कृपया फिर से प्रयास करें।'},
+    'send_otp': {'en': 'Send OTP', 'hi': 'OTP भेजें'},
+    'verify_otp_btn': {'en': 'Verify', 'hi': 'सत्यापित करें'},
+    'update_mobile_number': {'en': 'Update Mobile Number', 'hi': 'मोबाइल नंबर बदलें'},
+    'new_mobile_number': {'en': 'New Mobile Number', 'hi': 'नया मोबाइल नंबर'},
+    'current_number_label': {'en': 'Current', 'hi': 'मौजूदा नंबर'},
+    'otp_sent_success': {'en': 'OTP sent successfully!', 'hi': 'OTP भेजा गया है!'},
+    'number_updated_success': {'en': '✅ Mobile number updated successfully!', 'hi': '✅ मोबाइल नंबर सफलतापूर्वक अपडेट हुआ!'},
+    'enter_otp_label': {'en': 'Enter OTP', 'hi': 'OTP दर्ज करें'},
+    'number_updated_label': {'en': 'Number updated successfully!', 'hi': 'नंबर अपडेट हो गया!'},
+    'invalid_phone_10digits': {'en': 'Please enter a valid 10-digit mobile number', 'hi': 'कृपया 10 अंकों का मोबाइल नंबर दर्ज करें'},
+    'enter_6digit_otp': {'en': 'Please enter the 6-digit OTP', 'hi': 'कृपया 6 अंकों का OTP दर्ज करें'},
     
     // --- History Status ---
     'status_completed': {'en': 'COMPLETED', 'hi': 'पूरा हुआ'},
@@ -812,5 +826,236 @@ class AppStrings {
       'en': 'Switch between Map, History, and Profile to see your past rides and account details.',
       'hi': 'अपनी पिछली सवारी और खाते की जानकारी के लिए मैप, इतिहास और प्रोफाइल के बीच स्विच करें।'
     },
+
+    // --- Hardcoded UI Strings (Phase 2 Hindi Localization) ---
+    'uiLoginToTrack': {
+      'en': 'Please Login to track ride',
+      'hi': 'सवारी ट्रैक करने के लिए कृपया लॉगिन करें',
+    },
+    'uiRideNotFound': {
+      'en': 'Ride not found or expired',
+      'hi': 'यात्रा नहीं मिली या समाप्त हो गई',
+    },
+    'uiLoginToView': {
+      'en': 'Please Login to view shared ride',
+      'hi': 'साझा यात्रा देखने के लिए कृपया लॉगिन करें',
+    },
+    'uiFetchingLocation': {
+      'en': 'Fetching current location...',
+      'hi': 'वर्तमान स्थान प्राप्त हो रहा है...',
+    },
+    'uiNoInternet': {
+      'en': 'No Internet Connection',
+      'hi': 'इंटरनेट कनेक्शन नहीं है',
+    },
+    'uiEnterValidPhone': {
+      'en': 'Enter valid 10-digit number',
+      'hi': 'वैध 10-अंकीय नंबर दर्ज करें',
+    },
+    'uiNoMessages': {
+      'en': 'No messages yet. Say Hi! 👋',
+      'hi': 'अभी कोई संदेश नहीं। नमस्ते कहें! 👋',
+    },
+    'uiLanguageSelection': {
+      'en': 'Language Selection',
+      'hi': 'भाषा चुनाव',
+    },
+    'uiWelcomeRurboo': {
+      'en': 'Welcome to RURBOO',
+      'hi': 'रू-रबू में आपका स्वागत है',
+    },
+    'uiChooseLanguage': {
+      'en': 'Choose your preferred language to continue',
+      'hi': 'जारी रखने के लिए अपनी पसंदीदा भाषा चुनें',
+    },
+    'uiSelectLanguage': {
+      'en': 'Select Language',
+      'hi': 'भाषा चुनें',
+    },
+    'uiProfileUpdated': {
+      'en': 'Profile Updated Successfully! 📸',
+      'hi': 'प्रोफ़ाइल सफलतापूर्वक अपडेट हो गई! 📸',
+    },
+    'uiOpenSettings': {
+      'en': 'Open Settings',
+      'hi': 'सेटिंग्स खोलें',
+    },
+    'uiSettings': {
+      'en': 'Settings',
+      'hi': 'सेटिंग्स',
+    },
+    'uiPreferences': {
+      'en': 'Preferences',
+      'hi': 'प्राथमिकताएँ',
+    },
+    'uiAppLanguage': {
+      'en': 'App Language',
+      'hi': 'ऐप भाषा',
+    },
+    'uiPushNotifications': {
+      'en': 'Push Notifications',
+      'hi': 'पुश सूचनाएं',
+    },
+    'uiReceiveRideUpdates': {
+      'en': 'Receive updates about your ride',
+      'hi': 'अपनी यात्रा के बारे में अपडेट प्राप्त करें',
+    },
+    'uiPromotionalEmails': {
+      'en': 'Promotional Emails',
+      'hi': 'प्रचार ईमेल',
+    },
+    'uiAbout': {
+      'en': 'About',
+      'hi': 'हमारे बारे में',
+    },
+    'uiAppVersion': {
+      'en': 'App Version',
+      'hi': 'ऐप संस्करण',
+    },
+    'uiFailedToLoadImage': {
+      'en': 'Failed to load image',
+      'hi': 'छवि लोड करने में विफल',
+    },
+    'uiSos': {
+      'en': 'SOS',
+      'hi': 'आपातकाल',
+    },
+    'uiEmergencyGuidelines': {
+      'en': 'Emergency Guidelines',
+      'hi': 'आपातकालीन दिशा-निर्देश',
+    },
+    'uiCancelRideTitle': {
+      'en': 'Cancel Ride?',
+      'hi': 'यात्रा रद्द करें?',
+    },
+    'uiSelectCancelReason': {
+      'en': 'Please select a reason for cancellation:',
+      'hi': 'कृपया रद्द करने का कारण चुनें:',
+    },
+    'uiBack': {
+      'en': 'Back',
+      'hi': 'वापस',
+    },
+    'uiCancelRideBtn': {
+      'en': 'Cancel Ride',
+      'hi': 'यात्रा रद्द करें',
+    },
+    'uiConnectionError': {
+      'en': 'Connection Error',
+      'hi': 'कनेक्शन त्रुटि',
+    },
+    'uiCheckInternet': {
+      'en': 'Please check your internet connection.',
+      'hi': 'कृपया अपना इंटरनेट कनेक्शन जांचें।',
+    },
+    'uiRetry': {
+      'en': 'Retry',
+      'hi': 'पुनः प्रयास करें',
+    },
+    'uiClose': {
+      'en': 'Close',
+      'hi': 'बंद करें',
+    },
+    'uiWakeWord': {
+      'en': 'Wake Word ("Hey Rurboo")',
+      'hi': 'जागृति शब्द ("हे रू-रबू")',
+    },
+    'uiContinuousConversation': {
+      'en': 'Continuous Conversation',
+      'hi': 'निरंतर वार्तालाप',
+    },
+    'uiWhoToCall': {
+      'en': 'Who do you want to call?\n\nThis action will be logged for your safety.',
+      'hi': 'आप किसे कॉल करना चाहते हैं?\n\nआपकी सुरक्षा के लिए यह कार्रवाई लॉग की जाएगी।',
+    },
+    'uiNoTrustedContacts': {
+      'en': 'No trusted contacts added yet.\nAdd family or friends for emergencies.',
+      'hi': 'अभी तक कोई विश्वसनीय संपर्क नहीं जोड़ा गया।\nआपात स्थिति के लिए परिवार या मित्रों को जोड़ें।',
+    },
+    'uiCancel': {
+      'en': 'Cancel',
+      'hi': 'रद्द करें',
+    },
+    'uiDelete': {
+      'en': 'Delete',
+      'hi': 'हटाएं',
+    },
+    'cancel_ride': {
+      'en': 'Cancel Ride',
+      'hi': 'सवारी रद्द करें',
+    },
+    'driver_requested_end_ride': {
+      'en': 'Driver requested to end the ride',
+      'hi': 'ड्राइवर ने सवारी समाप्त करने का अनुरोध किया है',
+    },
+    'driver_requested_end_desc': {
+      'en': 'Has the driver dropped you at your destination?',
+      'hi': 'क्या ड्राइवर ने आपको आपके गंतव्य पर छोड़ दिया है?',
+    },
+    'reject': {
+      'en': 'Reject',
+      'hi': 'अस्वीकार करें',
+    },
+    'approve': {
+      'en': 'Approve',
+      'hi': 'स्वीकार करें',
+    },
+    'min': {
+      'en': 'min',
+      'hi': 'मिनट',
+    },
+    'km': {
+      'en': 'km',
+      'hi': 'किमी',
+    },
+    'error': {
+      'en': 'Error',
+      'hi': 'त्रुटि',
+    },
+    'voice_state_listening': {
+      'en': 'Listening...',
+      'hi': 'सुन रहा हूं...',
+    },
+    'voice_state_processing': {
+      'en': 'Thinking...',
+      'hi': 'सोच रहा हूं...',
+    },
+    'voice_state_speaking': {
+      'en': 'Speaking...',
+      'hi': 'बोल रहा हूं...',
+    },
+    'voice_state_sos': {
+      'en': '⚠️ SOS ACTIVATED',
+      'hi': '⚠️ आपातकाल सक्रिय',
+    },
+    'voice_state_error': {
+      'en': '❌ Error - Retrying...',
+      'hi': '❌ त्रुटि - पुनः प्रयास कर रहा हूं...',
+    },
+    'voice_state_booking': {
+      'en': '🚗 Booking Ride...',
+      'hi': '🚗 सवारी बुक कर रहा हूं...',
+    },
+    'voice_state_confirming': {
+      'en': '💰 Confirm Fare?',
+      'hi': '💰 किराया पक्का करें?',
+    },
+    'voice_state_ready': {
+      'en': 'Ready',
+      'hi': 'तैयार',
+    },
+    'voice_enter_phone_number': {
+      'en': 'Please enter your 10 digit mobile number to proceed.',
+      'hi': 'कृपया आगे बढ़ने के लिए अपना दस अंकों का मोबाइल नंबर दर्ज करें।',
+    },
+    'voice_enter_otp': {
+      'en': 'Please enter the 6 digit OTP sent to your mobile number.',
+      'hi': 'कृपया आपके मोबाइल नंबर पर भेजा गया छे अंकों का ओटीपी दर्ज करें।',
+    },
+    'voice_create_profile_start': {
+      'en': 'Please enter your details to create a profile.',
+      'hi': 'प्रोफ़ाइल बनाने के लिए कृपया अपना विवरण दर्ज करें।',
+    },
   };
 }
+

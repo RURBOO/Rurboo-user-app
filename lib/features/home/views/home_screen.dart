@@ -188,6 +188,11 @@ class HomeBody extends StatelessWidget {
     final vm = Provider.of<HomeViewModel>(context);
     final lang = Provider.of<LanguageViewModel>(context);
 
+    // Refresh pickup address whenever language changes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      vm.refreshPickupLanguage(lang.language);
+    });
+
     if (vm.hasLocationError) {
       return Scaffold(
         body: Center(
@@ -264,20 +269,6 @@ class HomeBody extends StatelessWidget {
               bottom: vm.destination == null ? 280 : 200,
             ),
           ),
-          
-          // Debug Overlay
-          Positioned(
-            left: 10,
-            bottom: 300,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              color: Colors.black54,
-              child: const Text(
-                "Debug: Sync Active",
-                style: TextStyle(color: Colors.white, fontSize: 8),
-              ),
-            ),
-          ),
 
           Positioned(
             top: 60,
@@ -290,7 +281,7 @@ class HomeBody extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(30), // Pill Shape
+                  borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.primary.withValues(alpha: 0.15),
@@ -326,8 +317,8 @@ class HomeBody extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            vm.pickup?.address == 'current_location' 
-                              ? lang.getText('current_location') 
+                            vm.pickup?.address == 'current_location'
+                              ? lang.getText('current_location')
                               : (vm.pickup?.address ?? lang.getText('current_location')),
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -339,12 +330,27 @@ class HomeBody extends StatelessWidget {
                         ],
                       ),
                     ),
+                    // Divider
                     Container(
-                      height: 30, 
-                      width: 1, 
-                      color: Colors.grey[200], 
-                      margin: const EdgeInsets.symmetric(horizontal: 12),
+                      height: 30,
+                      width: 1,
+                      color: Colors.grey[200],
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
                     ),
+                    // Save pickup as Home/Work/Favourite
+                    GestureDetector(
+                      onTap: () {
+                        final loc = vm.pickup;
+                        if (loc != null) {
+                          showSaveLocationSheet(context, loc, lang);
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(Icons.bookmark_outline, color: AppColors.textSecondary, size: 22),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
                     const Icon(Icons.search, color: AppColors.textSecondary),
                   ],
                 ),
@@ -456,11 +462,13 @@ class HomeBody extends StatelessWidget {
   Widget _searchBottomSheet(BuildContext context, HomeViewModel vm) {
     final lang = Provider.of<LanguageViewModel>(context);
     final theme = Theme.of(context);
+    final maxH = MediaQuery.of(context).size.height * 0.55;
+
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
-        height: 320 + MediaQuery.of(context).padding.bottom,
-        padding: EdgeInsets.fromLTRB(24, 12, 24, MediaQuery.of(context).padding.bottom + 24),
+        constraints: BoxConstraints(maxHeight: maxH),
+        padding: EdgeInsets.fromLTRB(24, 12, 24, MediaQuery.of(context).padding.bottom + 16),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
@@ -472,49 +480,52 @@ class HomeBody extends StatelessWidget {
             )
           ],
         ),
-        child: Column(
-          children: [
-            // Drag Handle
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            // Where to Box
-            GestureDetector(
-              key: searchKey,
-              onTap: () => _openSearch(context, isDestination: true),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF4F7F6),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.dividerColor),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.search, color: AppColors.primary, size: 24),
-                    const SizedBox(width: 16),
-                    Text(
-                      lang.getText('where_to'),
-                      style: theme.textTheme.titleMedium?.copyWith(color: AppColors.textSecondary),
-                    ),
-                  ],
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Drag handle ──────────────────────────────────────────
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
-            ),
-            
-            const SizedBox(height: 24),
-            
-            // Home/Work shortcuts
-            Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: Row(
+              const SizedBox(height: 20),
+
+              // ── "Where to?" search box ───────────────────────────────
+              GestureDetector(
+                key: searchKey,
+                onTap: () => _openSearch(context, isDestination: true),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF4F7F6),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.dividerColor),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search, color: AppColors.primary, size: 24),
+                      const SizedBox(width: 16),
+                      Text(
+                        lang.getText('where_to'),
+                        style: theme.textTheme.titleMedium?.copyWith(color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // ── Home / Work shortcuts ────────────────────────────────
+              Row(
                 children: [
                   _shortcutChip(
                     context,
@@ -547,12 +558,61 @@ class HomeBody extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
 
-            // Recent Destinations Title
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
+              // ── Favourite locations (horizontal scroll) ──────────────
+              if (vm.favoriteLocations.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  lang.getText('favorites'),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 72,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: vm.favoriteLocations.length,
+                    itemBuilder: (context, i) {
+                      final fav = vm.favoriteLocations[i];
+                      return GestureDetector(
+                        onTap: () => vm.selectDestination(fav),
+                        child: Container(
+                          width: 110,
+                          margin: const EdgeInsets.only(right: 10),
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.deepPurple.withValues(alpha: 0.07),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.deepPurple.withValues(alpha: 0.25)),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.favorite, size: 18, color: Colors.deepPurple),
+                              const SizedBox(height: 4),
+                              Text(
+                                fav.address.split(',').first,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: 10),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+
+              // ── Recent Destinations ──────────────────────────────────
+              const SizedBox(height: 16),
+              Text(
                 lang.getText('recent_destinations'),
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w700,
@@ -560,78 +620,83 @@ class HomeBody extends StatelessWidget {
                   letterSpacing: 0.5,
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            
-            // Recent List
-            Expanded(
-              child: vm.recentDestinations.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.history, size: 40, color: Colors.grey[300]),
-                          const SizedBox(height: 8),
-                          Text(
-                            lang.getText('no_recent_destinations'),
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                        ],
+              const SizedBox(height: 10),
+
+              if (vm.recentDestinations.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Row(
+                    children: [
+                      Icon(Icons.history, size: 24, color: Colors.grey[300]),
+                      const SizedBox(width: 8),
+                      Text(
+                        lang.getText('no_recent_destinations'),
+                        style: theme.textTheme.bodyMedium,
                       ),
-                    )
-                  : ListView.separated(
-                      padding: EdgeInsets.zero,
-                      itemCount: vm.recentDestinations.length,
-                      separatorBuilder: (c, i) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final destination = vm.recentDestinations[index];
-                        return InkWell(
-                          onTap: () => vm.selectDestination(
-                            LocationResult(
-                              address: destination.address,
-                              coordinates: destination.latLng,
-                            ),
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: AppColors.background,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.location_on_outlined, size: 20, color: AppColors.primary),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      destination.address.split(',').first,
-                                      style: theme.textTheme.titleMedium,
-                                    ),
-                                    Text(
-                                      destination.address,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: theme.textTheme.bodySmall,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
+                    ],
+                  ),
+                )
+              else
+                ListView.separated(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: vm.recentDestinations.length,
+                  separatorBuilder: (c, i) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final dest = vm.recentDestinations[index];
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.history, size: 18, color: AppColors.primary),
+                      ),
+                      title: Text(
+                        dest.address.split(',').first,
+                        style: theme.textTheme.titleSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        dest.address,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.bookmark_outline, size: 18, color: Colors.grey),
+                        tooltip: lang.getText('save_location'),
+                        onPressed: () {
+                          final loc = LocationResult(
+                            address: dest.address,
+                            coordinates: dest.latLng,
+                          );
+                          showSaveLocationSheet(context, loc, lang, onSaved: () {
+                            // Reload ViewModel saved locations
+                            vm.reloadSavedLocations();
+                          });
+                        },
+                      ),
+                      onTap: () => vm.selectDestination(
+                        LocationResult(
+                          address: dest.address,
+                          coordinates: dest.latLng,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+            ],
+          ),
         ),
       ).animate().slideY(begin: 0.3, end: 0, duration: 400.ms, curve: Curves.easeOutQuad),
     );
   }
+
 
   Widget _shortcutChip(
     BuildContext context, {
@@ -686,7 +751,7 @@ class HomeBody extends StatelessWidget {
   }) async {
     final vm = Provider.of<HomeViewModel>(context, listen: false);
 
-    final result = await Navigator.push<LocationResult?>(
+    final raw = await Navigator.push<dynamic>(
       context,
       MaterialPageRoute(
         builder: (_) => SearchLocationScreen(
@@ -697,12 +762,27 @@ class HomeBody extends StatelessWidget {
       ),
     );
 
-    if (result != null) {
-      if (isDestination) {
-        await vm.selectDestination(result);
-      } else {
-        await vm.setPickupLocation(result);
-      }
+    if (raw == null || !context.mounted) return;
+
+    // New format: Map with 'result' and 'isDestination'
+    // Legacy format (just a LocationResult): treat as destination
+    LocationResult? result;
+    bool setAsDestination = isDestination;
+
+    if (raw is Map) {
+      result = raw['result'] as LocationResult?;
+      setAsDestination = raw['isDestination'] as bool? ?? isDestination;
+    } else if (raw is LocationResult) {
+      result = raw;
+    }
+
+    if (result == null) return;
+
+    if (setAsDestination) {
+      await vm.selectDestination(result);
+    } else {
+      await vm.setPickupLocation(result, context: context);
     }
   }
 }
+

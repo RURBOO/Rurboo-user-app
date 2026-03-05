@@ -68,7 +68,7 @@ class _UserDeleteAccountScreenState extends State<UserDeleteAccountScreen> {
         } else {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text("Error: $e")));
+          ).showSnackBar(SnackBar(content: Text("${Provider.of<LanguageViewModel>(context, listen: false).getText('error')}: $e")));
         }
       }
     } finally {

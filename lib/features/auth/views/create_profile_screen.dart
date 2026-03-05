@@ -64,7 +64,9 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
     // Auto-start Voice Agent
     WidgetsBinding.instance.addPostFrameCallback((_) {
        final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
+       final lang = Provider.of<LanguageViewModel>(context, listen: false);
        voice.startProfileCreation();
+       voice.speak(lang.getText('voice_create_profile_start'));
        voice.addListener(_onVoiceUpdate);
     });
   }
@@ -134,8 +136,8 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
      if (voice.tempCategory != null && userCategory != voice.tempCategory) {
        setState(() {
          userCategory = voice.tempCategory;
-         // Auto-set gender if Woman
-         if (userCategory == 'Woman') gender = "Woman";
+         // Auto-set gender if Female
+         if (userCategory == 'Woman') gender = "Female";
        });
      }
      
@@ -243,7 +245,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
         'emergencyContact': emergencyController.text.trim(),
         'createdAt': FieldValue.serverTimestamp(),
         'whatsappUpdates': whatsappUpdates,
-        'safetyModeEnabled': (gender == 'Woman' || userCategory == 'Child'), // Auto-enable for safety
+        'safetyModeEnabled': (gender == 'Female' || userCategory == 'Child'), // Auto-enable for safety
         'fcmToken': await NotificationService().getDeviceToken(),
       };
 
@@ -287,6 +289,24 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
     final lang = Provider.of<LanguageViewModel>(context);
     final theme = Theme.of(context);
 
+    final premiumInputDecoration = InputDecoration(
+      filled: true,
+      fillColor: theme.cardColor,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: AppColors.dividerColor.withValues(alpha: 0.3)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: AppColors.dividerColor.withValues(alpha: 0.3)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+    );
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: lang.loading
@@ -300,17 +320,54 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 10),
+                        // Beautifully styled, uncropped logo
+                        Center(
+                          child: Container(
+                            width: 180,
+                            height: 180,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(40),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withValues(alpha: 0.25),
+                                  blurRadius: 30,
+                                  offset: const Offset(0, 15),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(40),
+                              child: Image.asset(
+                                "assets/images/app_logo.jpg",
+                                fit: BoxFit.contain,
+                                errorBuilder: (c, e, s) => Container(
+                                  color: AppColors.primary.withValues(alpha: 0.1),
+                                  child: const Icon(Icons.local_taxi, size: 70, color: AppColors.primary),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ).animate().fade(duration: 600.ms).scale(curve: Curves.easeOutBack),
+                        
+                        const SizedBox(height: 32),
                         Text(
                           lang.getText('create_profile_title'),
-                          style: theme.textTheme.headlineLarge,
+                          style: theme.textTheme.headlineLarge?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
                         ).animate().fade(duration: 400.ms).slideY(begin: 0.1),
                         const SizedBox(height: 8),
                         Text(
                           lang.getText('create_profile_subtitle'),
-                          style: theme.textTheme.bodyMedium,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: AppColors.textSecondary,
+                            height: 1.5,
+                          ),
                         ).animate().fade(delay: 150.ms).slideY(begin: 0.1),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 32),
 
                         TextFormField(
                           controller: nameController,
@@ -319,7 +376,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                           inputFormatters: [
                             FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
                           ],
-                          decoration: InputDecoration(
+                          decoration: premiumInputDecoration.copyWith(
                             labelText: lang.getText('full_name_label'),
                             prefixIcon: const Icon(Icons.person_outline, color: AppColors.textSecondary),
                           ),
@@ -343,7 +400,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                                   FilteringTextInputFormatter.digitsOnly,
                                   LengthLimitingTextInputFormatter(3),
                                 ],
-                                decoration: InputDecoration(
+                                decoration: premiumInputDecoration.copyWith(
                                   labelText: lang.getText('age_label'),
                                   prefixIcon: const Icon(Icons.calendar_today, color: AppColors.textSecondary),
                                 ),
@@ -361,10 +418,10 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                               flex: 3,
                               child: DropdownButtonFormField<String>(
                                 initialValue: gender.isEmpty ? null : gender,
-                                decoration: InputDecoration(
+                                decoration: premiumInputDecoration.copyWith(
                                   labelText: lang.getText('gender_label'),
                                 ),
-                                items: ["Male", "Woman", "Other"].map((g) =>
+                                items: ["Male", "Female", "Other"].map((g) =>
                                   DropdownMenuItem(value: g, child: Text(lang.getText(g.toLowerCase())))).toList(),
                                 onChanged: (v) => setState(() => gender = v!),
                                 validator: (v) => v == null ? lang.getText('required') : null,
@@ -378,7 +435,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                         // --- USER CATEGORY ---
                         DropdownButtonFormField<String>(
                           initialValue: userCategory,
-                          decoration: InputDecoration(
+                          decoration: premiumInputDecoration.copyWith(
                             labelText: lang.getText('category_label'),
                             prefixIcon: const Icon(Icons.category_outlined, color: AppColors.textSecondary),
                           ),
@@ -416,10 +473,8 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                                   TextFormField(
                                     controller: guardianNameController,
                                     focusNode: guardianNameFocus,
-                                    decoration: InputDecoration(
+                                    decoration: premiumInputDecoration.copyWith(
                                       labelText: lang.getText('guardian_name_label'),
-                                      fillColor: AppColors.surface,
-                                      filled: true,
                                     ),
                                     validator: (v) => _isGuardianRequired() && (v == null || v.isEmpty)
                                         ? lang.getText('required') : null,
@@ -430,10 +485,8 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                                   focusNode: guardianPhoneFocus,
                                   keyboardType: TextInputType.phone,
                                   inputFormatters: [LengthLimitingTextInputFormatter(10)],
-                                    decoration: InputDecoration(
+                                    decoration: premiumInputDecoration.copyWith(
                                       labelText: lang.getText('guardian_phone_label'),
-                                      fillColor: AppColors.surface,
-                                      filled: true,
                                     ),
                                     validator: (v) => _isGuardianRequired() && (v == null || v.length != 10)
                                         ? lang.getText('invalid') : null,
@@ -452,7 +505,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                             FilteringTextInputFormatter.digitsOnly,
                             LengthLimitingTextInputFormatter(10),
                           ],
-                          decoration: InputDecoration(
+                          decoration: premiumInputDecoration.copyWith(
                             labelText: lang.getText('emergency_contact_label'),
                             prefixIcon: const Icon(Icons.contact_emergency, color: AppColors.textSecondary),
                           ),
@@ -480,7 +533,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                         TextFormField(
                           controller: referralController,
                           textCapitalization: TextCapitalization.characters,
-                          decoration: InputDecoration(
+                          decoration: premiumInputDecoration.copyWith(
                             labelText: lang.getText('referral_code_optional'),
                             prefixIcon: const Icon(Icons.confirmation_number_outlined, color: AppColors.textSecondary),
                             hintText: "e.g. ADAR1234",
@@ -492,9 +545,19 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                         ElevatedButton(
                           onPressed: submit,
                           style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(double.infinity, 56),
+                            minimumSize: const Size(double.infinity, 60),
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            elevation: 5,
+                            shadowColor: AppColors.primary.withValues(alpha: 0.5),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
                           ),
-                          child: Text(lang.getText('proceed')),
+                          child: Text(
+                            lang.getText('proceed'),
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.0),
+                          ),
                         ).animate().fade(delay: 500.ms).slideY(begin: 0.2),
                         const SizedBox(height: 24),
                       ],

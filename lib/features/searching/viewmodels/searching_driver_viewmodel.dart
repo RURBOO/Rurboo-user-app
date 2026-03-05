@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
+import '../../language/viewmodels/language_vm.dart';
 
 import '../models/driver_model.dart';
 import '../../navigation/views/main_navigator.dart';
@@ -88,6 +90,7 @@ class SearchingDriverViewModel extends ChangeNotifier {
     String? selectedReason;
 
     if (!context.mounted) return;
+    final lang = Provider.of<LanguageViewModel>(context, listen: false);
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -96,7 +99,7 @@ class SearchingDriverViewModel extends ChangeNotifier {
         return StatefulBuilder(
           builder: (ctx, setDlgState) {
             return AlertDialog(
-              title: const Text('Cancel Ride?'),
+              title: Text(lang.getText('uiCancelRideTitle')),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -122,7 +125,7 @@ class SearchingDriverViewModel extends ChangeNotifier {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogCtx, false),
-                  child: const Text('Back'),
+                  child: Text(lang.getText('uiBack')),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -135,7 +138,7 @@ class SearchingDriverViewModel extends ChangeNotifier {
                           selectedReason = pickedReason;
                           Navigator.pop(dialogCtx, true);
                         },
-                  child: const Text('Cancel Ride'),
+                  child: Text(lang.getText('uiCancelRideBtn')),
                 ),
               ],
             );

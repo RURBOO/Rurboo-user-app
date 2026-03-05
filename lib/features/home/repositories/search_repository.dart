@@ -32,7 +32,7 @@ class SearchRepository {
       };
   }
 
-  Future<List<LocationResult>> autocomplete(String query, {LatLng? focusLocation}) async {
+  Future<List<LocationResult>> autocomplete(String query, {LatLng? focusLocation, String language = 'en'}) async {
     if (query.length < 2) return [];
 
     try {
@@ -42,7 +42,7 @@ class SearchRepository {
         return [];
       }
 
-      String urlString = 'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$query&key=$apiKey&components=country:in';
+      String urlString = 'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$query&key=$apiKey&components=country:in&language=$language';
       
       // Add Location Bias (radius 50km)
       if (focusLocation != null) {
@@ -77,11 +77,11 @@ class SearchRepository {
     }
   }
 
-  Future<LocationResult?> getPlaceDetails(String placeId) async {
+  Future<LocationResult?> getPlaceDetails(String placeId, {String language = 'en'}) async {
     try {
       final apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'];
       final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey',
+        'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey&language=$language',
       );
 
       final response = await http.get(url, headers: _headers);
@@ -107,11 +107,11 @@ class SearchRepository {
     }
   }
 
-  Future<String> reverseGeocode(LatLng point) async {
+  Future<String> reverseGeocode(LatLng point, {String language = 'en'}) async {
     try {
       final apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'];
       final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/geocode/json?latlng=${point.latitude},${point.longitude}&key=$apiKey',
+        'https://maps.googleapis.com/maps/api/geocode/json?latlng=${point.latitude},${point.longitude}&key=$apiKey&language=$language',
       );
 
       final response = await http.get(url, headers: _headers);

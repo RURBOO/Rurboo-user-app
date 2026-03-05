@@ -62,22 +62,32 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                 pickupLoc: widget.pickupLoc,
                 destLoc: widget.destinationLoc,
                 distance: widget.distanceKm,
-              ).then((_) {
+              ).then((_) async {
                  // Announce ALL vehicle fares comprehensively
                  if (context.mounted && vm.rideOptions.isNotEmpty) {
                     final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
+                    final lang = Provider.of<LanguageViewModel>(context, listen: false);
                     
+                    // Translate dynamic arguments first
+                    final translatedLocations = await lang.translate([widget.pickupText, widget.destinationText]);
+                    final pickupTranslated = translatedLocations.isNotEmpty ? translatedLocations[0] : widget.pickupText;
+                    final destinationTranslated = translatedLocations.length > 1 ? translatedLocations[1] : widget.destinationText;
+
                     // Build vehicle list for announcement
-                    final List<Map<String, dynamic>> vehicles = vm.rideOptions.map((ride) => {
-                      'name': ride.name,
-                      'fare': ride.fare.toInt(),
-                      'id': ride.id,
-                    }).toList();
+                    List<Map<String, dynamic>> vehicles = [];
+                    for(var ride in vm.rideOptions) {
+                        final transNames = await lang.translate([ride.name]);
+                        vehicles.add({
+                          'name': transNames.isNotEmpty ? transNames[0] : ride.name,
+                          'fare': ride.fare.toInt(),
+                          'id': ride.id,
+                        });
+                    }
                     
                     // Announce pickup, destination, distance, and all vehicle fares
                     voice.announceAllVehicleFares(
-                      pickup: widget.pickupText,
-                      destination: widget.destinationText,
+                      pickup: pickupTranslated,
+                      destination: destinationTranslated,
                       distanceKm: widget.distanceKm,
                       vehicles: vehicles,
                     );
@@ -232,7 +242,7 @@ class RideSelectionBody extends StatelessWidget {
             child: GoogleMap(
               initialCameraPosition: CameraPosition(
                 target: vm.pickup.coordinates!,
-                zoom: 13,
+                zoom: 14,
               ),
               onMapCreated: (c) => vm.setMapController(c),
               markers: vm.markers,
@@ -305,7 +315,7 @@ class RideSelectionBody extends StatelessWidget {
                                 const Icon(Icons.compare_arrows, size: 14, color: Colors.grey),
                                 const SizedBox(width: 4),
                                 Text(
-                                  "${vm.distanceKm.toStringAsFixed(1)} km",
+                                  "${vm.distanceKm.toStringAsFixed(1)} ${lang.getText('km')}",
                                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black54),
                                 ),
                               ],
@@ -741,11 +751,19 @@ class RideSelectionBody extends StatelessWidget {
     return Row(
       children: [
         // ICON
-        Icon(
-          ride.icon, 
-          size: 40, 
-          color: ride.iconColor ?? (selected ? AppColors.primary : Colors.grey[400]),
-        ),
+        if (ride.imageAsset != null)
+          Image.asset(
+            ride.imageAsset!,
+            width: 50,
+            height: 50,
+            fit: BoxFit.contain,
+          )
+        else
+          Icon(
+            ride.icon, 
+            size: 40, 
+            color: ride.iconColor ?? (selected ? AppColors.primary : Colors.grey[400]),
+          ),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
@@ -772,7 +790,7 @@ class RideSelectionBody extends StatelessWidget {
                    ),
                    const SizedBox(width: 8),
                     Text(
-                      ride.description, // Now this only contains ETA from VM
+                      "${ride.description} ${lang.getText('min')}", // Translated ETA
                       style: TextStyle(fontSize: 12, color: Colors.grey[600])
                     ),
                 ],

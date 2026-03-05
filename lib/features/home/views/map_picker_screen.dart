@@ -25,6 +25,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   String _address = "Searching...";
   bool _isLoadingAddress = false;
   GoogleMapController? _mapController;
+  String _language = 'en'; // Language for geocoding
   
   // Pin State
   Offset? _pinPosition;
@@ -37,6 +38,10 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
         Provider.of<HomeViewModel>(context, listen: false).currentLocation ??
         const LatLng(28.6139, 77.2090);
     _currentCenter = _initialPosition;
+    // Capture language so geocoding returns addresses in the active language
+    try {
+      _language = Provider.of<LanguageViewModel>(context, listen: false).language;
+    } catch (_) {}
     _getAddress(_currentCenter!);
   }
 
@@ -58,7 +63,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     final lang = Provider.of<LanguageViewModel>(context, listen: false);
     if (!_isLoadingAddress) setState(() => _isLoadingAddress = true);
     try {
-      final result = await _repo.reverseGeocode(point);
+      final result = await _repo.reverseGeocode(point, language: _language);
       if (mounted) {
         setState(() {
           _address = result;

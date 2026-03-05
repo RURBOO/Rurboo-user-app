@@ -7,6 +7,7 @@ import '../services/wake_word_detector.dart';
 import '../models/voice_agent_state.dart';
 import '../../../core/services/user_preferences.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/utils/number_to_hindi.dart'; // NEW IMPORT
 
 class VoiceAgentViewModel extends ChangeNotifier {
   final VoiceAgentService _voiceService = VoiceAgentService();
@@ -27,7 +28,22 @@ class VoiceAgentViewModel extends ChangeNotifier {
 
   void updateLanguage(String langCode) {
     _currentLanguage = langCode;
-    _voiceService.setTtsLanguage(langCode);
+    
+    // Map short codes to BCP-47 Locale codes for TTS engines
+    String ttsLocale;
+    switch (langCode.toLowerCase()) {
+      case 'hi': ttsLocale = 'hi-IN'; break;
+      case 'mr': ttsLocale = 'mr-IN'; break;
+      case 'ta': ttsLocale = 'ta-IN'; break;
+      case 'te': ttsLocale = 'te-IN'; break;
+      case 'kn': ttsLocale = 'kn-IN'; break;
+      case 'gu': ttsLocale = 'gu-IN'; break;
+      case 'bn': ttsLocale = 'bn-IN'; break;
+      default: ttsLocale = 'en-IN'; // Default to Indian English for accent
+    }
+    
+    debugPrint("🔊 TTS Language mapped to: $ttsLocale");
+    _voiceService.setTtsLanguage(ttsLocale);
     notifyListeners();
   }
 
@@ -315,6 +331,9 @@ class VoiceAgentViewModel extends ChangeNotifier {
       return;
     }
     
+    // Convert numbers globally for BOTH languages (e.g., handling decimals and Hindi translation)
+    text = _convertNumbersInString(text, _currentLanguage);
+    
     _transitionTo(VoiceAgentState.speaking);
     await _voiceService.speakWithCompletion(text, () {
       if (_state != VoiceAgentState.sosActivated) {
@@ -330,6 +349,47 @@ class VoiceAgentViewModel extends ChangeNotifier {
           }
         }
       }
+    });
+  }
+
+  String _convertNumbersInString(String input, String langCode) {
+    // Regex to find digits including optional decimals (e.g., 8.1 or 12)
+    final regex = RegExp(r'\d+(\.\d+)?');
+    return input.replaceAllMapped(regex, (match) {
+      final numberStr = match.group(0);
+      if (numberStr != null) {
+        if (numberStr.contains('.')) {
+          if (langCode == 'hi') {
+             final parts = numberStr.split('.');
+             final wholePart = int.tryParse(parts[0]);
+             final decimalPartStr = parts[1];
+
+             String wholeText = wholePart != null ? NumberToHindi.convert(wholePart) : "";
+             String decimalText = "";
+             // Read decimal digits one by one
+             for (int i = 0; i < decimalPartStr.length; i++) {
+                int? digit = int.tryParse(decimalPartStr[i]);
+                 if (digit != null) {
+                    decimalText += "${NumberToHindi.convert(digit)} ";
+                 }
+             }
+             return "$wholeText dashamlav ${decimalText.trim()}";
+          } else {
+             // For English, explicitly say "point"
+             return numberStr.replaceAll('.', ' point ');
+          }
+        } else {
+          // No decimal
+          if (langCode == 'hi') {
+            final number = int.tryParse(numberStr);
+            if (number != null) {
+              return NumberToHindi.convert(number);
+            }
+          }
+          return numberStr;
+        }
+      }
+      return match.group(0) ?? "";
     });
   }
   
@@ -382,6 +442,11 @@ class VoiceAgentViewModel extends ChangeNotifier {
       final name = vehicle['name'] as String;
       final fare = vehicle['id'] as String; // Use ID for highlighting
       final price = vehicle['fare'] as int;
+      
+      String priceText = price.toString();
+      if (_currentLanguage == 'hi') {
+        priceText = NumberToHindi.convert(price);
+      }
 
       // Highlight this vehicle
       _highlightedElementId = fare; // Assuming ID matches keys like 'bike', 'auto'
@@ -389,7 +454,7 @@ class VoiceAgentViewModel extends ChangeNotifier {
 
       await _speakChunk(_getText('voice_fare_result')
           .replaceAll('{name}', name)
-          .replaceAll('{price}', price.toString()));
+          .replaceAll('{price}', priceText));
       
       // Small pause between items for better UX
       await Future.delayed(const Duration(milliseconds: 500));
@@ -413,6 +478,9 @@ class VoiceAgentViewModel extends ChangeNotifier {
     if (!_isAnnouncing) return;
     Completer<void> completer = Completer();
     
+    // Convert numbers globally for BOTH languages
+    text = _convertNumbersInString(text, _currentLanguage);
+
     await _voiceService.speakWithCompletion(text, () {
       if (!completer.isCompleted) completer.complete();
     });

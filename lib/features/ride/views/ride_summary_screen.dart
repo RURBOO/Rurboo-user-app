@@ -131,7 +131,7 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text("Error: $e")));
+        ).showSnackBar(SnackBar(content: Text("${Provider.of<LanguageViewModel>(context, listen: false).getText('error')}: $e")));
         setState(() => _isSubmitting = false);
       }
     }

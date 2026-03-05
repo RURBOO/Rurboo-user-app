@@ -23,10 +23,15 @@ class SearchLocationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Read the current language BEFORE creating the provider so Google API
+    // returns results in the correct language (e.g., Hindi place names in Hindi mode).
+    final currentLanguage = Provider.of<LanguageViewModel>(context, listen: false).language;
+
     return ChangeNotifierProvider(
       create: (_) => SearchLocationViewModel(
         repo: SearchRepository(),
         isDestinationMode: isDestination,
+        language: currentLanguage,
       )..init(existingPickupAddress, existingDestinationAddress),
       child: const _SearchLocationBody(),
     );
@@ -89,7 +94,10 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
                );
                
                if (result != null && context.mounted) {
-                  Navigator.pop(context, result);
+                  Navigator.pop(context, {
+                    'result': result,
+                    'isDestination': vm.isDestinationMode,
+                  });
                }
             },
           ),
@@ -128,14 +136,17 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
                           onPressed: () async {
                             final LocationResult? result = await vm.selectPlace(place.placeId!);
                             if (result != null && context.mounted) {
-                              _showSaveLocationSheet(context, result, lang, onSaved: _loadFavourites);
+                          showSaveLocationSheet(context, result, lang, onSaved: _loadFavourites);
                             }
                           },
                         ),
-                        onTap: () async {
+                    onTap: () async {
                           final LocationResult? result = await vm.selectPlace(place.placeId!);
                           if (result != null && context.mounted) {
-                            Navigator.pop(context, result);
+                            Navigator.pop(context, {
+                              'result': result,
+                              'isDestination': vm.isDestinationMode,
+                            });
                           }
                         },
                       );
@@ -158,35 +169,53 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
       ),
       child: Column(
         children: [
+          // ── Pickup field — always editable ───────────────────────────
           TextField(
             controller: vm.pickupController,
-            readOnly: vm.isDestinationMode,
             focusNode: vm.pickupFocus,
-            onChanged: vm.isDestinationMode ? null : vm.onTextChanged,
+            onChanged: (text) {
+              vm.switchMode(false);   // Switch to pickup search mode
+              vm.onTextChanged(text);
+            },
+            onTap: () => vm.switchMode(false),
             decoration: InputDecoration(
               hintText: lang.getText('pickup_location'),
               border: InputBorder.none,
               prefixIcon: const Icon(Icons.circle, color: Colors.green, size: 14),
+              suffixIcon: !vm.isDestinationMode
+                  ? const Icon(Icons.edit, size: 14, color: Colors.green)
+                  : null,
             ),
+            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
           ),
 
-          const Divider(),
+          const Divider(height: 1),
 
+          // ── Destination field — always editable ──────────────────────
           TextField(
             controller: vm.destinationController,
-            readOnly: !vm.isDestinationMode,
             focusNode: vm.destinationFocus,
-            onChanged: vm.isDestinationMode ? vm.onTextChanged : null,
+            onChanged: (text) {
+              vm.switchMode(true);    // Switch to destination search mode
+              vm.onTextChanged(text);
+            },
+            onTap: () => vm.switchMode(true),
             decoration: InputDecoration(
               hintText: lang.getText('where_to'),
               border: InputBorder.none,
               prefixIcon: const Icon(Icons.square, color: Colors.red, size: 14),
+              suffixIcon: vm.isDestinationMode
+                  ? const Icon(Icons.edit, size: 14, color: Colors.red)
+                  : null,
             ),
+            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
           ),
         ],
       ),
     );
   }
+
+
 
   /// Home + Work quick access buttons
   Widget _quickAccessButtons(BuildContext context, SearchLocationViewModel vm, LanguageViewModel lang) {
@@ -198,7 +227,7 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
           onTap: () async {
             final loc = await UserPreferences.getHomeLocation();
             if (loc != null && context.mounted) {
-              Navigator.pop(context, loc);
+              Navigator.pop(context, {'result': loc, 'isDestination': vm.isDestinationMode});
             }
           },
         ),
@@ -208,7 +237,7 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
           onTap: () async {
             final loc = await UserPreferences.getWorkLocation();
             if (loc != null && context.mounted) {
-              Navigator.pop(context, loc);
+              Navigator.pop(context, {'result': loc, 'isDestination': vm.isDestinationMode});
             }
           },
         ),
@@ -256,10 +285,10 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
                       title: Text(lang.getText('delete')),
                       content: Text(fav.address, maxLines: 2, overflow: TextOverflow.ellipsis),
                       actions: [
-                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(lang.getText('uiCancel'))),
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, true),
-                          child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                          child: Text(lang.getText('uiDelete'), style: const TextStyle(color: Colors.red)),
                         ),
                       ],
                     ),
@@ -303,7 +332,8 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
 }
 
 /// Shows a bottom sheet to save a location as Home, Work, or Favourite.
-void _showSaveLocationSheet(
+/// Public so it can also be called from home_screen.dart (pickup pill save button).
+void showSaveLocationSheet(
   BuildContext context,
   LocationResult result,
   LanguageViewModel lang, {

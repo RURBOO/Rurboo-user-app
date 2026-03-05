@@ -8,6 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
+import '../../features/language/viewmodels/language_vm.dart';
 import '../../features/home/models/location_result.dart';
 import '../../features/home/services/polyline_service.dart';
 import '../../features/home/viewmodels/home_viewmodel.dart';
@@ -183,8 +184,9 @@ class DeepLinkService {
      
      if (user == null) {
         _pendingRideId = rideId;
+        final lang = Provider.of<LanguageViewModel>(context, listen: false);
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Please Login to track ride")),
+            SnackBar(content: Text(lang.getText('uiLoginToTrack'))),
         );
         return;
      }
@@ -204,8 +206,9 @@ class DeepLinkService {
           
           if (!doc.exists) {
               if (context.mounted) {
+                final lang = Provider.of<LanguageViewModel>(context, listen: false);
                 ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Ride not found or expired")),
+                    SnackBar(content: Text(lang.getText('uiRideNotFound'))),
                 );
               }
               return;
@@ -257,8 +260,9 @@ class DeepLinkService {
     if (user == null) {
       debugPrint("🔒 User not logged in. Pending navigation.");
       _pendingDestination = destination;
+      final lang = Provider.of<LanguageViewModel>(context, listen: false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please Login to view shared ride")),
+        SnackBar(content: Text(lang.getText('uiLoginToView'))),
       );
     } else {
       _launchRideSelection(destination);
@@ -287,8 +291,9 @@ class DeepLinkService {
     await homeVm.init(context); 
     if (homeVm.currentLocation == null) {
        if (context.mounted) {
+         final lang = Provider.of<LanguageViewModel>(context, listen: false);
          ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Fetching current location...")),
+          SnackBar(content: Text(lang.getText('uiFetchingLocation'))),
         );
        }
       return; 

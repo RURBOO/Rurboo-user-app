@@ -5,7 +5,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
 import '../../../core/services/user_preferences.dart';
+import '../../language/viewmodels/language_vm.dart';
 import '../../splash/views/splash_screen.dart';
 
 class ProfileViewModel extends ChangeNotifier {
@@ -225,9 +227,10 @@ class ProfileViewModel extends ChangeNotifier {
       _photoUrl = downloadUrl;
 
       if (context.mounted) {
+        final lang = Provider.of<LanguageViewModel>(context, listen: false);
         Navigator.of(context, rootNavigator: true).pop(); // Dismiss loading
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Profile Updated Successfully! 📸")),
+          SnackBar(content: Text(lang.getText('uiProfileUpdated'))),
         );
       }
     } catch (e) {
@@ -246,6 +249,7 @@ class ProfileViewModel extends ChangeNotifier {
   
   void _showPermissionDialog(BuildContext context, String feature) {
     if (!context.mounted) return;
+    final lang = Provider.of<LanguageViewModel>(context, listen: false);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -262,7 +266,7 @@ class ProfileViewModel extends ChangeNotifier {
               Navigator.pop(ctx);
               openAppSettings();
             },
-            child: const Text("Open Settings"),
+            child: Text(lang.getText('uiOpenSettings')),
           ),
         ],
       ),

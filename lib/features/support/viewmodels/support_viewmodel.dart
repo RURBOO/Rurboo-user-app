@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/ticket_model.dart';
 import '../repositories/support_repository.dart';
-import '../../../core/services/user_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SupportViewModel extends ChangeNotifier {
   final SupportRepository _repository = SupportRepository();
@@ -33,13 +33,12 @@ class SupportViewModel extends ChangeNotifier {
   }
 
   Stream<List<TicketModel>> getUserTickets() {
-    return Stream.fromFuture(UserPreferences.getUserId()).asyncExpand((userId) {
-      if (userId != null) {
-        return _repository.getUserTickets(userId);
-      } else {
-        return Stream.value([]);
-      }
-    });
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      return _repository.getUserTickets(userId);
+    } else {
+      return Stream.value([]);
+    }
   }
 
   Future<bool> createTicket({
@@ -51,7 +50,7 @@ class SupportViewModel extends ChangeNotifier {
     _error = null;
 
     try {
-      final userId = await UserPreferences.getUserId();
+      final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) throw Exception("User not logged in");
 
       String? imageUrl;
