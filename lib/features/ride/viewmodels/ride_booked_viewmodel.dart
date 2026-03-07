@@ -148,6 +148,8 @@ class RideBookedViewModel extends ChangeNotifier {
     });
   }
 
+  DateTime _lastEtaFetch = DateTime.now().subtract(const Duration(minutes: 5));
+
   void _listenToRide() {
     _rideStream = FirebaseFirestore.instance
         .collection('rideRequests')
@@ -182,12 +184,11 @@ class RideBookedViewModel extends ChangeNotifier {
           stage = newStage;
 
           // Check if driver requested to end ride early
-          if (data['endRideRequested'] == true && data['endRideApproved'] != true && data['endRideRejected'] != true) {
-            isEndRideRequested = true;
-          } else {
-            isEndRideRequested = false;
-          }
+          bool newEndRequestState = data['endRideRequested'] == true && data['endRideApproved'] != true && data['endRideRejected'] != true;
+          bool requestStateChanged = isEndRideRequested != newEndRequestState;
+          isEndRideRequested = newEndRequestState;
 
+          // Real-time location from ride request document (updated every 15m by driver during trip)
           if (data['driverLocation'] != null) {
             final geo = data['driverLocation'] as GeoPoint;
             driverLocation = LatLng(geo.latitude, geo.longitude);
@@ -211,14 +212,24 @@ class RideBookedViewModel extends ChangeNotifier {
 
           _updateDriverMarker();
 
-          if (stageChanged || _lastFetchedStage != stage || (stage == RideStage.arriving && polylines.isEmpty && driverLocation != null)) {
-            _handleStageChangeRoute();
+          if (stageChanged || _lastFetchedStage != stage || (stage == RideStage.arriving && polylines.isEmpty && driverLocation != null) || requestStateChanged) {
+            _lastEtaFetch = DateTime.now();
+            if (stageChanged || _lastFetchedStage != stage || (stage == RideStage.arriving && polylines.isEmpty && driverLocation != null)) {
+              _handleStageChangeRoute();
+            }
             if (newStage == RideStage.arriving || newStage == RideStage.inProgress) {
                _checkForAutoShare();
             }
-          } else if (stage == RideStage.inProgress && driverLocation != null) {
-            // Periodic update during trip if driver moves
-            _fetchPolyline(driverLocation!, destinationLatLng, 'trip_route');
+          } else if ((stage == RideStage.arriving || stage == RideStage.inProgress) && driverLocation != null) {
+            // Throttled periodic ETA updates to save Google Maps API costs
+            if (DateTime.now().difference(_lastEtaFetch).inSeconds > 45) {
+               _lastEtaFetch = DateTime.now();
+               if (stage == RideStage.arriving) {
+                 _fetchPolyline(driverLocation!, pickupLatLng, 'driver_to_pickup');
+               } else {
+                 _fetchPolyline(driverLocation!, destinationLatLng, 'trip_route');
+               }
+            }
           }
 
           notifyListeners();
@@ -424,7 +435,10 @@ class RideBookedViewModel extends ChangeNotifier {
   }
 
   Future<void> shareRideToGuardian({bool auto = false}) async {
-    final String message = "Trip Started! 🚗 Tracking Link: https://rurboo.app/track?id=$rideId";
+    final driverInfo = rideDetails != null 
+        ? "${rideDetails!.driverName} (${rideDetails!.carNumber})"
+        : "a driver";
+    final String message = "My Ride: $driverInfo is arriving in $eta mins. Call ${rideDetails?.driverPhone ?? ''} for details.";
     
     String? phone = guardianPhone;
     if (phone == null && trustedContacts.isNotEmpty) {
@@ -433,7 +447,7 @@ class RideBookedViewModel extends ChangeNotifier {
 
     if (phone != null) {
       if (auto) {
-        debugPrint("🔄 Auto-Sharing Ride with $phone");
+        debugPrint("🔄 Auto-Sharing Ride with $phone: $message");
         // Simulated auto-share notification
       } else {
          final Uri smsUri = Uri(

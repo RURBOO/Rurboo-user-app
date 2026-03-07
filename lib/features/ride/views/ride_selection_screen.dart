@@ -856,7 +856,7 @@ class RideSelectionBody extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              if (nameController.text.isNotEmpty && phoneController.text.length >= 10) {
+              if (nameController.text.isNotEmpty && phoneController.text.length == 10) {
                 vm.setReceiverDetails(nameController.text, phoneController.text);
                 Navigator.pop(c);
               } else {
@@ -938,10 +938,13 @@ Future<void> bookRideTransaction(
     // ✅ ROBUST VEHICLE CATEGORIZATION
     final String category = _getVehicleCategory(vm.selectedRide!.name);
 
+    final String finalUserName = vm.isBookForOthers ? (vm.receiverName ?? 'User') : (userData['name'] ?? 'User');
+    final String finalUserPhone = vm.isBookForOthers ? (vm.receiverPhone ?? '') : (userData['phoneNumber'] ?? '');
+
     final rideData = {
       'userId': userId,
-      'userName': userData['name'] ?? 'User',
-      'userPhone': userData['phoneNumber'] ?? '',
+      'userName': finalUserName,
+      'userPhone': finalUserPhone,
       'pickupAddress': pickupText,
       'destinationAddress': destinationText,
       'pickupGeo': pickupGeo.data,

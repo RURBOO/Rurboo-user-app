@@ -128,6 +128,18 @@ class _RideBookedScreenState extends State<RideBookedScreen> {
     } else if (vm.stage == RideStage.completed) {
        // Ride completed - thank you message
        voice.speak(lang.getText('ride_completed_voice'));
+       
+       // Fixed: Instantly navigate on completion instead of relying on the build method which might skip frames.
+       Navigator.pushReplacement(
+         context,
+         MaterialPageRoute(
+           builder: (_) => RideSummaryScreen(
+             rideId: vm.rideId,
+             fare: vm.rideDetails?.fare ?? 0,
+             driverName: vm.rideDetails?.driverName ?? "Driver",
+           ),
+         ),
+       );
     }
   }
   
@@ -168,21 +180,6 @@ class _RideBookedContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<RideBookedViewModel>();
-
-    if (vm.stage == RideStage.completed) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => RideSummaryScreen(
-              rideId: vm.rideId,
-              fare: vm.rideDetails?.fare ?? 0,
-              driverName: vm.rideDetails?.driverName ?? "Driver",
-            ),
-          ),
-        );
-      });
-    }
 
     return PopScope(
       canPop: false,

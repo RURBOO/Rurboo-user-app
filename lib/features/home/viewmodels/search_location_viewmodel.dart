@@ -49,8 +49,13 @@ class SearchLocationViewModel extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 500), () {
-      _search(query);
+    _debounce = Timer(const Duration(milliseconds: 800), () {
+      if (query.trim().length >= 3) {
+        _search(query);
+      } else {
+        suggestions = [];
+        notifyListeners();
+      }
     });
   }
 
