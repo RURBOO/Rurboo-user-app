@@ -20,7 +20,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(lang.getText('uiSettings')),
-        foregroundColor: Colors.black,
         elevation: 1,
       ),
       body: ListView(
@@ -54,7 +53,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            activeThumbColor: Colors.black,
             title: Text(lang.getText('uiPushNotifications')),
             subtitle: Text(lang.getText('uiReceiveRideUpdates')),
             value: _pushNotifications,
@@ -65,7 +63,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            activeThumbColor: Colors.black,
             title: Text(lang.getText('uiPromotionalEmails')),
             value: _promoEmails,
             onChanged: (val) {

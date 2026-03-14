@@ -313,7 +313,7 @@ class HomeBody extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
@@ -357,7 +357,6 @@ class HomeBody extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
                             ),
                           ),
                         ],
@@ -495,7 +494,7 @@ class HomeBody extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: theme.cardColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           boxShadow: [
             BoxShadow(
@@ -590,7 +589,7 @@ class HomeBody extends StatelessWidget {
         constraints: BoxConstraints(maxHeight: maxH),
         padding: EdgeInsets.fromLTRB(24, 12, 24, MediaQuery.of(context).padding.bottom + 16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: theme.cardColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
           boxShadow: [
             BoxShadow(
@@ -625,7 +624,7 @@ class HomeBody extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF4F7F6),
+                    color: theme.brightness == Brightness.dark ? Colors.grey[850] : const Color(0xFFF4F7F6),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: AppColors.dividerColor),
                   ),
@@ -773,7 +772,7 @@ class HomeBody extends StatelessWidget {
                         leading: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: AppColors.background,
+                            color: theme.canvasColor,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.history, size: 16, color: AppColors.primary),

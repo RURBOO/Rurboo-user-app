@@ -316,7 +316,7 @@ class _RideBookedContent extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -380,7 +380,7 @@ class _RideBookedContent extends StatelessWidget {
                   maxHeight: MediaQuery.of(context).size.height * 0.48, // Reduced from 0.55
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
                   boxShadow: [
                     BoxShadow(
@@ -448,7 +448,7 @@ class _RideBookedContent extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(12), // Reduced from 16
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF5F7FA),
+                            color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : const Color(0xFFF5F7FA),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: Colors.grey[200]!),
                           ),
@@ -458,7 +458,7 @@ class _RideBookedContent extends StatelessWidget {
                                 width: 48, // Reduced from 56
                                 height: 48,
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: Theme.of(context).cardColor,
                                   shape: BoxShape.circle,
                                   border: Border.all(color: Colors.grey[300]!),
                                   image: const DecorationImage(
@@ -477,7 +477,6 @@ class _RideBookedContent extends StatelessWidget {
                                       style: const TextStyle(
                                         fontSize: 15, // Reduced from 16
                                         fontWeight: FontWeight.bold,
-                                        color: AppColors.textPrimary,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -559,7 +558,7 @@ class _RideBookedContent extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                           decoration: BoxDecoration(
-                            color: Colors.grey[50], // Fixed
+                            color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[50],
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: Colors.grey[200]!),
                           ),

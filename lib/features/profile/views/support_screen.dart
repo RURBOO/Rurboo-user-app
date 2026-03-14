@@ -149,8 +149,8 @@ class _SupportScreenBodyState extends State<SupportScreenBody> with SingleTicker
                 ElevatedButton(
                   onPressed: vm.pickImage,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[200],
-                    foregroundColor: Colors.black87,
+                    backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[200],
+                    foregroundColor: Theme.of(context).textTheme.bodyMedium?.color,
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),

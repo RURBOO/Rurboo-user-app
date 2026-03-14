@@ -363,7 +363,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                         Text(
                           lang.getText('create_profile_subtitle'),
                           style: theme.textTheme.bodyLarge?.copyWith(
-                            color: AppColors.textSecondary,
+                            color: theme.textTheme.bodyMedium?.color,
                             height: 1.5,
                           ),
                         ).animate().fade(delay: 150.ms).slideY(begin: 0.1),
@@ -378,7 +378,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                           ],
                           decoration: premiumInputDecoration.copyWith(
                             labelText: lang.getText('full_name_label'),
-                            prefixIcon: const Icon(Icons.person_outline, color: AppColors.textSecondary),
+                            prefixIcon: Icon(Icons.person_outline, color: theme.textTheme.bodyMedium?.color),
                           ),
                           validator: (v) {
                             if (v == null || v.isEmpty) return lang.getText('enter_full_name');
@@ -402,7 +402,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                                 ],
                                 decoration: premiumInputDecoration.copyWith(
                                   labelText: lang.getText('age_label'),
-                                  prefixIcon: const Icon(Icons.calendar_today, color: AppColors.textSecondary),
+                                  prefixIcon: Icon(Icons.calendar_today, color: theme.textTheme.bodyMedium?.color),
                                 ),
                                 onChanged: (v) => setState(() {}),
                                 validator: (v) {
@@ -437,7 +437,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                           initialValue: userCategory,
                           decoration: premiumInputDecoration.copyWith(
                             labelText: lang.getText('category_label'),
-                            prefixIcon: const Icon(Icons.category_outlined, color: AppColors.textSecondary),
+                            prefixIcon: Icon(Icons.category_outlined, color: theme.textTheme.bodyMedium?.color),
                           ),
                           items: ["Adult", "Woman", "Student", "Child"].map((c) =>
                             DropdownMenuItem(value: c, child: Text(lang.getText(c.toLowerCase())))).toList(),
@@ -507,7 +507,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                           ],
                           decoration: premiumInputDecoration.copyWith(
                             labelText: lang.getText('emergency_contact_label'),
-                            prefixIcon: const Icon(Icons.contact_emergency, color: AppColors.textSecondary),
+                            prefixIcon: Icon(Icons.contact_emergency, color: theme.textTheme.bodyMedium?.color),
                           ),
                           validator: (v) {
                             if (v != null && v.isNotEmpty && v.length != 10) return lang.getText('invalid');
@@ -535,7 +535,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                           textCapitalization: TextCapitalization.characters,
                           decoration: premiumInputDecoration.copyWith(
                             labelText: lang.getText('referral_code_optional'),
-                            prefixIcon: const Icon(Icons.confirmation_number_outlined, color: AppColors.textSecondary),
+                            prefixIcon: Icon(Icons.confirmation_number_outlined, color: theme.textTheme.bodyMedium?.color),
                             hintText: "e.g. ADAR1234",
                           ),
                         ).animate().fade(delay: 400.ms).slideY(begin: 0.1),

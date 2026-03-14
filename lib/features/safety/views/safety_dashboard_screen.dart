@@ -27,12 +27,11 @@ class _SafetyDashboardBody extends StatelessWidget {
     final lang = Provider.of<LanguageViewModel>(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text("${lang.getText('safety_center')} 🛡️", style: const TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
         centerTitle: true,
-        foregroundColor: Colors.black,
       ),
       body: vm.isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -43,7 +42,7 @@ class _SafetyDashboardBody extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -137,9 +136,9 @@ class _SafetyDashboardBody extends StatelessWidget {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade200),
+                        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
                       ),
                       child: ListTile(
                         leading: CircleAvatar(
@@ -170,9 +169,9 @@ class _SafetyDashboardBody extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.orange[50],
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.orange.shade900.withValues(alpha: 0.2) : Colors.orange[50],
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.orange.shade100),
+                    border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.orange.shade800 : Colors.orange.shade100),
                   ),
                   child: Column(
                     children: [

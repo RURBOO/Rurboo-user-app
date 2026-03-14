@@ -208,7 +208,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                     Text(
                       lang.getText('login_subtitle'),
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: theme.textTheme.bodyMedium?.color,
                         height: 1.5,
                       ),
                     ).animate().fade(delay: 300.ms).slideY(begin: 0.2),
@@ -241,7 +241,6 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                             child: Text(
                               "🇮🇳 +91",
                               style: theme.textTheme.titleMedium?.copyWith(
-                                color: AppColors.textPrimary,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -268,7 +267,6 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                               ),
                               cursorColor: AppColors.primary,
                               style: theme.textTheme.titleLarge?.copyWith(
-                                color: AppColors.textPrimary,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 2.0,
                               ),

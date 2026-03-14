@@ -77,7 +77,7 @@ class _ProfileScreenBody extends StatelessWidget {
     final lang = Provider.of<LanguageViewModel>(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA), // Light premium gray
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Light premium gray
       body: vm.isLoading
           ? const Center(child: CircularProgressIndicator())
           : CustomScrollView(
@@ -211,8 +211,7 @@ class _ProfileScreenBody extends StatelessWidget {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -238,7 +237,6 @@ class _ProfileScreenBody extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 4),
@@ -261,8 +259,7 @@ class _ProfileScreenBody extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -283,7 +280,6 @@ class _ProfileScreenBody extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
                 ),
               ),
               Container(
@@ -334,7 +330,6 @@ class _ProfileScreenBody extends StatelessWidget {
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
           ),
         ),
         Text(
@@ -351,8 +346,7 @@ class _ProfileScreenBody extends StatelessWidget {
   Widget _buildMenuSection(BuildContext context, ProfileViewModel vm) {
     final lang = Provider.of<LanguageViewModel>(context);
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -426,8 +420,7 @@ class _ProfileScreenBody extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(top: 24),
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -478,12 +471,11 @@ class _ProfileScreenBody extends StatelessWidget {
           color: isDestructive ? Colors.red.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, color: isDestructive ? Colors.red : Colors.black87, size: 20),
+        child: Icon(icon, color: isDestructive ? Colors.red : Theme.of(context).iconTheme.color, size: 20),
       ),
       title: Text(
         title,
-        style: TextStyle(
-          color: isDestructive ? Colors.red : Colors.black87,
+          color: isDestructive ? Colors.red : Theme.of(context).textTheme.bodyLarge?.color,
           fontWeight: FontWeight.w600,
         ),
       ),

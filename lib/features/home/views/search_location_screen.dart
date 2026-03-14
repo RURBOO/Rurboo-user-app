@@ -71,7 +71,6 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
-        foregroundColor: Colors.black,
         elevation: 0.5,
       ),
       body: Column(

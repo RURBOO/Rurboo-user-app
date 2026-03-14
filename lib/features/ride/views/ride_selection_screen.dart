@@ -228,8 +228,7 @@ class RideSelectionBody extends StatelessWidget {
       extendBodyBehindAppBar: true, // Allow map to go behind app bar
       appBar: AppBar(
         title: Text(lang.getText('select_ride'), style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white.withValues(alpha: 0.9), // Fixed
-        foregroundColor: AppColors.textPrimary,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.9),
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
@@ -272,7 +271,7 @@ class RideSelectionBody extends StatelessWidget {
               return Container(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0), // Compact padding
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
                   boxShadow: [
                     BoxShadow(
@@ -311,7 +310,7 @@ class RideSelectionBody extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.grey[100],
+                              color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[100],
                               borderRadius: BorderRadius.circular(20)
                             ),
                             child: Row(
@@ -362,7 +361,7 @@ class RideSelectionBody extends StatelessWidget {
                                 duration: const Duration(milliseconds: 200),
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: selected ? AppColors.primary.withValues(alpha: 0.05) :Colors.white,
+                                  color: selected ? AppColors.primary.withValues(alpha: 0.05) : Theme.of(context).cardColor,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
                                     color: isHighlighted 
@@ -406,7 +405,7 @@ class RideSelectionBody extends StatelessWidget {
                 bottom: MediaQuery.of(context).padding.bottom + 16, // Extra space for navigation bar
               ),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 boxShadow: [
                    BoxShadow(
                      color: Colors.black.withValues(alpha: 0.05),
@@ -447,7 +446,7 @@ class RideSelectionBody extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[100],
         borderRadius: BorderRadius.circular(12),
       ),
       child: IntrinsicHeight(
@@ -523,7 +522,7 @@ class RideSelectionBody extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: Colors.grey[50],
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[50],
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.grey[200]!),
                   ),
@@ -691,7 +690,7 @@ class RideSelectionBody extends StatelessWidget {
     child: Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[200]!),
       ),
@@ -730,7 +729,7 @@ class RideSelectionBody extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: vm.isBookForOthers ? AppColors.primary.withValues(alpha: 0.1) : Colors.grey[50],
+          color: vm.isBookForOthers ? AppColors.primary.withValues(alpha: 0.1) : (Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[50]),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: vm.isBookForOthers ? AppColors.primary : Colors.grey[200]!)
         ),

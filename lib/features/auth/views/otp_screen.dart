@@ -248,7 +248,6 @@ class _OtpScreenState extends State<OtpScreen> {
       width: 50,
       height: 60,
       textStyle: theme.textTheme.headlineMedium?.copyWith(
-        color: AppColors.textPrimary,
         fontWeight: FontWeight.bold,
       ),
       decoration: BoxDecoration(
@@ -331,7 +330,7 @@ class _OtpScreenState extends State<OtpScreen> {
                     Text(
                       "${lang.getText('otp_subtitle')} ${widget.phone}",
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: theme.textTheme.bodyMedium?.color,
                         height: 1.5,
                       ),
                     ).animate().fade(delay: 200.ms).slideY(begin: 0.1),

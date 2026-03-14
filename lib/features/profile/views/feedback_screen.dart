@@ -74,7 +74,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       
       appBar: AppBar(
         title: Text(lang.getText('feedback_suggestions')),
-        foregroundColor: Colors.black,
         elevation: 1,
       ),
       body: SingleChildScrollView(
@@ -109,7 +108,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   borderSide: BorderSide(color: Colors.grey[300]!),
                 ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).cardColor,
               ),
             ),
             const SizedBox(height: 32),
