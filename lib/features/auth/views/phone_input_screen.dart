@@ -155,16 +155,17 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 40),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
                     // Beautifully styled, uncropped logo
                     Center(
                       child: Container(
@@ -229,9 +230,11 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                           ),
                         ],
                       ),
-                      child: Row(
-                        children: [
-                          Container(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Row(
+                          children: [
+                            Container(
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                             decoration: BoxDecoration(
                               border: Border(
@@ -274,12 +277,16 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                           ),
                         ],
                       ),
-                    ).animate().fade(delay: 400.ms).slideY(begin: 0.2),
-                    
-                    const Spacer(),
-                    
-                    // Premium Button
-                    ElevatedButton(
+                    ),
+                  ).animate().fade(delay: 400.ms).slideY(begin: 0.2),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Premium Button
+              ElevatedButton(
                       onPressed: () {
                         final phone = phoneCtrl.text.trim();
                         if (phone.length != 10) {
@@ -301,17 +308,15 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                         ),
                       ),
                       child: Text(
-                        lang.getText('proceed'),
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.0),
-                      ),
-                    ).animate().fade(delay: 600.ms).slideY(begin: 0.3),
-                  ],
+                  lang.getText('proceed'),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.0),
                 ),
-              ),
-            ),
-          ],
+              ).animate().fade(delay: 600.ms).slideY(begin: 0.3),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+

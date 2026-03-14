@@ -37,7 +37,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: widget.fromProfile 
           ? AppBar(
               title: const Text("Language Selection", style: TextStyle(fontWeight: FontWeight.bold)),
@@ -53,7 +53,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              AppColors.background,
+              theme.scaffoldBackgroundColor,
               AppColors.primary.withValues(alpha: 0.05),
             ],
           ),
@@ -173,6 +173,7 @@ class _LanguageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
@@ -180,10 +181,10 @@ class _LanguageCard extends StatelessWidget {
         duration: 250.ms,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.surface : AppColors.surface.withValues(alpha: 0.6),
+          color: isSelected ? theme.cardColor : theme.cardColor.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.dividerColor,
+            color: isSelected ? AppColors.primary : theme.dividerColor,
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected ? [
@@ -200,12 +201,12 @@ class _LanguageCard extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : AppColors.background,
+                color: isSelected ? AppColors.primary : theme.scaffoldBackgroundColor,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.translate_rounded,
-                color: isSelected ? Colors.white : AppColors.textSecondary,
+                color: isSelected ? Colors.white : theme.textTheme.bodySmall?.color ?? AppColors.textSecondary,
                 size: 24,
               ),
             ),

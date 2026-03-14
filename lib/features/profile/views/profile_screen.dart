@@ -504,8 +504,10 @@ class _ProfileScreenBody extends StatelessWidget {
       trailing: Switch(
         value: announcementEnabled,
         onChanged: onAnnouncementToggle,
-        activeThumbColor: Colors.white,
         activeTrackColor: AppColors.primary,
+        activeThumbColor: Colors.white,
+        inactiveThumbColor: Colors.white,
+        inactiveTrackColor: Colors.grey[400],
       ),
     );
   }
@@ -534,8 +536,10 @@ class _ProfileScreenBody extends StatelessWidget {
       trailing: Switch(
         value: themeProvider.isDarkMode,
         onChanged: (val) => context.read<ThemeProvider>().toggleTheme(val),
-        activeThumbColor: Colors.white,
         activeTrackColor: AppColors.primary,
+        activeThumbColor: Colors.white,
+        inactiveThumbColor: Colors.white,
+        inactiveTrackColor: Colors.grey[400],
       ),
     );
   }

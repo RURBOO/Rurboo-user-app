@@ -441,11 +441,11 @@ class _RideBookedContent extends StatelessWidget {
 
                         // Driver Info Card
                         Container(
-                          padding: const EdgeInsets.all(12), // Reduced from 16
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : const Color(0xFFF5F7FA),
+                            color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[900] : const Color(0xFFF5F7FA),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(),
+                            border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800]! : Colors.grey[200]!),
                           ),
                           child: Row(
                             children: [
@@ -455,7 +455,7 @@ class _RideBookedContent extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   color: Theme.of(context).cardColor,
                                   shape: BoxShape.circle,
-                                  border: Border.all(),
+                                  border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[200]!),
                                   image: const DecorationImage(
                                      image: NetworkImage("https://cdn-icons-png.flaticon.com/512/3135/3135715.png"), // Placeholder driver
                                      fit: BoxFit.cover,
@@ -552,9 +552,9 @@ class _RideBookedContent extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[50],
+                            color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[900] : Colors.grey[50],
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(),
+                            border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800]! : Colors.grey[200]!),
                           ),
                           child: Column(
                             children: [
@@ -673,6 +673,7 @@ class _RideBookedContent extends StatelessWidget {
               Expanded(
                 child: Container(
                   width: 2,
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700] : Colors.grey[300],
                   margin: const EdgeInsets.symmetric(vertical: 4),
                 ),
               ),
@@ -691,7 +692,11 @@ class _RideBookedContent extends StatelessWidget {
                     : vm.pickupAddress,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle( fontSize: 14),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 Text(
@@ -700,7 +705,11 @@ class _RideBookedContent extends StatelessWidget {
                     : vm.destinationAddress,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle( fontSize: 14),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),

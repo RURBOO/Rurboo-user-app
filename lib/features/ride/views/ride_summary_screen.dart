@@ -350,17 +350,30 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
               // Safety Question
               Container(
                 decoration: BoxDecoration(
-                   color: _feltSafe ? Colors.green[50] : Colors.red[50],
+                   color: _feltSafe 
+                       ? (Theme.of(context).brightness == Brightness.dark ? Colors.green.withValues(alpha: 0.1) : Colors.green[50])
+                       : (Theme.of(context).brightness == Brightness.dark ? Colors.red.withValues(alpha: 0.1) : Colors.red[50]),
                    borderRadius: BorderRadius.circular(12),
-                   border: Border.all(color: _feltSafe ? Colors.green.shade200 : Colors.red.shade200),
+                   border: Border.all(
+                     color: _feltSafe 
+                        ? (Theme.of(context).brightness == Brightness.dark ? Colors.green.withValues(alpha: 0.5) : Colors.green.shade200)
+                        : (Theme.of(context).brightness == Brightness.dark ? Colors.red.withValues(alpha: 0.5) : Colors.red.shade200)
+                   ),
                 ),
                 child: SwitchListTile(
-                   title: Text(lang.getText('safe_ride_question'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                   title: Text(
+                     lang.getText('safe_ride_question'), 
+                     style: TextStyle(
+                       fontWeight: FontWeight.bold, 
+                       fontSize: 14,
+                       color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87,
+                     )
+                   ),
                    value: _feltSafe,
                    activeTrackColor: Colors.green,
-                   activeThumbColor: Colors.green,
-                   inactiveThumbColor: Colors.red,
-                   inactiveTrackColor: Colors.red[200],
+                   activeThumbColor: Colors.white,
+                   inactiveThumbColor: Colors.white,
+                   inactiveTrackColor: Colors.red.withValues(alpha: 0.5),
                    onChanged: (val) {
                       setState(() => _feltSafe = val);
                       if (!val) {

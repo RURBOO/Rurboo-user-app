@@ -338,8 +338,8 @@ class RideSelectionBody extends StatelessWidget {
                           },
                           child: ListView.separated(
                           controller: scrollController,
-                          // Increased padding to 35% to ensure last items are visible above the fixed footer
-                          padding: EdgeInsets.only(bottom: MediaQuery.of(context).size.height * 0.35), 
+                          // Adjusted padding to 25% to prevent item cutoff while keeping it tight
+                          padding: EdgeInsets.only(bottom: MediaQuery.of(context).size.height * 0.25), 
                           itemCount: vm.rideOptions.length,
                           separatorBuilder: (c, i) => const SizedBox(height: 12),
                           itemBuilder: (_, i) {
@@ -364,7 +364,7 @@ class RideSelectionBody extends StatelessWidget {
                                   border: Border.all(
                                     color: isHighlighted 
                                         ? const Color(0xFFFFD54F) 
-                                        : (selected ? AppColors.primary : Colors.grey[200]!),
+                                        : (selected ? AppColors.primary : (Theme.of(context).brightness == Brightness.dark ? Colors.grey[800]! : Colors.grey[200]!)),
                                     width: isHighlighted ? 3 : (selected ? 2 : 1),
                                   ),
                                   boxShadow: isHighlighted 
@@ -379,7 +379,7 @@ class RideSelectionBody extends StatelessWidget {
                                      BoxShadow(color: AppColors.primary.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4))
                                   ] : []),
                                 ),
-                                  child: _rideTile(ride, selected, AppColors.primary, lang),
+                                  child: _rideTile(context, ride, selected, AppColors.primary, lang),
                                 ),
                             ).animate(target: isHighlighted ? 1 : 0).scale(begin: const Offset(1,1), end: const Offset(1.05, 1.05));
                           },
@@ -421,12 +421,14 @@ class RideSelectionBody extends StatelessWidget {
                    ),
                    const SizedBox(height: 12),
                    
+/*
                    // Payment Method Display
                    Padding(
                      padding: const EdgeInsets.symmetric(horizontal: 20),
                      child: _paymentDisplay(context, lang),
                    ),
                    const SizedBox(height: 12),
+*/
                    
                    // Confirm Button
                    _confirmButton(context, vm, lang),
@@ -440,11 +442,15 @@ class RideSelectionBody extends StatelessWidget {
   }
 
   Widget _locationPreview(BuildContext context, String pickup, String destination) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[100],
+        color: isDark ? Colors.grey[900] : Colors.grey[100],
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.transparent,
+        ),
       ),
       child: IntrinsicHeight(
         child: Row(
@@ -455,14 +461,15 @@ class RideSelectionBody extends StatelessWidget {
                 const Icon(Icons.circle, color: Colors.green, size: 12),
                 Expanded(
                   child: Container(
-                    width: 226,
+                    width: 2,
+                    color: isDark ? Colors.grey[700] : Colors.grey[300],
                     margin: const EdgeInsets.symmetric(vertical: 2),
                   ),
                 ),
                 const Icon(Icons.square, color: Colors.red, size: 12),
               ],
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,21 +477,23 @@ class RideSelectionBody extends StatelessWidget {
                 children: [
                   Text(
                     pickup,
-                    maxLines: 1, // Reduced to 1
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13, // Reduced font
+                    style: TextStyle(
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : Colors.black87,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
                     destination,
-                    maxLines: 1, // Reduced to 1
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13, // Reduced font
+                    style: TextStyle(
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : Colors.black87,
                     ),
                   ),
                 ],
@@ -509,6 +518,7 @@ class RideSelectionBody extends StatelessWidget {
     return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+/*
           // Schedule Button
           if (!vm.isOutstationRide && !vm.isBooking)
             Padding(
@@ -543,6 +553,7 @@ class RideSelectionBody extends StatelessWidget {
                 ),
               ),
             ),
+*/
 
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -570,7 +581,7 @@ class RideSelectionBody extends StatelessWidget {
                       },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  disabledBackgroundColor: Colors.grey[300],
+                  disabledBackgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[300],
                   elevation: 6,
                   shadowColor: AppColors.primary.withValues(alpha: 0.4),
                   shape: RoundedRectangleBorder(
@@ -608,6 +619,7 @@ class RideSelectionBody extends StatelessWidget {
       );
   }
 
+/*
   Future<void> _pickDateTime(BuildContext context, RideSelectionViewModel vm) async {
     final now = DateTime.now();
     final firstDate = now.add(const Duration(minutes: 15)); // Min start time
@@ -649,6 +661,7 @@ class RideSelectionBody extends StatelessWidget {
   String _formatDate(DateTime d) {
     return "${d.day}/${d.month} ${d.hour}:${d.minute.toString().padLeft(2,'0')}";
   }
+*/
 
   Widget _outstationMessage(LanguageViewModel lang) =>
       Center(child: Text(lang.getText('outstation_unavailable')));
@@ -659,7 +672,7 @@ class RideSelectionBody extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.location_off_rounded, size: 64, ),
+              Icon(Icons.location_off_rounded, size: 64, color: AppColors.primary.withValues(alpha: 0.5)),
               const SizedBox(height: 16),
               const Text(
                 "Service Unavailable", 
@@ -679,6 +692,7 @@ class RideSelectionBody extends StatelessWidget {
         ),
       );
 
+/*
   Widget _paymentDisplay(BuildContext context, LanguageViewModel lang) => InkWell(
     onTap: () {
       // payment selection
@@ -711,6 +725,7 @@ class RideSelectionBody extends StatelessWidget {
       ),
     ),
   );
+*/
 
   Widget _bookForOthersToggle(BuildContext context, RideSelectionViewModel vm, LanguageViewModel lang) {
     return InkWell(
@@ -756,7 +771,7 @@ class RideSelectionBody extends StatelessWidget {
                 if (val) _showBookForOthersDialog(context, vm);
               },
               activeTrackColor: AppColors.primary,
-              activeThumbColor: AppColors.primary,
+              activeThumbColor: Colors.white,
             )
           ],
         ),
@@ -776,7 +791,7 @@ class RideSelectionBody extends StatelessWidget {
   }
 */
 
-  Widget _rideTile(RideOption ride, bool selected, Color color, LanguageViewModel lang) {
+  Widget _rideTile(BuildContext context, RideOption ride, bool selected, Color color, LanguageViewModel lang) {
     return Row(
       children: [
         // ICON
@@ -802,9 +817,9 @@ class RideSelectionBody extends StatelessWidget {
                 children: [
                   Text(
                     lang.getText(ride.name),
-                    style: TextStyle(fontSize: 15, // Reduced from default
+                    style: TextStyle(fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: selected ? AppColors.primary : AppColors.textPrimary,
+                      color: selected ? AppColors.primary : Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -825,20 +840,20 @@ class RideSelectionBody extends StatelessWidget {
               const SizedBox(height: 2),
               Row(
                 children: [
-                  Icon(Icons.person, size: 10, ),
+                  Icon(Icons.person, size: 10, color: Theme.of(context).textTheme.bodySmall?.color),
                   const SizedBox(width: 3),
                   Text(
                     ride.seats == 0 
                       ? lang.getText('cargo') 
                       : "${ride.seats} ${ride.seats > 1 ? lang.getText('seats') : lang.getText('seat')}", 
-                    style: TextStyle(fontSize: 10, ),
+                    style: TextStyle(fontSize: 10, color: Theme.of(context).textTheme.bodySmall?.color),
                   ),
                   const SizedBox(width: 8),
-                  Icon(Icons.access_time, size: 10, ),
+                  Icon(Icons.access_time, size: 10, color: Theme.of(context).textTheme.bodySmall?.color),
                   const SizedBox(width: 3),
                   Text(
                     "${ride.eta} min", 
-                    style: TextStyle(fontSize: 10, ),
+                    style: TextStyle(fontSize: 10, color: Theme.of(context).textTheme.bodySmall?.color),
                   ),
                 ],
               ),
@@ -851,9 +866,9 @@ class RideSelectionBody extends StatelessWidget {
           children: [
             Text(
               "₹${ride.fare.toInt()}",
-              style: TextStyle(fontSize: 17, // Reduced from default
+              style: TextStyle(fontSize: 17,
                 fontWeight: FontWeight.w900,
-                color: selected ? AppColors.primary : AppColors.textPrimary,
+                color: selected ? AppColors.primary : Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
           ],
@@ -881,8 +896,17 @@ class RideSelectionBody extends StatelessWidget {
             const SizedBox(height: 10),
             TextField(
               controller: phoneController,
-              decoration: InputDecoration(labelText: lang.getText('phone_number'), prefixIcon: const Icon(Icons.phone)),
+              decoration: InputDecoration(
+                labelText: lang.getText('phone_number'), 
+                prefixIcon: const Icon(Icons.phone),
+                counterText: "", // Hide the default counter
+              ),
               keyboardType: TextInputType.phone,
+              maxLength: 10,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(10),
+              ],
             ),
           ],
         ),

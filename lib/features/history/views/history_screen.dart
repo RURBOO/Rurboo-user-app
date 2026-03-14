@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/widgets/shimmer_loading.dart';
 import '../../language/viewmodels/language_vm.dart';
+import '../../../core/theme/app_colors.dart';
 import '../viewmodels/history_viewmodel.dart';
 import '../models/ride_history_model.dart';
 
@@ -101,7 +102,10 @@ class _HistoryScreenBody extends StatelessWidget {
               children: [
                 Text(
                   formattedDate,
-                  style: TextStyle(fontSize: 12),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black54,
+                  ),
                 ),
                 Text(
                   '₹${ride.fare.toStringAsFixed(0)}',
@@ -114,9 +118,9 @@ class _HistoryScreenBody extends StatelessWidget {
             ),
             const Divider(height: 24),
 
-            _buildAddressRow(Icons.circle, Colors.green, ride.pickupAddress),
+            _buildAddressRow(context, Icons.circle, Colors.green, ride.pickupAddress),
             const SizedBox(height: 12),
-            _buildAddressRow(Icons.square, Colors.red, ride.destinationAddress),
+            _buildAddressRow(context, Icons.square, Colors.red, ride.destinationAddress),
 
             const SizedBox(height: 16),
 
@@ -160,7 +164,7 @@ class _HistoryScreenBody extends StatelessWidget {
     );
   }
 
-  Widget _buildAddressRow(IconData icon, Color color, String address) {
+  Widget _buildAddressRow(BuildContext context, IconData icon, Color color, String address) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -171,7 +175,11 @@ class _HistoryScreenBody extends StatelessWidget {
             address,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 14),
+            style: TextStyle(
+              fontSize: 14,
+              color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ],
@@ -190,7 +198,7 @@ class _HistoryScreenBody extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.history, size: 80, ),
+          Icon(Icons.history, size: 80, color: AppColors.primary.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           Text(
             lang.getText('no_rides'),

@@ -79,11 +79,12 @@ class _SafetyDashboardBody extends StatelessWidget {
                               ),
                             ],
                           ),
-                          Switch(
-                            value: vm.safetyMode,
-                            onChanged: (val) => vm.toggleSafetyMode(val),
-                            activeTrackColor: Colors.indigo,
-                          ),
+                            Switch(
+                              value: vm.safetyMode,
+                              onChanged: (val) => vm.toggleSafetyMode(val),
+                              activeTrackColor: Colors.indigo,
+                              activeThumbColor: Colors.white,
+                            ),
                         ],
                       ),
                     ],
