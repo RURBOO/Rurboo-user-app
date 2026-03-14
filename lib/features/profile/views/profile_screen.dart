@@ -88,9 +88,9 @@ class _ProfileScreenBody extends StatelessWidget {
                     padding: const EdgeInsets.all(20.0),
                     child: Column(
                       children: [
-                        _buildStatsRow(vm, lang),
+                        _buildStatsRow(context, vm, lang),
                         const SizedBox(height: 24),
-                        _buildProfileDetails(vm, lang),
+                        _buildProfileDetails(context, vm, lang),
                         const SizedBox(height: 24),
                         _buildMenuSection(context, vm),
                         const SizedBox(height: 24),
@@ -197,20 +197,21 @@ class _ProfileScreenBody extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsRow(ProfileViewModel vm, LanguageViewModel lang) {
+  Widget _buildStatsRow(BuildContext context, ProfileViewModel vm, LanguageViewModel lang) {
     return Row(
       children: [
-        _buildStatCard(lang.getText('total_rides'), "${vm.totalRides}", Icons.directions_car, color: AppColors.primary),
+        _buildStatCard(context, lang.getText('total_rides'), "${vm.totalRides}", Icons.directions_car, color: AppColors.primary),
         const SizedBox(width: 16),
-        _buildStatCard(lang.getText('rating_label'), "${vm.avgRating}", Icons.star, color: AppColors.accent),
+        _buildStatCard(context, lang.getText('rating_label'), "${vm.avgRating}", Icons.star, color: AppColors.accent),
       ],
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, {Color color = Colors.black}) {
+  Widget _buildStatCard(BuildContext context, String label, String value, IconData icon, {Color color = Colors.black}) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
@@ -255,10 +256,11 @@ class _ProfileScreenBody extends StatelessWidget {
   }
 
   // ignore: unused_element
-  Widget _buildReferralDashboard(ProfileViewModel vm, LanguageViewModel lang) {
+  Widget _buildReferralDashboard(BuildContext context, ProfileViewModel vm, LanguageViewModel lang) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
@@ -346,6 +348,7 @@ class _ProfileScreenBody extends StatelessWidget {
   Widget _buildMenuSection(BuildContext context, ProfileViewModel vm) {
     final lang = Provider.of<LanguageViewModel>(context);
     return Container(
+      decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
@@ -414,12 +417,13 @@ class _ProfileScreenBody extends StatelessWidget {
     ).animate().slideY(begin: 0.2, end: 0, delay: 300.ms, curve: Curves.easeOut);
   }
 
-  Widget _buildProfileDetails(ProfileViewModel vm, LanguageViewModel lang) {
+  Widget _buildProfileDetails(BuildContext context, ProfileViewModel vm, LanguageViewModel lang) {
     if (vm.email == null && vm.age == null) return const SizedBox.shrink();
 
     return Container(
       margin: const EdgeInsets.only(top: 24),
       padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
@@ -475,6 +479,7 @@ class _ProfileScreenBody extends StatelessWidget {
       ),
       title: Text(
         title,
+        style: TextStyle(
           color: isDestructive ? Colors.red : Theme.of(context).textTheme.bodyLarge?.color,
           fontWeight: FontWeight.w600,
         ),

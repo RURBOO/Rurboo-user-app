@@ -296,7 +296,7 @@ class RideSelectionBody extends StatelessWidget {
                       ),
                     ),
                     
-                    _locationPreview(parent.pickupText, parent.destinationText),
+                    _locationPreview(context, parent.pickupText, parent.destinationText),
 
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -427,7 +427,7 @@ class RideSelectionBody extends StatelessWidget {
                    // Payment Method Display
                    Padding(
                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                     child: _paymentDisplay(lang),
+                     child: _paymentDisplay(context, lang),
                    ),
                    const SizedBox(height: 12),
                    
@@ -442,7 +442,7 @@ class RideSelectionBody extends StatelessWidget {
     );
   }
 
-  Widget _locationPreview(String pickup, String destination) {
+  Widget _locationPreview(BuildContext context, String pickup, String destination) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -683,7 +683,7 @@ class RideSelectionBody extends StatelessWidget {
         ),
       );
 
-  Widget _paymentDisplay(LanguageViewModel lang) => InkWell(
+  Widget _paymentDisplay(BuildContext context, LanguageViewModel lang) => InkWell(
     onTap: () {
       // payment selection
     },

@@ -8,8 +8,6 @@ import '../../language/viewmodels/language_vm.dart';
 import '../repositories/search_repository.dart';
 import '../viewmodels/home_viewmodel.dart';
 import '../models/location_result.dart';
-import '../../../core/theme/map_styles.dart';
-import '../../../core/theme/theme_provider.dart';
 
 class MapPickerScreen extends StatefulWidget {
   final LatLng? initialLocation;
