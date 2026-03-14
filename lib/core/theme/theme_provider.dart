@@ -18,8 +18,8 @@ class ThemeProvider with ChangeNotifier {
       // In a real app we'd use context to check MediaQuery platform brightness
       // but here we default to light if we can't tell, or we just rely on themeMode
       // To make toggles easier, we evaluate system theme manually or just return false
-      final window = WidgetsBinding.instance.window;
-      return window.platformBrightness == Brightness.dark;
+      final dispatcher = WidgetsBinding.instance.platformDispatcher;
+      return dispatcher.platformBrightness == Brightness.dark;
     }
     return _themeMode == ThemeMode.dark;
   }
