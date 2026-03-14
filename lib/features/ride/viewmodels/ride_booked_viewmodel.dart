@@ -193,8 +193,8 @@ class RideBookedViewModel extends ChangeNotifier {
             }
           } else if ((stage == RideStage.arriving || stage == RideStage.inProgress) && driverLocation != null) {
             // Throttled periodic ETA/Route updates
-            // 🚀 Reduced throttle to 15s as per user request for better real-time updates
-            if (DateTime.now().difference(_lastEtaFetch).inSeconds > 5) {
+            // Optimized: 60s interval to minimize Maps API cost (was 5s — very expensive at scale)
+            if (DateTime.now().difference(_lastEtaFetch).inSeconds > 60) {
                debugPrint("📍 UserApp: Periodic route/ETA update. Stage: $stage");
                _lastEtaFetch = DateTime.now();
                if (stage == RideStage.arriving) {
