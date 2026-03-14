@@ -247,7 +247,7 @@ class HomeBody extends StatelessWidget {
                 Text(
                   lang.getText('enable_gps'),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  style: const TextStyle(fontSize: 16, ),
                 ),
                 const SizedBox(height: 32),
 
@@ -341,9 +341,7 @@ class HomeBody extends StatelessWidget {
                         children: [
                           Text(
                             lang.getText('pickup_from'),
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 10,
+                            style: TextStyle(fontSize: 10,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.5,
                             ),
@@ -366,7 +364,6 @@ class HomeBody extends StatelessWidget {
                     Container(
                       height: 30,
                       width: 1,
-                      color: Colors.grey[200],
                       margin: const EdgeInsets.symmetric(horizontal: 8),
                     ),
                     
@@ -396,11 +393,11 @@ class HomeBody extends StatelessWidget {
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(4),
-                        child: Icon(Icons.bookmark_outline, color: AppColors.textSecondary, size: 22),
+                        child: Icon(Icons.bookmark_outline, size: 22),
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(Icons.search, color: AppColors.textSecondary),
+                    const Icon(Icons.search, ),
                   ],
                 ),
               ).animate().fade(duration: 500.ms).slideY(begin: -0.5, end: 0, curve: Curves.easeOutBack),
@@ -432,8 +429,7 @@ class HomeBody extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.red[200]!),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -460,9 +456,7 @@ class HomeBody extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               lang.getText('service_unavailable_desc'),
-              style: TextStyle(
-                color: Colors.grey[800],
-                fontSize: 12,
+              style: TextStyle(fontSize: 12,
               ),
             ),
             const SizedBox(height: 12),
@@ -497,8 +491,7 @@ class HomeBody extends StatelessWidget {
           color: theme.cardColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 24,
               offset: const Offset(0, -4),
             ),
@@ -509,7 +502,7 @@ class HomeBody extends StatelessWidget {
           children: [
             Container(
               width: 40, height: 4,
-              decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
             ),
             const SizedBox(height: 16),
             Row(
@@ -532,7 +525,7 @@ class HomeBody extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                  icon: const Icon(Icons.close, ),
                   onPressed: () => vm.clearDestination(),
                 ),
               ],
@@ -592,8 +585,7 @@ class HomeBody extends StatelessWidget {
           color: theme.cardColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 30,
               offset: const Offset(0, -5),
             )
@@ -610,7 +602,6 @@ class HomeBody extends StatelessWidget {
                 child: Container(
                   width: 40, height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -634,7 +625,7 @@ class HomeBody extends StatelessWidget {
                       const SizedBox(width: 16),
                       Text(
                         lang.getText('where_to'),
-                        style: theme.textTheme.titleMedium?.copyWith(color: AppColors.textSecondary),
+                        style: theme.textTheme.titleMedium?.copyWith(),
                       ),
                     ],
                   ),
@@ -685,7 +676,6 @@ class HomeBody extends StatelessWidget {
                   lang.getText('favorites'),
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -735,7 +725,6 @@ class HomeBody extends StatelessWidget {
                 lang.getText('recent_destinations'),
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -746,7 +735,7 @@ class HomeBody extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Row(
                     children: [
-                      Icon(Icons.history, size: 24, color: Colors.grey[300]),
+                      Icon(Icons.history, size: 24, ),
                       const SizedBox(width: 8),
                       Text(
                         lang.getText('no_recent_destinations'),
@@ -790,7 +779,7 @@ class HomeBody extends StatelessWidget {
                           style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
                         ),
                         trailing: IconButton(
-                          icon: const Icon(Icons.bookmark_outline, size: 16, color: Colors.grey),
+                          icon: const Icon(Icons.bookmark_outline, size: 16, ),
                           visualDensity: VisualDensity.compact,
                           onPressed: () {
                             final loc = LocationResult(
@@ -855,7 +844,7 @@ class HomeBody extends StatelessWidget {
                       location?.address.split(',').first ?? Provider.of<LanguageViewModel>(context).getText('add_favorite'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                      style: TextStyle(fontSize: 11),
                     ),
                   ],
                 ),

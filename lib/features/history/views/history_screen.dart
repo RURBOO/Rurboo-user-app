@@ -101,7 +101,7 @@ class _HistoryScreenBody extends StatelessWidget {
               children: [
                 Text(
                   formattedDate,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  style: TextStyle(fontSize: 12),
                 ),
                 Text(
                   '₹${ride.fare.toStringAsFixed(0)}',
@@ -145,8 +145,7 @@ class _HistoryScreenBody extends StatelessWidget {
                   ),
                   child: Text(
                     displayStatus,
-                    style: TextStyle(
-                      color: statusColor,
+                    style: TextStyle(color: statusColor,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                       letterSpacing: 0.5,
@@ -191,7 +190,7 @@ class _HistoryScreenBody extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.history, size: 80, color: Colors.grey[300]),
+          Icon(Icons.history, size: 80, ),
           const SizedBox(height: 16),
           Text(
             lang.getText('no_rides'),
@@ -200,7 +199,7 @@ class _HistoryScreenBody extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             lang.getText('history_empty_desc'),
-            style: const TextStyle(color: Colors.grey),
+            style: const TextStyle(),
           ),
         ],
       ),

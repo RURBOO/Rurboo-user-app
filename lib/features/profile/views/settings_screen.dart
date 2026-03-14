@@ -30,8 +30,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: Colors.grey,
-            ),
+              ),
           ),
           const SizedBox(height: 10),
 
@@ -39,7 +38,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.translate),
             title: Text(lang.getText('uiAppLanguage')),
-            trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+            trailing: const Icon(Icons.chevron_right, ),
             onTap: () {
               Navigator.push(
                 context,
@@ -78,15 +77,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: Colors.grey,
-            ),
+              ),
           ),
           const SizedBox(height: 10),
 
           ListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(lang.getText('uiAppVersion')),
-            trailing: const Text("1.0.0", style: TextStyle(color: Colors.grey)),
+            trailing: const Text("1.0.0", style: TextStyle()),
           ),
         ],
       ),

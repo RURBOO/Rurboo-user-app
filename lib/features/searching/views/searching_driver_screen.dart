@@ -211,7 +211,6 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
                       width: 50, // Smaller handle
                       height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.grey[300],
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
@@ -287,8 +286,7 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
                         ),
                         child: Text(
                           lang.getText('cancel_ride'),
-                          style: TextStyle(
-                            color: Colors.red.shade400,
+                          style: TextStyle(color: Colors.red.shade400,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),

@@ -184,7 +184,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   Text(lang.getText('select_location_label'), style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
+                   Text(lang.getText('select_location_label'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                    const SizedBox(height: 8),
                    Row(
                     children: [
@@ -198,7 +198,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                     ],
                    ),
                    const SizedBox(height: 10),
-                   Text(lang.getText('drag_pin_hint'), style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                   Text(lang.getText('drag_pin_hint'), style: const TextStyle(fontSize: 12, )),
                    const SizedBox(height: 20),
                    SizedBox(
                      width: double.infinity,

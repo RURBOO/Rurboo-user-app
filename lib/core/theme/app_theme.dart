@@ -21,16 +21,16 @@ class AppTheme {
       ),
 
       // Typography: Inter (Premium, clean sans-serif used by Uber/Rapido)
-      textTheme: GoogleFonts.interTextTheme().copyWith(
-        displayLarge: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.textPrimary, letterSpacing: -0.5),
-        displayMedium: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: -0.5),
-        headlineLarge: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-        headlineMedium: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-        titleLarge: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        titleMedium: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        bodyLarge: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w400, color: AppColors.textPrimary),
-        bodyMedium: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.textSecondary),
-        bodySmall: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+      textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme).copyWith(
+        displayLarge: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+        displayMedium: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+        headlineLarge: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w700, ),
+        headlineMedium: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w700, ),
+        titleLarge: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, ),
+        titleMedium: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, ),
+        bodyLarge: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w400, ),
+        bodyMedium: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w400, ),
+        bodySmall: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, ),
         labelLarge: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.5),
       ),
 
@@ -39,9 +39,8 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+        iconTheme: const IconThemeData(),
         titleTextStyle: GoogleFonts.inter(
-          color: AppColors.textPrimary,
           fontSize: 20,
           fontWeight: FontWeight.bold,
         ),
@@ -105,7 +104,7 @@ class AppTheme {
         filled: true,
         fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        hintStyle: GoogleFonts.inter(color: AppColors.textSecondary, fontSize: 15),
+        hintStyle: GoogleFonts.inter(fontSize: 15),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.dividerColor, width: 1.5),
@@ -116,7 +115,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.textPrimary, width: 2),
+          borderSide: const BorderSide(width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -149,7 +148,7 @@ class AppTheme {
         error: Colors.redAccent,
       ),
 
-      textTheme: GoogleFonts.interTextTheme().copyWith(
+      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(
         displayLarge: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w800, color: const Color(0xFFF1F1F1), letterSpacing: -0.5),
         displayMedium: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w700, color: const Color(0xFFF1F1F1), letterSpacing: -0.5),
         headlineLarge: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w700, color: const Color(0xFFF1F1F1)),

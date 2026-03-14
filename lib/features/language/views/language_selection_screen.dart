@@ -40,10 +40,10 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
       backgroundColor: AppColors.background,
       appBar: widget.fromProfile 
           ? AppBar(
-              title: const Text("Language Selection", style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+              title: const Text("Language Selection", style: TextStyle(fontWeight: FontWeight.bold)),
               elevation: 0, 
               backgroundColor: Colors.transparent, 
-              iconTheme: const IconThemeData(color: AppColors.textPrimary),
+              iconTheme: const IconThemeData(),
             ) 
           : null,
       body: Container(
@@ -84,7 +84,6 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
                         letterSpacing: -0.5,
                       ),
                     ),
@@ -95,8 +94,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                       "Choose your preferred language to continue",
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
+                        ),
                     ),
                   ).animate().fade(delay: 300.ms).slideY(begin: 0.2, end: 0),
                   const SizedBox(height: 48),
@@ -106,8 +104,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                   "Select Language",
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
+                    ),
                 ).animate().fade(delay: 400.ms).slideX(begin: -0.1, end: 0),
                 const SizedBox(height: 16),
 
@@ -222,16 +219,14 @@ class _LanguageCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
+                      ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
                     style: const TextStyle(
                       fontSize: 14,
-                      color: AppColors.textSecondary,
-                    ),
+                      ),
                   ),
                 ],
               ),

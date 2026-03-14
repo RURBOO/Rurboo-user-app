@@ -99,7 +99,7 @@ class _UserDeleteAccountScreenState extends State<UserDeleteAccountScreen> {
             Text(
               lang.getText('delete_account_desc'),
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
+              style: const TextStyle(fontSize: 16, ),
             ),
             const Spacer(),
             SizedBox(

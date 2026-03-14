@@ -319,8 +319,7 @@ class _RideBookedContent extends StatelessWidget {
                     color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.2),
                         blurRadius: 10,
                         spreadRadius: 2,
                       )
@@ -339,7 +338,7 @@ class _RideBookedContent extends StatelessWidget {
                       Text(
                         Provider.of<LanguageViewModel>(context).getText('driver_requested_end_desc'),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.grey, fontSize: 13),
+                        style: const TextStyle(fontSize: 13),
                       ),
                       const SizedBox(height: 16),
                       Row(
@@ -383,8 +382,7 @@ class _RideBookedContent extends StatelessWidget {
                   color: Theme.of(context).cardColor,
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
                   boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.15),
                       blurRadius: 30,
                       spreadRadius: 5,
                       offset: const Offset(0, -5),
@@ -402,7 +400,6 @@ class _RideBookedContent extends StatelessWidget {
                           width: 40,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: Colors.grey[300],
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
@@ -420,8 +417,7 @@ class _RideBookedContent extends StatelessWidget {
                                ),
                                child: Text(
                                  _getStatusText(vm.stage, Provider.of<LanguageViewModel>(context)),
-                                 style: TextStyle(
-                                   color: vm.stage == RideStage.arriving ? AppColors.primary : Colors.green[700],
+                                 style: TextStyle(color: vm.stage == RideStage.arriving ? AppColors.primary : Colors.green[700],
                                    fontWeight: FontWeight.bold,
                                    fontSize: 14,
                                  ),
@@ -435,7 +431,6 @@ class _RideBookedContent extends StatelessWidget {
                                        : Provider.of<LanguageViewModel>(context).getText('status_arriving_now'))
                                    : "${vm.eta} ${Provider.of<LanguageViewModel>(context).getText('minutes')}",
                                  style: const TextStyle(
-                                   color: AppColors.textSecondary,
                                    fontWeight: FontWeight.w600,
                                    fontSize: 16,
                                  ),
@@ -450,7 +445,7 @@ class _RideBookedContent extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : const Color(0xFFF5F7FA),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey[200]!),
+                            border: Border.all(),
                           ),
                           child: Row(
                             children: [
@@ -460,7 +455,7 @@ class _RideBookedContent extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   color: Theme.of(context).cardColor,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.grey[300]!),
+                                  border: Border.all(),
                                   image: const DecorationImage(
                                      image: NetworkImage("https://cdn-icons-png.flaticon.com/512/3135/3135715.png"), // Placeholder driver
                                      fit: BoxFit.cover,
@@ -484,7 +479,6 @@ class _RideBookedContent extends StatelessWidget {
                                       "${vm.rideDetails?.carName} • ${vm.rideDetails?.carNumber}",
                                       style: const TextStyle(
                                         fontSize: 13,
-                                        color: AppColors.textSecondary,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -560,7 +554,7 @@ class _RideBookedContent extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[50],
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey[200]!),
+                            border: Border.all(),
                           ),
                           child: Column(
                             children: [
@@ -587,7 +581,6 @@ class _RideBookedContent extends StatelessWidget {
                                           "₹${vm.rideDetails!.fare.toInt()}",
                                           style: const TextStyle(
                                             decoration: TextDecoration.lineThrough,
-                                            color: Colors.grey,
                                             fontSize: 12,
                                           ),
                                         ),
@@ -680,7 +673,6 @@ class _RideBookedContent extends StatelessWidget {
               Expanded(
                 child: Container(
                   width: 2,
-                  color: Colors.grey[300],
                   margin: const EdgeInsets.symmetric(vertical: 4),
                 ),
               ),
@@ -737,7 +729,7 @@ class _RideBookedContent extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               Provider.of<LanguageViewModel>(context, listen: false).getText('cancel_ride_conf'),
-              style: const TextStyle(color: Colors.grey),
+              style: const TextStyle(),
             ),
             const SizedBox(height: 24),
 
@@ -816,7 +808,7 @@ void _showSafetyShield(BuildContext context, RideBookedViewModel vm) {
             const SizedBox(height: 8),
             Text(
               Provider.of<LanguageViewModel>(context, listen: false).getText('safety_shield_subtitle'),
-              style: const TextStyle(color: Colors.grey),
+              style: const TextStyle(),
             ),
             const SizedBox(height: 24),
 

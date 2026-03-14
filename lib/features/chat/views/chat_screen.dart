@@ -73,8 +73,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                         child: Text(
                           data['text'] ?? "",
-                          style: TextStyle(
-                            color: isMe ? Colors.white : Colors.black87,
+                          style: TextStyle(color: isMe ? Colors.white : Colors.black87,
                           ),
                         ),
                       ),

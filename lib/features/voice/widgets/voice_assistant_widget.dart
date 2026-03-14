@@ -77,8 +77,7 @@ class _VoiceOverlay extends StatelessWidget {
           color: Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 20,
               spreadRadius: 5,
             )
@@ -92,7 +91,6 @@ class _VoiceOverlay extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -101,8 +99,7 @@ class _VoiceOverlay extends StatelessWidget {
             // Status Text
             Text(
               _getStatusText(vm.state, Provider.of<LanguageViewModel>(context)),
-              style: TextStyle(
-                fontSize: 16,
+              style: TextStyle(fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: _getStatusColor(vm.state),
               ),
@@ -170,9 +167,8 @@ class _VoiceOverlay extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.grey[50],
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!),
+                  border: Border.all(),
                 ),
                 child: Column(
                   children: [
@@ -220,7 +216,7 @@ class _VoiceOverlay extends StatelessWidget {
             const SizedBox(height: 10),
             TextButton(
               onPressed: () => vm.stopSession(),
-              child: Text(Provider.of<LanguageViewModel>(context).getText('uiClose'), style: const TextStyle(color: Colors.grey)),
+              child: Text(Provider.of<LanguageViewModel>(context).getText('uiClose'), style: const TextStyle()),
             ),
           ],
         ),

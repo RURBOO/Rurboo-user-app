@@ -117,7 +117,7 @@ class SearchingDriverViewModel extends ChangeNotifier {
                 children: [
                   const Text(
                     'Please select a reason for cancellation:',
-                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                    style: TextStyle(fontSize: 13),
                   ),
                   const SizedBox(height: 12),
                   RadioGroup<String>(

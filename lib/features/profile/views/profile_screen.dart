@@ -96,9 +96,7 @@ class _ProfileScreenBody extends StatelessWidget {
                         const SizedBox(height: 24),
                         Text(
                           "${lang.getText('version')} 1.0.0",
-                          style: TextStyle(
-                            color: Colors.grey[400],
-                            fontSize: 12,
+                          style: TextStyle(fontSize: 12,
                           ),
                         ),
                         const SizedBox(height: 30),
@@ -184,8 +182,7 @@ class _ProfileScreenBody extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   vm.phoneNumber ?? "",
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.7),
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.7),
                     fontSize: 14,
                   ),
                 ),
@@ -215,8 +212,7 @@ class _ProfileScreenBody extends StatelessWidget {
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -246,8 +242,7 @@ class _ProfileScreenBody extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
-              ),
+                ),
             ),
           ],
         ),
@@ -264,8 +259,7 @@ class _ProfileScreenBody extends StatelessWidget {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -338,8 +332,7 @@ class _ProfileScreenBody extends StatelessWidget {
           label,
           style: const TextStyle(
             fontSize: 12,
-            color: AppColors.textSecondary,
-          ),
+            ),
         ),
       ],
     );
@@ -352,8 +345,7 @@ class _ProfileScreenBody extends StatelessWidget {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -427,8 +419,7 @@ class _ProfileScreenBody extends StatelessWidget {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(
-             color: Colors.black.withValues(alpha: 0.05),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05),
              blurRadius: 10,
              offset: const Offset(0, 4),
           ),
@@ -454,12 +445,12 @@ class _ProfileScreenBody extends StatelessWidget {
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, color: Colors.grey, size: 20),
+        Icon(icon, size: 20),
         const SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+            Text(label, style: const TextStyle(fontSize: 12)),
             Text(value, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
           ],
         ),
@@ -479,12 +470,11 @@ class _ProfileScreenBody extends StatelessWidget {
       ),
       title: Text(
         title,
-        style: TextStyle(
-          color: isDestructive ? Colors.red : Theme.of(context).textTheme.bodyLarge?.color,
+        style: TextStyle(color: isDestructive ? Colors.red : Theme.of(context).textTheme.bodyLarge?.color,
           fontWeight: FontWeight.w600,
         ),
       ),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 16, ),
       onTap: onTap,
     );
   }
@@ -508,9 +498,7 @@ class _ProfileScreenBody extends StatelessWidget {
       ),
       subtitle: Text(
         announcementEnabled ? lang.getText('enabled') : lang.getText('disabled'),
-        style: TextStyle(
-          color: Colors.grey[600],
-          fontSize: 12,
+        style: TextStyle(fontSize: 12,
         ),
       ),
       trailing: Switch(
@@ -535,16 +523,12 @@ class _ProfileScreenBody extends StatelessWidget {
       ),
       title: const Text(
         'Dark Mode / डार्क मोड',
-        style: TextStyle(
-          
-          fontWeight: FontWeight.w600,
+        style: TextStyle(fontWeight: FontWeight.w600,
         ),
       ),
       subtitle: Text(
         'Toggle app theme',
-        style: TextStyle(
-          color: Colors.grey[600],
-          fontSize: 12,
+        style: TextStyle(fontSize: 12,
         ),
       ),
       trailing: Switch(
@@ -559,7 +543,7 @@ class _ProfileScreenBody extends StatelessWidget {
   Widget _buildDivider() {
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Divider(color: Colors.grey[100], height: 1),
+        child: Divider(height: 1),
     );
   }
 

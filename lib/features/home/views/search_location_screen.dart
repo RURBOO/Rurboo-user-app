@@ -129,7 +129,7 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
                         leading: const Icon(Icons.location_on_outlined),
                         title: Text(place.address),
                         trailing: IconButton(
-                          icon: const Icon(Icons.bookmark_border, color: Colors.grey),
+                          icon: const Icon(Icons.bookmark_border, ),
                           tooltip: 'Save location',
                           onPressed: () async {
                             final LocationResult? result = await vm.selectPlace(place.placeId!);
@@ -266,7 +266,7 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
   Widget _quickItem({required IconData icon, required String label, required VoidCallback onTap}) {
     return Expanded(
       child: ListTile(
-        leading: Icon(icon, color: Colors.grey),
+        leading: Icon(icon, ),
         title: Text(label),
         onTap: onTap,
       ),
@@ -282,7 +282,7 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
           child: Text(
             lang.getText('favorites'),
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, ),
           ),
         ),
         SizedBox(
@@ -372,7 +372,7 @@ void showSaveLocationSheet(
         children: [
           Text(lang.getText('save_location'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Text(result.address, style: const TextStyle(fontSize: 13, color: Colors.grey), maxLines: 2, overflow: TextOverflow.ellipsis),
+          Text(result.address, style: const TextStyle(fontSize: 13, ), maxLines: 2, overflow: TextOverflow.ellipsis),
           const Divider(height: 24),
           ListTile(
             leading: const Icon(Icons.home, color: Colors.blue),

@@ -91,7 +91,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             Text(
               lang.getText('suggestions_desc_text'),
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 14, ),
             ),
             const SizedBox(height: 30),
             TextField(
@@ -101,11 +101,11 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 hintText: lang.getText('suggestions_hint'),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
+                  borderSide: BorderSide(),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
+                  borderSide: BorderSide(),
                 ),
                 filled: true,
                 fillColor: Theme.of(context).cardColor,
@@ -140,7 +140,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             Center(
               child: Text(
                 lang.getText('help_build_better_rurboo'),
-                style: TextStyle(color: Colors.grey[400], fontSize: 13),
+                style: TextStyle(fontSize: 13),
               ),
             ),
           ],

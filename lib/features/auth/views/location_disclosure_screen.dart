@@ -114,7 +114,7 @@ class LocationDisclosureScreen extends StatelessWidget {
                   },
                   child: Text(
                     lang.getText('maybe_later'),
-                    style: const TextStyle(color: Colors.grey),
+                    style: const TextStyle(),
                   ),
                 ),
               ),

@@ -26,7 +26,7 @@ class LocationPermissionScreen extends StatelessWidget {
               Text(
                 lang.getText('location_permission_desc'),
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.grey, fontSize: 14),
+                style: const TextStyle(fontSize: 14),
               ),
               const SizedBox(height: 40),
               ElevatedButton(

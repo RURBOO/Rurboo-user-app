@@ -45,8 +45,7 @@ class _SafetyDashboardBody extends StatelessWidget {
                     color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                       )
                     ],
@@ -74,8 +73,7 @@ class _SafetyDashboardBody extends StatelessWidget {
                                     lang.getText('auto_share'),
                                     style: const TextStyle(
                                       fontSize: 12,
-                                      color: Colors.grey,
-                                    ),
+                                      ),
                                   ),
                                 ],
                               ),
@@ -119,12 +117,12 @@ class _SafetyDashboardBody extends StatelessWidget {
                     alignment: Alignment.center,
                     child: Column(
                       children: [
-                        Icon(Icons.perm_contact_calendar_outlined, size: 48, color: Colors.grey[300]),
+                        Icon(Icons.perm_contact_calendar_outlined, size: 48, ),
                         const SizedBox(height: 10),
                         Text(
                           "No trusted contacts added yet.\nAdd family or friends for emergencies.",
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey[500]),
+                          style: TextStyle(),
                         ),
                       ],
                     ),

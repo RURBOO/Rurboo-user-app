@@ -272,7 +272,7 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
               Text(
                 "${lang.getText('ride_arrived_subtitle')} ${widget.driverName}.",
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey[600]),
+                style: TextStyle(),
               ),
 
               const SizedBox(height: 40),
@@ -288,7 +288,7 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
                   children: [
                     Text(
                       lang.getText('total_fare'),
-                      style: const TextStyle(color: Colors.grey),
+                      style: const TextStyle(),
                     ),
                     const SizedBox(height: 8),
                     _loadingFare
@@ -300,7 +300,6 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
                                   "₹${(_displayFare + _discountAmount).toStringAsFixed(0)}",
                                   style: const TextStyle(
                                     decoration: TextDecoration.lineThrough,
-                                    color: Colors.grey,
                                     fontSize: 16,
                                   ),
                                 ),
@@ -438,7 +437,6 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
                 child: Text(
                   lang.getText('skip'),
                   style: const TextStyle(
-                    color: Colors.grey,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),

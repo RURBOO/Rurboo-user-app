@@ -274,8 +274,7 @@ class RideSelectionBody extends StatelessWidget {
                   color: Theme.of(context).cardColor,
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
                   boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 30,
                       offset: const Offset(0, -5),
                     ),
@@ -290,7 +289,6 @@ class RideSelectionBody extends StatelessWidget {
                         height: 4,
                         margin: const EdgeInsets.only(bottom: 20),
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
@@ -315,7 +313,7 @@ class RideSelectionBody extends StatelessWidget {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.compare_arrows, size: 14, color: Colors.grey),
+                                const Icon(Icons.compare_arrows, size: 14, ),
                                 const SizedBox(width: 4),
                                 Text(
                                   "${vm.distanceKm.toStringAsFixed(1)} ${lang.getText('km')}",
@@ -407,8 +405,7 @@ class RideSelectionBody extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
                 boxShadow: [
-                   BoxShadow(
-                     color: Colors.black.withValues(alpha: 0.05),
+                   BoxShadow(color: Colors.black.withValues(alpha: 0.05),
                      blurRadius: 10,
                      offset: const Offset(0, -5),
                    )
@@ -524,7 +521,7 @@ class RideSelectionBody extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[50],
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[200]!),
+                    border: Border.all(),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -536,8 +533,7 @@ class RideSelectionBody extends StatelessWidget {
                         vm.scheduledTime == null 
                           ? lang.getText('schedule_later')
                           : "${lang.getText('schedule_later')}: ${_formatDate(vm.scheduledTime!)}",
-                        style: TextStyle(
-                          color: vm.scheduledTime != null ? AppColors.primary : Colors.grey[700],
+                        style: TextStyle(color: vm.scheduledTime != null ? AppColors.primary : Colors.grey[700],
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),
@@ -663,7 +659,7 @@ class RideSelectionBody extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.location_off_rounded, size: 64, color: Colors.grey[400]),
+              Icon(Icons.location_off_rounded, size: 64, ),
               const SizedBox(height: 16),
               const Text(
                 "Service Unavailable", 
@@ -675,7 +671,7 @@ class RideSelectionBody extends StatelessWidget {
                 child: Text(
                   "Rurboo is not currently operating in this area.",
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 14, ),
                 ),
               ),
             ],
@@ -692,7 +688,7 @@ class RideSelectionBody extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -708,7 +704,7 @@ class RideSelectionBody extends StatelessWidget {
             children: [
               Text(lang.getText('cash'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(width: 4),
-              const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
+              const Icon(Icons.arrow_forward_ios, size: 12, ),
             ],
           ),
         ],
@@ -747,7 +743,7 @@ class RideSelectionBody extends StatelessWidget {
                     if (vm.isBookForOthers && vm.receiverName != null)
                       Text(
                         "${vm.receiverName} (${vm.receiverPhone})",
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style: const TextStyle(fontSize: 12, ),
                       )
                   ],
                 ),
@@ -806,8 +802,7 @@ class RideSelectionBody extends StatelessWidget {
                 children: [
                   Text(
                     lang.getText(ride.name),
-                    style: TextStyle(
-                      fontSize: 15, // Reduced from default
+                    style: TextStyle(fontSize: 15, // Reduced from default
                       fontWeight: FontWeight.bold,
                       color: selected ? AppColors.primary : AppColors.textPrimary,
                     ),
@@ -830,20 +825,20 @@ class RideSelectionBody extends StatelessWidget {
               const SizedBox(height: 2),
               Row(
                 children: [
-                  Icon(Icons.person, size: 10, color: Colors.grey[600]),
+                  Icon(Icons.person, size: 10, ),
                   const SizedBox(width: 3),
                   Text(
                     ride.seats == 0 
                       ? lang.getText('cargo') 
                       : "${ride.seats} ${ride.seats > 1 ? lang.getText('seats') : lang.getText('seat')}", 
-                    style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 10, ),
                   ),
                   const SizedBox(width: 8),
-                  Icon(Icons.access_time, size: 10, color: Colors.grey[600]),
+                  Icon(Icons.access_time, size: 10, ),
                   const SizedBox(width: 3),
                   Text(
                     "${ride.eta} min", 
-                    style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 10, ),
                   ),
                 ],
               ),
@@ -856,8 +851,7 @@ class RideSelectionBody extends StatelessWidget {
           children: [
             Text(
               "₹${ride.fare.toInt()}",
-              style: TextStyle(
-                fontSize: 17, // Reduced from default
+              style: TextStyle(fontSize: 17, // Reduced from default
                 fontWeight: FontWeight.w900,
                 color: selected ? AppColors.primary : AppColors.textPrimary,
               ),

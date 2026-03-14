@@ -369,7 +369,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       const SizedBox(height: 6),
                       Text(
                         '${lang.getText('current_number_label')}: $currentPhoneDisplay',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                        style: TextStyle(fontSize: 12),
                       ),
                     ],
 

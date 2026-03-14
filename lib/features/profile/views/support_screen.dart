@@ -119,20 +119,19 @@ class _SupportScreenBodyState extends State<SupportScreenBody> with SingleTicker
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[300]!),
+                      border: Border.all(),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.attach_file, size: 18, color: Colors.grey[600]),
+                        Icon(Icons.attach_file, size: 18, ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             vm.selectedImage == null 
                                 ? lang.getText('attach_screenshot_optional')
                                 : vm.selectedImage!.name,
-                            style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                            style: TextStyle(fontSize: 14, ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -211,7 +210,7 @@ class _SupportScreenBodyState extends State<SupportScreenBody> with SingleTicker
            return Center(child: Text("Error: ${snapshot.error}", style: const TextStyle(color: Colors.red)));
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-           return Center(child: Text(lang.getText('no_tickets_found'), style: const TextStyle(color: Colors.grey)));
+           return Center(child: Text(lang.getText('no_tickets_found'), style: const TextStyle()));
         }
 
         final tickets = snapshot.data!;
@@ -235,8 +234,8 @@ class _SupportScreenBodyState extends State<SupportScreenBody> with SingleTicker
                    crossAxisAlignment: CrossAxisAlignment.start,
                    children: [
                      const SizedBox(height: 4),
-                     Text("${lang.getText('ticket_id')}: ${ticket.id.length > 8 ? '${ticket.id.substring(0, 8)}...' : ticket.id}", style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                     Text(DateFormat('MMM dd, yyyy').format(ticket.createdAt), style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                     Text("${lang.getText('ticket_id')}: ${ticket.id.length > 8 ? '${ticket.id.substring(0, 8)}...' : ticket.id}", style: const TextStyle(fontSize: 12, )),
+                     Text(DateFormat('MMM dd, yyyy').format(ticket.createdAt), style: const TextStyle(fontSize: 12, )),
                    ],
                  ),
                  trailing: Container(
@@ -257,7 +256,7 @@ class _SupportScreenBodyState extends State<SupportScreenBody> with SingleTicker
                          crossAxisAlignment: CrossAxisAlignment.start,
                          children: [
                             const Divider(),
-                            Text(lang.getText('ticket_desc_label'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                            Text(lang.getText('ticket_desc_label'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, )),
                             const SizedBox(height: 4),
                             Text(ticket.description),
                              if (ticket.adminResponse != null) ...[
@@ -282,7 +281,7 @@ class _SupportScreenBodyState extends State<SupportScreenBody> with SingleTicker
                              ],
                              if (ticket.imageUrl != null) ...[
                                 const SizedBox(height: 12),
-                                Text(lang.getText('attachment_label'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                                Text(lang.getText('attachment_label'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, )),
                                 const SizedBox(height: 8),
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(8),

@@ -106,7 +106,7 @@ class SOSService {
               
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: Text(lang.getText('cancel'), style: const TextStyle(color: Colors.grey)),
+                child: Text(lang.getText('cancel'), style: const TextStyle()),
               ),
             ],
           ),

@@ -547,7 +547,6 @@ class HomeViewModel extends ChangeNotifier {
           polylineId: const PolylineId("route_fallback"),
           points: pointsToFit,
           width: 5,
-          color: Colors.grey,
           patterns: [PatternItem.dash(10)],
         ),
       );

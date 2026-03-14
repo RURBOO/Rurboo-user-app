@@ -48,8 +48,7 @@ class _SelectionScreenState extends State<SelectionScreen> {
                             borderRadius: BorderRadius.circular(20), // Rounded corners
                             border: Border.all(color: Colors.white, width: 3),
                             boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.3),
+                              BoxShadow(color: Colors.black.withValues(alpha: 0.3),
                                 blurRadius: 10,
                                 spreadRadius: 2,
                               ),
