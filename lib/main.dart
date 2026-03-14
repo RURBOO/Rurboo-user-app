@@ -14,6 +14,7 @@ import 'package:provider/provider.dart';
 import 'core/wrappers/connectivity_wrapper.dart';
 import 'core/services/language_service.dart';
 import 'core/theme/app_theme.dart'; // NEW THEME
+import 'core/theme/theme_provider.dart';
 
 // LANGUAGE
 import 'features/language/viewmodels/language_vm.dart';
@@ -112,6 +113,9 @@ Future<void> main() async {
               return voice ?? VoiceAgentViewModel();
             },
           ),
+          ChangeNotifierProvider<ThemeProvider>(
+            create: (_) => ThemeProvider(),
+          ),
         ],
         child: const MyApp(),
       ),
@@ -143,11 +147,15 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Rurboo',
-      navigatorKey: navigatorKey,
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'Rurboo',
+          navigatorKey: navigatorKey,
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeProvider.themeMode,
       
       // 1. Static Routes
       initialRoute: AppRoutes.splash,
@@ -202,6 +210,8 @@ class _MyAppState extends State<MyApp> {
             },
             child: child ?? const SizedBox(),
           ),
+        );
+      },
         );
       },
     );

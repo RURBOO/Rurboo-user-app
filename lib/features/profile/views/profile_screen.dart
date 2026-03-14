@@ -14,6 +14,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../safety/views/safety_dashboard_screen.dart';
 import '../../safety/services/sos_service.dart';
 import '../../../core/services/user_preferences.dart';
+import '../../../core/theme/theme_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -389,7 +390,10 @@ class _ProfileScreenBody extends StatelessWidget {
           _buildMenuItem(context, lang.getText('safety_center'), Icons.shield_moon_outlined, // "Safety Dashboard" -> "Safety Center"
               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SafetyDashboardScreen()))),
           _buildDivider(),
-        _buildAnnouncementToggle(context, lang),
+          _buildDivider(),
+          _buildAnnouncementToggle(context, lang),
+          _buildDivider(),
+          _buildDarkModeToggle(context, lang),
         _buildDivider(),
           _buildMenuItem(context, lang.getText('change_language'), Icons.language, // "Language"
               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LanguageSelectionScreen(fromProfile: true)))),
@@ -515,6 +519,40 @@ class _ProfileScreenBody extends StatelessWidget {
       trailing: Switch(
         value: announcementEnabled,
         onChanged: onAnnouncementToggle,
+        activeThumbColor: Colors.white,
+        activeTrackColor: AppColors.primary,
+      ),
+    );
+  }
+
+  Widget _buildDarkModeToggle(BuildContext context, LanguageViewModel lang) {
+    final themeProvider = context.watch<ThemeProvider>();
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.indigo.withValues(alpha: 0.1),
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.dark_mode_rounded, color: Colors.indigo, size: 20),
+      ),
+      title: const Text(
+        'Dark Mode / डार्क मोड',
+        style: TextStyle(
+          color: Colors.black87,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      subtitle: Text(
+        'Toggle app theme',
+        style: TextStyle(
+          color: Colors.grey[600],
+          fontSize: 12,
+        ),
+      ),
+      trailing: Switch(
+        value: themeProvider.isDarkMode,
+        onChanged: (val) => context.read<ThemeProvider>().toggleTheme(val),
         activeThumbColor: Colors.white,
         activeTrackColor: AppColors.primary,
       ),

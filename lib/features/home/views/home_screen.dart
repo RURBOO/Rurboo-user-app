@@ -14,6 +14,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import '../../../core/services/user_preferences.dart';
 import '../../voice/models/voice_agent_state.dart';
+import '../../../core/theme/theme_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   final GlobalKey? navBarKey;
@@ -367,6 +368,23 @@ class HomeBody extends StatelessWidget {
                       color: Colors.grey[200],
                       margin: const EdgeInsets.symmetric(horizontal: 8),
                     ),
+                    
+                    // Theme Toggle
+                    GestureDetector(
+                      onTap: () {
+                        final themeProvider = context.read<ThemeProvider>();
+                        themeProvider.toggleTheme(!themeProvider.isDarkMode);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          context.watch<ThemeProvider>().isDarkMode ? Icons.light_mode : Icons.dark_mode_rounded, 
+                          color: context.watch<ThemeProvider>().isDarkMode ? Colors.amber : AppColors.textSecondary, 
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                    
                     // Save pickup as Home/Work/Favourite
                     GestureDetector(
                       onTap: () {
