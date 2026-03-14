@@ -9,6 +9,8 @@ import '../models/coupon_model.dart'; // Added
 import '../../home/models/location_result.dart';
 import '../repositories/ride_selection_repository.dart';
 import '../../home/services/polyline_service.dart';
+import '../services/zone_service.dart'; // Added
+import '../../../core/utils/polygon_utils.dart'; // Added
 
 class RideSelectionViewModel extends ChangeNotifier {
   final RideSelectionRepository repo;
@@ -41,6 +43,8 @@ class RideSelectionViewModel extends ChangeNotifier {
 
   bool _isBooking = false;
   bool get isBooking => _isBooking;
+  
+  bool isServiceAvailable = true; // Added for Geofencing validation
 
   double get distanceKm => _distanceKm;
 
@@ -88,6 +92,33 @@ class RideSelectionViewModel extends ChangeNotifier {
     destination = destLoc;
 
     _setMarkers();
+    
+    // --- GEOFENCING VALIDATION ---
+    final zoneService = ZoneService();
+    final activeZones = await zoneService.getActiveZones();
+    bool available = false;
+    
+    for (var zone in activeZones) {
+       if (PolygonUtils.isPointInPolygon(pickupLoc.coordinates!, zone.polygon)) {
+          available = true;
+          debugPrint("✅ Service is available in zone: ${zone.name}");
+          break;
+       }
+    }
+    
+    isServiceAvailable = available;
+    
+    if (!isServiceAvailable) {
+       debugPrint("❌ Service not available at pickup location.");
+       loading = false;
+       notifyListeners();
+       
+       if (mapController != null) {
+         mapController?.animateCamera(CameraUpdate.newLatLngZoom(pickup.coordinates!, 14));
+       }
+       return; // Stop further execution
+    }
+    // -----------------------------
 
     // 🚀 Force One-Sided Distance (Geodesic)
     _distanceKm = distance; 
@@ -151,12 +182,19 @@ class RideSelectionViewModel extends ChangeNotifier {
 
     if (routeInfo != null && routeInfo.points.isNotEmpty) {
       routePoints = routeInfo.points;
-      debugPrint("🚀🚀🚀 OSRM Path loaded asynchronously.");
+      _distanceKm = routeInfo.distanceKm;
+      _durationMins = routeInfo.durationMins;
+      
+      debugPrint("🚀🚀🚀 Real-time Route loaded (Distance: $_distanceKm, Duration: $_durationMins). Refreshing fares...");
+      
       _setPolyline(routePoints);
       
       if (mapController != null) {
         _fitCameraToRoute(routePoints);
       }
+      
+      // Re-calculate fares and ETAs based on the actual Google Maps data
+      await _fetchFaresAsync();
       notifyListeners();
     }
   }
@@ -179,18 +217,21 @@ class RideSelectionViewModel extends ChangeNotifier {
         final Map<String, dynamic> vRates = rates[key] as Map<String, dynamic>;
         final double baseFare = (vRates['base_fare'] ?? 0).toDouble();
         final double perKmRate = (vRates['per_km'] ?? 0).toDouble();
-        
-        // Match the Cloud Function logic locally
-        secureFare = baseFare + (_distanceKm * perKmRate);
+
+        // Match the Cloud Function logic locally:
+        // Base fare covers first 2km. Charges apply ONLY after 2km.
+        double chargeableDistance = (_distanceKm - 2.0).clamp(0.0, double.infinity);
+        secureFare = baseFare + (chargeableDistance * perKmRate);
       } else {
          // Generic Fallbacks if offline or missing
+         double chargeableDist = (_distanceKm - 2.0).clamp(0.0, double.infinity);
          switch (key) {
-           case 'bike': secureFare = 20 + (_distanceKm * 5); break;
-           case 'auto': secureFare = 30 + (_distanceKm * 10); break;
-           case 'car': secureFare = 50 + (_distanceKm * 15); break;
-           case 'erickshaw': secureFare = 20 + (_distanceKm * 8); break;
-           case 'bigcar': secureFare = 80 + (_distanceKm * 20); break;
-           case 'carriertruck': secureFare = 150 + (_distanceKm * 40); break;
+           case 'bike': secureFare = 20 + (chargeableDist * 5); break;
+           case 'auto': secureFare = 30 + (chargeableDist * 10); break;
+           case 'car': secureFare = 50 + (chargeableDist * 15); break;
+           case 'erickshaw': secureFare = 20 + (chargeableDist * 8); break;
+           case 'bigcar': secureFare = 80 + (chargeableDist * 20); break;
+           case 'carriertruck': secureFare = 150 + (chargeableDist * 40); break;
          }
       }
 

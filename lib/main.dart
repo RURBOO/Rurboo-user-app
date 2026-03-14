@@ -43,79 +43,59 @@ import 'features/ride/views/ride_booked_screen.dart';
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // ===============================
-  // 🔥 FIREBASE INITIALIZATION
-  // ===============================
-  try {
-    await Firebase.initializeApp();
-    debugPrint('✅ Firebase initialized');
-  } catch (e, stack) {
-    debugPrint('❌ Firebase init failed: $e');
-    debugPrintStack(stackTrace: stack);
-  }
-
-  // ===============================
-  // 🚨 CRASHLYTICS CONFIG
-  // ===============================
-  // Pass all uncaught "fatal" errors from the framework to Crashlytics
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-
-  // ===============================
-  // 🔐 FIREBASE APP CHECK
-  // ===============================
-  try {
-    await FirebaseAppCheck.instance.activate(
-      androidProvider: kDebugMode 
-          ? AndroidProvider.debug 
-          : AndroidProvider.playIntegrity,
-    );
-    debugPrint('🔐 App Check: ${kDebugMode ? "Debug" : "Play Integrity"} active');
-
-    // ✅ VERY IMPORTANT: prevents token expiry issues
-    await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
-  } catch (e) {
-    debugPrint('⚠️ App Check init issue (non-fatal): $e');
-  }
-
-  // ===============================
-  // 🌱 ENV VARIABLES
-  // ===============================
-  try {
-    await dotenv.load();
-    debugPrint('🌱 ENV loaded');
-  } catch (e) {
-    debugPrint('⚠️ ENV load failed: $e');
-  }
-
-  // ===============================
-  // 🔔 NOTIFICATIONS
-  // ===============================
-  try {
-    await NotificationService().init();
-  } catch (e) {
-    debugPrint('⚠️ Notification init failed: $e');
-  }
-
   // ===============================
   // 🚀 RUN APP (WITH ERROR HANDLING)
   // ===============================
-  runZonedGuarded(() {
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+
+    // 🔥 FIREBASE INITIALIZATION
+    try {
+      await Firebase.initializeApp();
+      debugPrint('✅ Firebase initialized');
+    } catch (e, stack) {
+      debugPrint('❌ Firebase init failed: $e');
+      debugPrintStack(stackTrace: stack);
+    }
+
+    // 🚨 CRASHLYTICS CONFIG
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+
+    // 🔐 FIREBASE APP CHECK
+    try {
+      await FirebaseAppCheck.instance.activate(
+        androidProvider: kDebugMode 
+            ? AndroidProvider.debug 
+            : AndroidProvider.playIntegrity,
+      );
+      debugPrint('🔐 App Check: ${kDebugMode ? "Debug" : "Play Integrity"} active');
+      await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
+    } catch (e) {
+      debugPrint('⚠️ App Check init issue (non-fatal): $e');
+    }
+
+    // 🌱 ENV VARIABLES
+    try {
+      await dotenv.load();
+      debugPrint('🌱 ENV loaded');
+    } catch (e) {
+      debugPrint('⚠️ ENV load failed: $e');
+    }
+
+    // 🔔 NOTIFICATIONS
+    try {
+      await NotificationService().init();
+    } catch (e) {
+      debugPrint('⚠️ Notification init failed: $e');
+    }
+
     runApp(
       MultiProvider(
         providers: [
-          // SERVICES
-          Provider<LanguageService>(
-            create: (_) => LanguageService(),
-          ),
-
-          // VIEW MODELS
+          Provider<LanguageService>(create: (_) => LanguageService()),
           ChangeNotifierProvider<LanguageViewModel>(
-            create: (context) =>
-                LanguageViewModel(context.read<LanguageService>()),
+            create: (context) => LanguageViewModel(context.read<LanguageService>()),
           ),
-
           ChangeNotifierProvider<HomeViewModel>(
             create: (_) => HomeViewModel(
               HomeRepository(
@@ -125,14 +105,10 @@ Future<void> main() async {
               ),
             ),
           ),
-          
-          // VOICE AGENT
           ChangeNotifierProxyProvider<LanguageViewModel, VoiceAgentViewModel>(
             create: (_) => VoiceAgentViewModel()..init(),
             update: (_, lang, voice) {
-              if (voice != null) {
-                voice.updateLanguage(lang.language);
-              }
+              voice?.updateLanguage(lang.language);
               return voice ?? VoiceAgentViewModel();
             },
           ),

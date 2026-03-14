@@ -93,53 +93,68 @@ class _RideBookedScreenState extends State<RideBookedScreen> {
   }
   
   RideStage? _lastStage;
+  bool _announcedForStage = false;
   
   void _onRideStageChange() {
     if (!mounted) return;
-    if (vm.stage == _lastStage) return;
-    
-    _lastStage = vm.stage;
+
+    // Detect if the stage is NEW
+    if (vm.stage != _lastStage) {
+       debugPrint("📍 UserApp: Stage changed to ${vm.stage}. Resetting announcement flag.");
+       _lastStage = vm.stage;
+       _announcedForStage = false;
+    }
+
+    // Prepare voice and language
     final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
-    
     final lang = Provider.of<LanguageViewModel>(context, listen: false);
+
+    // CRITICAL: Wait for ETA to be fetched for the current stage before announcing
+    // But don't wait for 'completed' or 'cancelled' as they don't have ETAs
+    final bool needsEta = vm.stage == RideStage.arriving || vm.stage == RideStage.inProgress;
     
-    // Announce ride updates with comprehensive information
-    if (vm.stage == RideStage.arriving) {
-       // Driver found - announce with ETA
-       final etaText = (vm.eta == "0") 
-         ? lang.getText('status_arriving_now') 
-         : "${vm.eta} ${lang.getText('minutes')}";
-       String msg = lang.getText('driver_arriving_voice');
-       msg = msg.replaceAll('{0}', vm.rideDetails?.driverName ?? '');
-       msg = msg.replaceAll('{1}', vm.rideDetails?.carNumber ?? '');
-       msg = msg.replaceAll('{2}', etaText);
-       voice.speak(msg);
-       
-       // Check for Proactive Safety Alert on Arrival/Start
-       _triggerSafetyVoiceCheck(vm, voice);
-    } else if (vm.stage == RideStage.inProgress) {
-       // Ride started - announce with destination ETA
-       final etaText = (vm.eta == "0") 
-         ? lang.getText('status_nearly_there') 
-         : "${vm.eta} ${lang.getText('minutes')}";
-       String msg = lang.getText('ride_started_voice');
-       msg = msg.replaceAll('{0}', etaText);
-       voice.speak(msg);
-    } else if (vm.stage == RideStage.completed) {
-       // Ride completed - thank you message
-       voice.speak(lang.getText('ride_completed_voice'));
-       
-       // Fixed: Instantly navigate on completion instead of relying on the build method which might skip frames.
-       Navigator.pushReplacement(
-         context,
-         MaterialPageRoute(
-           builder: (_) => RideSummaryScreen(
-             rideId: vm.rideId,
-             fare: vm.rideDetails?.fare ?? 0,
-             driverName: vm.rideDetails?.driverName ?? "Driver",
-           ),
-         ),
-       );
+    if (!_announcedForStage && (!needsEta || !vm.isEtaFetching) && !vm.isLoading) {
+       _announcedForStage = true;
+       debugPrint("📍 UserApp: Triggering announcement for stage: ${vm.stage} with ETA: ${vm.eta}");
+
+       // Announce ride updates with comprehensive information
+       if (vm.stage == RideStage.arriving) {
+          // Driver found - announce with ETA
+          final etaText = (vm.eta == "0") 
+            ? lang.getText('status_arriving_now') 
+            : "${vm.eta} ${lang.getText('minutes')}";
+          String msg = lang.getText('driver_arriving_voice');
+          msg = msg.replaceAll('{0}', vm.rideDetails?.driverName ?? '');
+          msg = msg.replaceAll('{1}', vm.rideDetails?.carNumber ?? '');
+          msg = msg.replaceAll('{2}', etaText);
+          voice.speak(msg);
+          
+          // Check for Proactive Safety Alert on Arrival/Start
+          _triggerSafetyVoiceCheck(vm, voice);
+       } else if (vm.stage == RideStage.inProgress) {
+          // Ride started - announce with destination ETA
+          final etaText = (vm.eta == "0") 
+            ? lang.getText('status_nearly_there') 
+            : "${vm.eta} ${lang.getText('minutes')}";
+          String msg = lang.getText('ride_started_voice');
+          msg = msg.replaceAll('{0}', etaText);
+          voice.speak(msg);
+       } else if (vm.stage == RideStage.completed) {
+          // Ride completed - thank you message
+          voice.speak(lang.getText('ride_completed_voice'));
+          
+          // Instantly navigate on completion
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => RideSummaryScreen(
+                rideId: vm.rideId,
+                fare: vm.rideDetails?.fare ?? 0,
+                driverName: vm.rideDetails?.driverName ?? "Driver",
+              ),
+            ),
+          );
+       }
     }
   }
   
@@ -209,7 +224,7 @@ class _RideBookedContent extends StatelessWidget {
               polylines: vm.polylines,
               myLocationEnabled: false,
               zoomControlsEnabled: false,
-              padding: const EdgeInsets.only(bottom: 300, top: 80),
+              padding: const EdgeInsets.only(bottom: 240, top: 60),
             ),
 
             SafeArea(
@@ -361,7 +376,7 @@ class _RideBookedContent extends StatelessWidget {
               alignment: Alignment.bottomCenter,
               child: Container(
                 constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.55,
+                  maxHeight: MediaQuery.of(context).size.height * 0.48, // Reduced from 0.55
                 ),
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -377,7 +392,7 @@ class _RideBookedContent extends StatelessWidget {
                 ),
                 child: SingleChildScrollView(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 20), // Compact padding
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -430,17 +445,17 @@ class _RideBookedContent extends StatelessWidget {
 
                         // Driver Info Card
                         Container(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(12), // Reduced from 16
                           decoration: BoxDecoration(
                             color: const Color(0xFFF5F7FA),
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: Colors.grey[200]!),
                           ),
                           child: Row(
                             children: [
                               Container(
-                                width: 56,
-                                height: 56,
+                                width: 48, // Reduced from 56
+                                height: 48,
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   shape: BoxShape.circle,
@@ -459,7 +474,7 @@ class _RideBookedContent extends StatelessWidget {
                                     Text(
                                       vm.rideDetails?.driverName ?? Provider.of<LanguageViewModel>(context).getText('status_connecting'),
                                       style: const TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 15, // Reduced from 16
                                         fontWeight: FontWeight.bold,
                                         color: AppColors.textPrimary,
                                       ),
@@ -509,26 +524,26 @@ class _RideBookedContent extends StatelessWidget {
                         if (vm.stage == RideStage.arriving && vm.otp != null)
                         Container(
                            width: double.infinity,
-                           margin: const EdgeInsets.only(bottom: 20),
-                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                           margin: const EdgeInsets.only(bottom: 16), // Reduced
+                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), // Reduced
                            decoration: BoxDecoration(
                              color: AppColors.surfaceDark,
-                             borderRadius: BorderRadius.circular(12),
+                             borderRadius: BorderRadius.circular(10),
                            ),
                            child: Row(
                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                              children: [
                                Text(
                                  Provider.of<LanguageViewModel>(context).getText('otp'),
-                                 style: const TextStyle(color: Colors.white70, fontSize: 14),
+                                 style: const TextStyle(color: Colors.white70, fontSize: 13),
                                ),
                                Text(
                                  vm.otp!,
                                  style: const TextStyle(
                                    color: Colors.white,
-                                   fontSize: 24,
+                                   fontSize: 20, // Reduced from 24
                                    fontWeight: FontWeight.bold,
-                                   letterSpacing: 4,
+                                   letterSpacing: 3,
                                  ),
                                ),
                              ],
@@ -537,7 +552,7 @@ class _RideBookedContent extends StatelessWidget {
 
                         _buildTripLine(context, vm),
 
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
                         
                         // Fare & Payment Info
                         Container(

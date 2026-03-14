@@ -335,6 +335,8 @@ class VoiceAgentViewModel extends ChangeNotifier {
     text = _convertNumbersInString(text, _currentLanguage);
     
     _transitionTo(VoiceAgentState.speaking);
+    
+    final completer = Completer<void>();
     await _voiceService.speakWithCompletion(text, () {
       if (_state != VoiceAgentState.sosActivated) {
         // In continuous mode, automatically restart listening after speaking
@@ -349,7 +351,10 @@ class VoiceAgentViewModel extends ChangeNotifier {
           }
         }
       }
+      if (!completer.isCompleted) completer.complete();
     });
+    
+    return completer.future;
   }
 
   String _convertNumbersInString(String input, String langCode) {

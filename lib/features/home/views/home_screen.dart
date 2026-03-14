@@ -13,6 +13,7 @@ import '../../../core/theme/app_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import '../../../core/services/user_preferences.dart';
+import '../../voice/models/voice_agent_state.dart';
 
 class HomeScreen extends StatefulWidget {
   final GlobalKey? navBarKey;
@@ -36,15 +37,44 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      Provider.of<HomeViewModel>(context, listen: false).init(context);
-      
+      final vm = Provider.of<HomeViewModel>(context, listen: false);
       final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
+      final lang = Provider.of<LanguageViewModel>(context, listen: false);
+      
       voice.init();
       
-      Future.delayed(const Duration(seconds: 2), () {
+      // Track welcome status for sequencing
+      bool welcomeFinished = false;
+
+      vm.onServiceUnavailable = () async {
+        if (!mounted) return;
+        
+        // Wait for welcome to finish if it's already in progress or about to start
+        if (!welcomeFinished) {
+           debugPrint("📢 Out-of-zone detected, but waiting for welcome to finish...");
+           return; 
+        }
+
+        if (voice.state != VoiceAgentState.speaking) {
+          voice.speak(lang.getText('voice_out_of_zone'));
+        }
+      };
+
+      // 1. Initialize logic
+      await vm.init(context);
+      
+      // 2. Clear initial greeting sequence
+      Future.delayed(const Duration(seconds: 1), () async {
         if (mounted) {
-          final lang = Provider.of<LanguageViewModel>(context, listen: false);
-          voice.speak(lang.getText('welcome_msg'));
+          debugPrint("📢 Starting Welcome sequence...");
+          await voice.speak(lang.getText('welcome_msg'));
+          welcomeFinished = true;
+          debugPrint("✅ Welcome finished. Checking for service availability...");
+          
+          // Re-trigger announcement if service is unavailable
+          if (!vm.isServiceAvailable) {
+            voice.speak(lang.getText('voice_out_of_zone'));
+          }
         }
       });
 
@@ -362,8 +392,78 @@ class HomeBody extends StatelessWidget {
             _searchBottomSheet(context, vm)
           else
             _confirmRideBottomSheet(context, vm),
+
+          // Out of Zone Warning Overlay
+          if (!vm.isServiceAvailable)
+            _outOfZoneOverlay(context, vm, lang),
         ],
       ),
+    );
+  }
+
+  Widget _outOfZoneOverlay(BuildContext context, HomeViewModel vm, LanguageViewModel lang) {
+    return Positioned(
+      bottom: vm.destination == null ? 350 : 250, // Above the bottom sheets
+      left: 20,
+      right: 20,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.red[50],
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.red[200]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.redAccent),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    lang.getText('service_unavailable_title'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.redAccent,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              lang.getText('service_unavailable_desc'),
+              style: TextStyle(
+                color: Colors.grey[800],
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _openSearch(context, isDestination: false),
+                icon: const Icon(Icons.edit_location_alt_outlined, size: 18),
+                label: Text(lang.getText('change_location')),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ).animate().shake(duration: 500.ms),
     );
   }
 
@@ -637,58 +737,61 @@ class HomeBody extends StatelessWidget {
                   ),
                 )
               else
-                ListView.separated(
-                  padding: EdgeInsets.zero,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: vm.recentDestinations.length,
-                  separatorBuilder: (c, i) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final dest = vm.recentDestinations[index];
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.background,
-                          shape: BoxShape.circle,
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 135),
+                  child: ListView.separated(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: vm.recentDestinations.length,
+                    separatorBuilder: (c, i) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final dest = vm.recentDestinations[index];
+                      return ListTile(
+                        dense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                        leading: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: AppColors.background,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.history, size: 16, color: AppColors.primary),
                         ),
-                        child: const Icon(Icons.history, size: 18, color: AppColors.primary),
-                      ),
-                      title: Text(
-                        dest.address.split(',').first,
-                        style: theme.textTheme.titleSmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: Text(
-                        dest.address,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.bookmark_outline, size: 18, color: Colors.grey),
-                        tooltip: lang.getText('save_location'),
-                        onPressed: () {
-                          final loc = LocationResult(
+                        title: Text(
+                          dest.address.split(',').first,
+                          style: theme.textTheme.titleSmall?.copyWith(fontSize: 13),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          dest.address,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.bookmark_outline, size: 16, color: Colors.grey),
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () {
+                            final loc = LocationResult(
+                              address: dest.address,
+                              coordinates: dest.latLng,
+                            );
+                            showSaveLocationSheet(context, loc, lang, onSaved: () {
+                              vm.reloadSavedLocations();
+                            });
+                          },
+                        ),
+                        onTap: () => vm.selectDestination(
+                          LocationResult(
                             address: dest.address,
                             coordinates: dest.latLng,
-                          );
-                          showSaveLocationSheet(context, loc, lang, onSaved: () {
-                            // Reload ViewModel saved locations
-                            vm.reloadSavedLocations();
-                          });
-                        },
-                      ),
-                      onTap: () => vm.selectDestination(
-                        LocationResult(
-                          address: dest.address,
-                          coordinates: dest.latLng,
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
             ],
           ),

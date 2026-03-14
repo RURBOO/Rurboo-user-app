@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../home/services/polyline_service.dart';
 import '../models/ride_booking.dart';
 import '../repositories/ride_booked_repository.dart';
+import '../../../core/utils/safe_parser.dart';
 
 enum RideStage { searching, arriving, inProgress, completed, cancelled }
 
@@ -33,6 +34,7 @@ class RideBookedViewModel extends ChangeNotifier {
   bool isLoading = true;
 
   String eta = "5"; // Store raw minutes as string for display
+  bool isEtaFetching = false;
   bool kIsSosTestMode = true;
 
   StreamSubscription<DocumentSnapshot>? _rideStream;
@@ -42,8 +44,6 @@ class RideBookedViewModel extends ChangeNotifier {
 
   bool _isCameraLocked = true;
   Timer? _cameraUnlockTimer;
-  Timer? _driverCrossCheckTimer;
-
   bool isEndRideRequested = false;
 
   RideBookedViewModel({
@@ -72,46 +72,8 @@ class RideBookedViewModel extends ChangeNotifier {
     _fetchPolyline(pickupLatLng, destinationLatLng, 'initial_route');
     _listenToRide();
     _fetchSafetySettings();
-    _startDriverCrossCheck();
   }
 
-  void _startDriverCrossCheck() {
-    _driverCrossCheckTimer?.cancel();
-    _driverCrossCheckTimer = Timer.periodic(const Duration(seconds: 60), (timer) async {
-      if (rideDetails == null || stage == RideStage.completed || stage == RideStage.cancelled) {
-        return;
-      }
-
-      try {
-        // Need to find the driverId from the current ride request data
-        final rideSnap = await FirebaseFirestore.instance.collection('rideRequests').doc(rideId).get();
-        final String? driverId = rideSnap.data()?['driverId'];
-
-        if (driverId != null) {
-          final driverSnap = await FirebaseFirestore.instance.collection('drivers').doc(driverId).get();
-          final bool driverIsOnTrip = driverSnap.data()?['isOnTrip'] == true;
-          final String? driverCurrentRide = driverSnap.data()?['currentRideId'];
-
-          // If driver says they are NOT on a trip, or are on a DIFFERENT trip
-          if (!driverIsOnTrip || (driverCurrentRide != null && driverCurrentRide != rideId)) {
-            debugPrint("🚨 Periodic Check: Driver mismatch detected. Auto-cancelling user ride.");
-            
-            // Update Firestore so other listeners get notified
-            await FirebaseFirestore.instance.collection('rideRequests').doc(rideId).update({
-              'status': 'cancelled',
-              'cancelReason': 'periodic_driver_mismatch',
-              'cancelledBy': 'system',
-            });
-
-            // Local cleanup and navigate home
-            _handleCancellation(isDriver: true);
-          }
-        }
-      } catch (e) {
-        debugPrint("⚠️ Periodic driver cross-check failed: $e");
-      }
-    });
-  }
 
   Future<void> _fetchSafetySettings() async {
     try {
@@ -198,13 +160,13 @@ class RideBookedViewModel extends ChangeNotifier {
 
           if (data['driverName'] != null) {
             rideDetails = RideBookingModel(
-              driverName: data['driverName'],
-              driverPhone: data['driverPhone'] ?? "",
-              carName: data['carName'] ?? 'Car',
-              carNumber: data['carNumber'] ?? '',
-              rating: (data['driverRating'] as num?)?.toDouble() ?? 5.0,
-              fare: (data['fare'] as num).toDouble(),
-              paymentMethod: data['paymentMethod'] ?? 'Cash',
+              driverName: SafeParser.toStr(data['driverName']),
+              driverPhone: SafeParser.toStr(data['driverPhone']),
+              carName: SafeParser.toStr(data['carName'], fallback: 'Car'),
+              carNumber: SafeParser.toStr(data['carNumber']),
+              rating: SafeParser.toDouble(data['driverRating'], fallback: 5.0),
+              fare: SafeParser.toDouble(data['fare']),
+              paymentMethod: SafeParser.toStr(data['paymentMethod'], fallback: 'Cash'),
             );
           }
 
@@ -212,17 +174,28 @@ class RideBookedViewModel extends ChangeNotifier {
 
           _updateDriverMarker();
 
-          if (stageChanged || _lastFetchedStage != stage || (stage == RideStage.arriving && polylines.isEmpty && driverLocation != null) || requestStateChanged) {
+          // 🚀 Trigger route update on stage change OR if we finally get driver location while waiting
+          final bool routeNeeded = (stage == RideStage.arriving || stage == RideStage.inProgress) && polylines.isEmpty && driverLocation != null;
+          
+          if (stageChanged || _lastFetchedStage != stage || routeNeeded || requestStateChanged) {
+            debugPrint("📍 UserApp: Stage change or route needed. Stage: $stage, driverLoc: $driverLocation");
             _lastEtaFetch = DateTime.now();
-            if (stageChanged || _lastFetchedStage != stage || (stage == RideStage.arriving && polylines.isEmpty && driverLocation != null)) {
-              _handleStageChangeRoute();
+            
+            // 🚀 Delay announcements until ETA is fetched for new stage
+            if (stageChanged || _lastFetchedStage != stage) {
+              isEtaFetching = true;
             }
+
+            _handleStageChangeRoute();
+            
             if (newStage == RideStage.arriving || newStage == RideStage.inProgress) {
                _checkForAutoShare();
             }
           } else if ((stage == RideStage.arriving || stage == RideStage.inProgress) && driverLocation != null) {
-            // Throttled periodic ETA updates to save Google Maps API costs
-            if (DateTime.now().difference(_lastEtaFetch).inSeconds > 45) {
+            // Throttled periodic ETA/Route updates
+            // 🚀 Reduced throttle to 15s as per user request for better real-time updates
+            if (DateTime.now().difference(_lastEtaFetch).inSeconds > 5) {
+               debugPrint("📍 UserApp: Periodic route/ETA update. Stage: $stage");
                _lastEtaFetch = DateTime.now();
                if (stage == RideStage.arriving) {
                  _fetchPolyline(driverLocation!, pickupLatLng, 'driver_to_pickup');
@@ -310,18 +283,26 @@ class RideBookedViewModel extends ChangeNotifier {
 
   Future<void> _handleStageChangeRoute() async {
     _lastFetchedStage = stage;
+    debugPrint("📍 UserApp: _handleStageChangeRoute for stage: $stage");
+
+    // Clear old polylines immediately on stage change to prevent showing stale route
+    polylines.clear();
+    notifyListeners();
 
     if (stage == RideStage.arriving && driverLocation != null) {
       await _fetchPolyline(driverLocation!, pickupLatLng, 'driver_to_pickup');
     } else if (stage == RideStage.inProgress) {
       // Use driverLocation if available for the trip start during progress
+      debugPrint("📍 UserApp: Fetching trip route. DriverLoc: $driverLocation, Dest: $destinationLatLng");
       await _fetchPolyline(driverLocation ?? pickupLatLng, destinationLatLng, 'trip_route');
     }
   }
 
   Future<void> _fetchPolyline(LatLng start, LatLng end, String polyId) async {
     try {
+      isEtaFetching = true;
       final route = await polyService.getRouteData(start, end);
+      isEtaFetching = false;
 
       if (route != null && route.points.isNotEmpty) {
         polylines.clear();
@@ -338,9 +319,9 @@ class RideBookedViewModel extends ChangeNotifier {
         if (route.durationMins < 1) {
           eta = "0"; // Special value for 'Arriving now' or 'Nearly there'
         } else {
-          eta = route.durationMins.toInt().toString();
+          eta = route.durationMins.toStringAsFixed(0);
         }
-
+        
         _fitCamera(route.points);
 
         notifyListeners();
@@ -498,7 +479,6 @@ class RideBookedViewModel extends ChangeNotifier {
   void dispose() {
     _rideStream?.cancel();
     _cameraUnlockTimer?.cancel();
-    _driverCrossCheckTimer?.cancel();
     super.dispose();
   }
 }

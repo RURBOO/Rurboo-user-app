@@ -645,6 +645,16 @@ class AppStrings {
     },
     'support_request': {'en': 'Support Request', 'hi': 'सहायता अनुरोध'},
     'beyond_service_limit': {'en': 'Beyond Service Limit', 'hi': 'सेवा सीमा से बाहर'},
+    'service_unavailable_title': {'en': 'Service Unavailable', 'hi': 'सेवा उपलब्ध नहीं है'},
+    'service_unavailable_desc': {
+      'en': 'Rurboo is currently not available at your location. You can still browse the app or change your pickup point.',
+      'hi': 'रुरबू वर्तमान में आपके स्थान पर उपलब्ध नहीं है। आप अभी भी ऐप देख सकते हैं या अपना पिकअप पॉइंट बदल सकते हैं।'
+    },
+    'voice_out_of_zone': {
+      'en': 'Rurboo is currently not available at your location. If you are booking for someone else, please change the pickup location.',
+      'hi': 'रुरबू वर्तमान में आपके स्थान पर उपलब्ध नहीं है। यदि आप किसी और के लिए बुक कर रहे हैं, तो कृपया पिकअप लोकेशन बदलें।'
+    },
+    'change_location': {'en': 'Change Pickup Location', 'hi': 'पिकअप लोकेशन बदलें'},
     'book_for_someone_else': {'en': 'Book for Someone Else', 'hi': 'किसी और के लिए बुक करें'},
     'apply_coupon': {'en': 'Apply Coupon', 'hi': 'कूपन लागू करें'},
     'coupon_applied': {'en': 'Coupon Applied', 'hi': 'कूपन लागू किया गया'},
@@ -792,7 +802,15 @@ class AppStrings {
     },
     'search_results_hint': {
       'en': 'Search to see results',
-      'hi': 'परिणाम देखने के लिए खोजें',
+      'hi': 'परिणाम देखने के लिए खोजें'
+    },
+    'search_pickup_placeholder': {
+      'en': 'Where to pick up from?',
+      'hi': 'पिकअप कहाँ से करना है?'
+    },
+    'search_destination_placeholder': {
+      'en': 'Where do you want to go?',
+      'hi': 'कहाँ जाना है?'
     },
     'pickup_label': {
       'en': 'Pickup',

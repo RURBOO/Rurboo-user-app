@@ -1,6 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -249,24 +250,24 @@ class RideSelectionBody extends StatelessWidget {
               polylines: vm.polylines,
               zoomControlsEnabled: false,
               myLocationEnabled: false,
-              // Add padding so logo/legal buttons appear above the minimized sheet (approx 40% height)
+              // Add padding so logo/legal buttons appear above the minimized sheet (approx 35% height)
               padding: EdgeInsets.only(
                 top: 40, 
                 left: 20, 
                 right: 20, 
-                bottom: MediaQuery.of(context).size.height * 0.45
+                bottom: MediaQuery.of(context).size.height * 0.38
               ),
             ),
           ),
 
           // BOTTOM SHEET (Draggable List Only)
           DraggableScrollableSheet(
-            initialChildSize: 0.80, // Increased to 80%
-            minChildSize: 0.65,     // Increased minimum height
-            maxChildSize: 0.95,
+            initialChildSize: 0.70, // Reduced from 0.80
+            minChildSize: 0.55,     // Reduced from 0.65
+            maxChildSize: 0.88, // Reduced from 0.95 to limit upward scroll
             builder: (context, scrollController) {
               return Container(
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0), // Compact padding
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
@@ -327,6 +328,8 @@ class RideSelectionBody extends StatelessWidget {
 
                     if (vm.isOutstationRide)
                        _outstationMessage(lang)
+                    else if (!vm.isServiceAvailable)
+                       _serviceUnavailableMessage(lang)
                     else
                       Expanded(
                         child: GestureDetector(
@@ -335,8 +338,8 @@ class RideSelectionBody extends StatelessWidget {
                           },
                           child: ListView.separated(
                           controller: scrollController,
-                          // HUGE padding at bottom to clear the fixed footer
-                          padding: const EdgeInsets.only(bottom: 320), 
+                          // Increased padding to 35% to ensure last items are visible above the fixed footer
+                          padding: EdgeInsets.only(bottom: MediaQuery.of(context).size.height * 0.35), 
                           itemCount: vm.rideOptions.length,
                           separatorBuilder: (c, i) => const SizedBox(height: 12),
                           itemBuilder: (_, i) {
@@ -348,6 +351,7 @@ class RideSelectionBody extends StatelessWidget {
                             
                             return GestureDetector(
                               onTap: () {
+                                 HapticFeedback.selectionClick();
                                  Provider.of<VoiceAgentViewModel>(context, listen: false).stopAnnouncement();
                                  vm.selectRide(ride);
                               },
@@ -438,10 +442,10 @@ class RideSelectionBody extends StatelessWidget {
 
   Widget _locationPreview(String pickup, String destination) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: IntrinsicHeight(
         child: Row(
@@ -449,18 +453,18 @@ class RideSelectionBody extends StatelessWidget {
           children: [
             Column(
               children: [
-                const Icon(Icons.circle, color: Colors.green, size: 14),
+                const Icon(Icons.circle, color: Colors.green, size: 12),
                 Expanded(
                   child: Container(
                     width: 2,
                     color: Colors.black26,
-                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    margin: const EdgeInsets.symmetric(vertical: 2),
                   ),
                 ),
-                const Icon(Icons.square, color: Colors.red, size: 14),
+                const Icon(Icons.square, color: Colors.red, size: 12),
               ],
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -468,20 +472,20 @@ class RideSelectionBody extends StatelessWidget {
                 children: [
                   Text(
                     pickup,
-                    maxLines: 2,
+                    maxLines: 1, // Reduced to 1
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 15,
+                      fontSize: 13, // Reduced font
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   Text(
                     destination,
-                    maxLines: 2,
+                    maxLines: 1, // Reduced to 1
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 15,
+                      fontSize: 13, // Reduced font
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -500,7 +504,7 @@ class RideSelectionBody extends StatelessWidget {
     LanguageViewModel lang,
   ) {
     final bool isButtonDisabled =
-        vm.isBooking || vm.isOutstationRide || vm.selectedRide == null;
+        vm.isBooking || vm.isOutstationRide || !vm.isServiceAvailable || vm.selectedRide == null;
 
     final rideName = vm.selectedRide != null ? lang.getText(vm.selectedRide!.name) : "";
 
@@ -547,7 +551,7 @@ class RideSelectionBody extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: SizedBox(
               width: double.infinity,
-              height: 58, 
+              height: 52, // Reduced from 58
               child: ElevatedButton(
                 onPressed: isButtonDisabled
                     ? null
@@ -578,23 +582,25 @@ class RideSelectionBody extends StatelessWidget {
                 ),
                 child: vm.isBooking
                     ? const SizedBox(
-                        height: 24,
-                        width: 24,
+                        height: 22, // Reduced
+                        width: 22,
                         child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
+                          strokeWidth: 2, // Reduced
                           color: Colors.white,
                         ),
                       )
                     : Text(
-                        vm.isOutstationRide
-                            ? lang.getText('beyond_service_limit')
-                            : (vm.selectedRide == null
-                                  ? lang.getText('select_ride')
-                                  : "${lang.getText('book_now')} $rideName"),
+                        !vm.isServiceAvailable
+                            ? "Service Unavailable"
+                            : vm.isOutstationRide
+                                ? lang.getText('beyond_service_limit')
+                                : (vm.selectedRide == null
+                                      ? lang.getText('select_ride')
+                                      : "${lang.getText('book_now')} $rideName"),
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
-                          fontSize: 18,
+                          fontSize: 16, // Reduced from 18
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -649,6 +655,32 @@ class RideSelectionBody extends StatelessWidget {
 
   Widget _outstationMessage(LanguageViewModel lang) =>
       Center(child: Text(lang.getText('outstation_unavailable')));
+
+  Widget _serviceUnavailableMessage(LanguageViewModel lang) =>
+      Expanded(
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.location_off_rounded, size: 64, color: Colors.grey[400]),
+              const SizedBox(height: 16),
+              const Text(
+                "Service Unavailable", 
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  "Rurboo is not currently operating in this area.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
 
   Widget _paymentDisplay(LanguageViewModel lang) => InkWell(
     onTap: () {
@@ -754,47 +786,67 @@ class RideSelectionBody extends StatelessWidget {
         if (ride.imageAsset != null)
           Image.asset(
             ride.imageAsset!,
-            width: 50,
-            height: 50,
+            width: 44, // Reduced from 50
+            height: 44,
             fit: BoxFit.contain,
           )
         else
           Icon(
             ride.icon, 
-            size: 40, 
+            size: 36, // Reduced from 40
             color: ride.iconColor ?? (selected ? AppColors.primary : Colors.grey[400]),
           ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                lang.getText(ride.name),
-                style: TextStyle(
-                  fontWeight: FontWeight.bold, 
-                  fontSize: 16,
-                  color: selected ? AppColors.textPrimary : Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 4),
               Row(
                 children: [
-                   Icon(Icons.person, size: 12, color: Colors.grey[600]),
-                   const SizedBox(width: 4),
-                   Text(
-                     ride.seats == 0 
-                       ? lang.getText('cargo') 
-                       : "${ride.seats} ${ride.seats > 1 ? lang.getText('seats') : lang.getText('seat')}", 
-                     style: TextStyle(fontSize: 12, color: Colors.grey[600])
-                   ),
-                   const SizedBox(width: 8),
-                    Text(
-                      "${ride.description} ${lang.getText('min')}", // Translated ETA
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600])
+                  Text(
+                    lang.getText(ride.name),
+                    style: TextStyle(
+                      fontSize: 15, // Reduced from default
+                      fontWeight: FontWeight.bold,
+                      color: selected ? AppColors.primary : AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  if (ride.id == 'car')
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        "AC",
+                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.blue),
+                      ),
                     ),
                 ],
-              )
+              ),
+              const SizedBox(height: 2),
+              Row(
+                children: [
+                  Icon(Icons.person, size: 10, color: Colors.grey[600]),
+                  const SizedBox(width: 3),
+                  Text(
+                    ride.seats == 0 
+                      ? lang.getText('cargo') 
+                      : "${ride.seats} ${ride.seats > 1 ? lang.getText('seats') : lang.getText('seat')}", 
+                    style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(Icons.access_time, size: 10, color: Colors.grey[600]),
+                  const SizedBox(width: 3),
+                  Text(
+                    "${ride.eta} min", 
+                    style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
             ],
           ),
         ),
@@ -802,20 +854,13 @@ class RideSelectionBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              "₹${ride.fare.toStringAsFixed(0)}",
+              "₹${ride.fare.toInt()}",
               style: TextStyle(
-                fontWeight: FontWeight.bold, 
-                fontSize: 18,
-                color: selected ? AppColors.textPrimary : Colors.black87,
+                fontSize: 17, // Reduced from default
+                fontWeight: FontWeight.w900,
+                color: selected ? AppColors.primary : AppColors.textPrimary,
               ),
             ),
-            if (selected)
-            Container(
-               margin: const EdgeInsets.only(top: 4),
-               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-               decoration: BoxDecoration(color: AppColors.success, borderRadius: BorderRadius.circular(4)),
-               child: Text(lang.getText('best_value'), style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
-            )
           ],
         ),
       ],

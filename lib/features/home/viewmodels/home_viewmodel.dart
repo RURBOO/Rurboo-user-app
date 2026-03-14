@@ -14,6 +14,8 @@ import '../models/recent_places.dart';
 import '../repositories/home_repository.dart';
 import '../models/location_result.dart';
 import '../repositories/search_repository.dart';
+import '../../ride/services/zone_service.dart';
+import '../../../core/utils/polygon_utils.dart';
 
 class HomeViewModel extends ChangeNotifier {
   final HomeRepository repo;
@@ -34,6 +36,12 @@ class HomeViewModel extends ChangeNotifier {
 
   bool _hasLocationError = false;
   bool get hasLocationError => _hasLocationError;
+
+  bool isServiceAvailable = true; // Added for Service Areas
+  VoidCallback? onServiceUnavailable; // Trigger for voice agent
+  bool _didAnnounceUnavailable = false; 
+
+  final ZoneService _zoneService = ZoneService();
 
   List<RecentPlace> recentDestinations = [];
   LocationResult? homeLocation;
@@ -104,7 +112,12 @@ class HomeViewModel extends ChangeNotifier {
         'isOnline': true,
         'lastSeen': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
-      debugPrint("✅ UserApp: Location sync successful for $userId");
+      
+      // Update local currentLocation for geofencing check
+      currentLocation = LatLng(position.latitude, position.longitude);
+      _verifyServiceAvailability();
+      
+      debugPrint("✅ UserApp: Location sync & Geofence check successful for $userId");
     } catch (e) {
       debugPrint("❌ UserApp: Location Sync Error: $e");
     }
@@ -174,6 +187,9 @@ class HomeViewModel extends ChangeNotifier {
 
     // Run reverse geocoding in the background so it doesn't block the UI
     _fetchAddressInBackground();
+    
+    // Check if the current location is within active service zones
+    _verifyServiceAvailability();
 
     if (mapController != null) {
       mapController!.animateCamera(
@@ -189,7 +205,45 @@ class HomeViewModel extends ChangeNotifier {
     
     _startLocationSync();
     
+    // Initial verification based on default pickup (current location)
+    _verifyServiceAvailability();
+    
     notifyListeners();
+  }
+
+  Future<void> _verifyServiceAvailability() async {
+    final targetLocation = pickup?.coordinates;
+    if (targetLocation == null) return;
+    
+    try {
+      final zones = await _zoneService.getActiveZones();
+      bool availableNow = true;
+
+      if (zones.isNotEmpty) {
+         availableNow = false;
+         for (var zone in zones) {
+            if (PolygonUtils.isPointInPolygon(targetLocation, zone.polygon)) {
+               availableNow = true;
+               break;
+            }
+         }
+      }
+
+      if (isServiceAvailable != availableNow) {
+        isServiceAvailable = availableNow;
+        if (!isServiceAvailable && !_didAnnounceUnavailable) {
+           if (onServiceUnavailable != null) {
+              _didAnnounceUnavailable = true;
+              onServiceUnavailable!.call();
+           }
+        } else if (isServiceAvailable) {
+           _didAnnounceUnavailable = false; // Reset if they move back in
+        }
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("Error verifying service availability: $e");
+    }
   }
 
   Future<void> _fetchAddressInBackground() async {
@@ -233,19 +287,24 @@ class HomeViewModel extends ChangeNotifier {
         final doc = activeQuery.docs.first;
         final data = doc.data();
         
-        // Safety Fallback: Ignore stale rides older than 2 hours
+        // Safety Fallback: Ignore stale rides
         bool isStale = false;
         if (data.containsKey('createdAt') && data['createdAt'] != null) {
           final createdAt = (data['createdAt'] as Timestamp).toDate();
-          if (DateTime.now().difference(createdAt).inHours >= 2) {
-            isStale = true;
+          final diffMins = DateTime.now().difference(createdAt).inMinutes;
+          
+          final status = data['status'] as String?;
+          if (status == 'pending' && diffMins >= 15) {
+            isStale = true; // Pending ride older than 15 mins is stale
+          } else if (diffMins >= 240) { 
+            isStale = true; // Other rides older than 4 hours are stale
           }
         }
-        
-        if (!isStale) {
+
+        if (!isStale && context.mounted) {
           _redirectToActiveRide(context, doc);
         } else {
-          debugPrint("Ignoring stale ride from database: ${doc.id}");
+          debugPrint("Ignoring stale/mismatched ride from database: ${doc.id}");
         }
       }
     } catch (e) {
@@ -291,6 +350,8 @@ class HomeViewModel extends ChangeNotifier {
 
   Future<void> setPickupLocation(LocationResult loc, {BuildContext? context}) async {
     pickup = loc;
+    
+    _verifyServiceAvailability();
 
     _updateMarkers(context: (context != null && context.mounted) ? context : null);
 

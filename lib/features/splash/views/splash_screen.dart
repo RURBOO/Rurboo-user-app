@@ -12,7 +12,6 @@ import '../../auth/views/location_disclosure_screen.dart';
 import '../../language/views/language_selection_screen.dart';
 import '../../language/viewmodels/language_vm.dart';
 import '../../navigation/views/main_navigator.dart';
-import '../../ride/views/ride_summary_screen.dart';
 import '../../searching/views/searching_driver_screen.dart';
 import '../../ride/views/ride_booked_screen.dart';
 import '../../ride/models/ride_booking.dart';
@@ -79,7 +78,7 @@ class _SplashScreenState extends State<SplashScreen>
     }
 
     try {
-      // ── Always fetch LATEST ride for this user ──────────────────────────
+      // ── Always fetch ACTIVE ride for this user ──────────────────────────
       final query = await FirebaseFirestore.instance
           .collection('rideRequests')
           .where('userId', isEqualTo: userId)
@@ -90,7 +89,6 @@ class _SplashScreenState extends State<SplashScreen>
               'accepted',
               'arrived',
               'in_progress',
-              'completed',
             ],
           )
           .orderBy('createdAt', descending: true) // ← Latest first
@@ -133,73 +131,12 @@ class _SplashScreenState extends State<SplashScreen>
         // Active rides older than 6 hours are no longer automatically killed here because a long ride (200km+) can take many hours. 
         // We solely rely on the driver cross-verification logic directly below to determine if a ride is truly stale/abandoned.
 
-        // Completed rides older than 10 min → skip summary, go home
-        if (status == 'completed' && diffMinutes > 10) {
-          debugPrint("⏩ Completed ride too old ($diffMinutes min). Skipping summary.");
-          if (!mounted) return;
-          _navigateTo(const MainNavigator());
-          return;
-        }
-      }
-      // ───────────────────────────────────────────────────────────────────
-
-      // ── Driver Cross-Verification ───────────────────────────────────────
-      // Only check for active (non-completed, non-pending) rides.
-      // If driver's isOnTrip is false → driver finished/cancelled, user is stuck.
-      if (status == 'accepted' || status == 'arrived' || status == 'in_progress') {
-        final String? driverId = data['driverId'] as String?;
-        if (driverId != null) {
-          try {
-            final driverDoc = await FirebaseFirestore.instance
-                .collection('drivers')
-                .doc(driverId)
-                .get();
-
-            final bool driverIsOnTrip =
-                driverDoc.data()?['isOnTrip'] == true;
-            final String? driverCurrentRide =
-                driverDoc.data()?['currentRideId'] as String?;
-
-            // Driver is NOT on a trip, or is on a DIFFERENT ride → mismatch
-            if (!driverIsOnTrip || (driverCurrentRide != null && driverCurrentRide != rideId)) {
-              debugPrint(
-                "🔴 Driver mismatch! driverIsOnTrip=$driverIsOnTrip "
-                "driverCurrentRideId=$driverCurrentRide userRideId=$rideId. "
-                "Auto-cancelling user ride."
-              );
-              await FirebaseFirestore.instance
-                  .collection('rideRequests')
-                  .doc(rideId)
-                  .update({
-                    'status': 'cancelled',
-                    'cancelReason': 'driver_not_on_trip',
-                    'cancelledBy': 'system',
-                  });
-              if (!mounted) return;
-              _navigateTo(const MainNavigator());
-              return;
-            }
-          } catch (e) {
-            // If driver doc read fails, don't block the user — just continue
-            debugPrint("⚠️ Driver cross-check failed: $e");
-          }
-        }
+        // Active rides older than 6 hours are no longer automatically killed here because a long ride (200km+) can take many hours. 
+        // We solely rely on the driver cross-verification logic directly below to determine if a ride is truly stale/abandoned.
       }
       // ───────────────────────────────────────────────────────────────────
 
       // Route to the correct screen based on status
-      if (status == 'completed') {
-        final double fare = (data['fare'] as num?)?.toDouble() ?? 0.0;
-        final String driverName = data['driverName'] ?? "Driver";
-        _navigateTo(
-          RideSummaryScreen(
-            rideId: rideId,
-            fare: fare,
-            driverName: driverName,
-          ),
-        );
-        return;
-      }
 
       final pickupGp = data['pickupCoords'];
       final destGp = data['destinationCoords'];

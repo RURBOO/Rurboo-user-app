@@ -27,70 +27,65 @@ class VoiceAgentService {
     if (_isInitialized) return true;
 
     // 1. Request Microphone Permission
+    bool hasMic = true;
     var status = await Permission.microphone.status;
     if (!status.isGranted) {
       status = await Permission.microphone.request();
       if (status != PermissionStatus.granted) {
         debugPrint("❌ Microphone permission denied");
         onError?.call("Microphone permission required");
-        return false; 
+        hasMic = false; 
       }
     }
 
     // 2. Initialize Speech to Text with multi-locale support
-    try {
-      bool available = await _speech.initialize(
-        onStatus: (status) {
-          debugPrint('🎤 STT Status: $status');
-          if (status == 'notListening' && isListening) {
-            // Session ended unexpectedly, could trigger auto-restart
-          }
-        },
-        onError: (error) {
-          debugPrint('❌ STT Error: ${error.errorMsg}');
-          onError?.call(error.errorMsg);
-        },
-        debugLogging: kDebugMode,
-      );
-
-      if (!available) {
-        debugPrint("❌ Speech Recognition Unavailable on this device");
-        if (_initRetryCount < _maxInitRetries) {
-          _initRetryCount++;
-          await Future.delayed(Duration(seconds: _initRetryCount * 2));
-          return await init(); // Retry
-        }
-        return false;
-      }
-
-      // Try to set preferred locale (Hindi first, then English fallbacks)
-      final locales = await _speech.locales();
-      final preferredLocales = ['hi_IN', 'en_IN', 'en_US', 'en_GB'];
-      
-      for (final preferred in preferredLocales) {
-        final match = locales.firstWhere(
-          (locale) => locale.localeId == preferred,
-          orElse: () => locales.first,
+    if (hasMic) {
+      try {
+        bool available = await _speech.initialize(
+          onStatus: (status) {
+            debugPrint('🎤 STT Status: $status');
+            if (status == 'notListening' && isListening) {
+              // Session ended unexpectedly, could trigger auto-restart
+            }
+          },
+          onError: (error) {
+            debugPrint('❌ STT Error: ${error.errorMsg}');
+            onError?.call(error.errorMsg);
+          },
+          debugLogging: kDebugMode,
         );
-        if (match.localeId == preferred) {
-          _currentLocale = preferred;
-          debugPrint("✅ Using locale: $_currentLocale");
-          break;
+
+        if (!available) {
+          debugPrint("❌ Speech Recognition Unavailable on this device");
+          if (_initRetryCount < _maxInitRetries) {
+            _initRetryCount++;
+            await Future.delayed(Duration(seconds: _initRetryCount * 2));
+            return await init(); // Retry
+          }
+        } else {
+          // Try to set preferred locale (Hindi first, then English fallbacks)
+          final locales = await _speech.locales();
+          final preferredLocales = ['hi_IN', 'en_IN', 'en_US', 'en_GB'];
+          
+          for (final preferred in preferredLocales) {
+            final match = locales.firstWhere(
+              (locale) => locale.localeId == preferred,
+              orElse: () => locales.first,
+            );
+            if (match.localeId == preferred) {
+              _currentLocale = preferred;
+              debugPrint("✅ Using locale: $_currentLocale");
+              break;
+            }
+          }
+          
+          _currentLocale ??= locales.first.localeId;
+          debugPrint("✅ Speech Recognition Initialized with ${locales.length} locales");
         }
+      } catch (e, stack) {
+        debugPrint("❌ STT Init Exception: $e");
+        debugPrintStack(stackTrace: stack);
       }
-      
-      _currentLocale ??= locales.first.localeId;
-      debugPrint("✅ Speech Recognition Initialized with ${locales.length} locales");
-      
-    } catch (e, stack) {
-      debugPrint("❌ STT Init Exception: $e");
-      debugPrintStack(stackTrace: stack);
-      if (_initRetryCount < _maxInitRetries) {
-        _initRetryCount++;
-        await Future.delayed(Duration(seconds: _initRetryCount * 2));
-        return await init(); // Retry with exponential backoff
-      }
-      return false;
     }
 
     // 3. Initialize Text to Speech with enhanced configuration
@@ -253,6 +248,7 @@ class VoiceAgentService {
     final processedText = text.replaceAll("RURBOO", "Roor booo");
 
     _tts.setCompletionHandler(onComplete);
+    debugPrint("🔊 Speaking: $processedText");
     await _tts.speak(processedText);
   }
 

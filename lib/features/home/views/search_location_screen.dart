@@ -176,15 +176,25 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
             onChanged: (text) {
               vm.switchMode(false);   // Switch to pickup search mode
               vm.onTextChanged(text);
+              setState(() {}); // Update to show/hide clear icon
             },
             onTap: () => vm.switchMode(false),
             decoration: InputDecoration(
-              hintText: lang.getText('pickup_location'),
+              hintText: lang.getText('search_pickup_placeholder'),
               border: InputBorder.none,
               prefixIcon: const Icon(Icons.circle, color: Colors.green, size: 14),
-              suffixIcon: !vm.isDestinationMode
-                  ? const Icon(Icons.edit, size: 14, color: Colors.green)
-                  : null,
+              suffixIcon: vm.pickupController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 18),
+                      onPressed: () {
+                        vm.pickupController.clear();
+                        vm.onTextChanged('');
+                        setState(() {});
+                      },
+                    )
+                  : (!vm.isDestinationMode
+                      ? const Icon(Icons.edit, size: 14, color: Colors.green)
+                      : null),
             ),
             style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
           ),
@@ -198,15 +208,25 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
             onChanged: (text) {
               vm.switchMode(true);    // Switch to destination search mode
               vm.onTextChanged(text);
+              setState(() {}); // Update to show/hide clear icon
             },
             onTap: () => vm.switchMode(true),
             decoration: InputDecoration(
-              hintText: lang.getText('where_to'),
+              hintText: lang.getText('search_destination_placeholder'),
               border: InputBorder.none,
               prefixIcon: const Icon(Icons.square, color: Colors.red, size: 14),
-              suffixIcon: vm.isDestinationMode
-                  ? const Icon(Icons.edit, size: 14, color: Colors.red)
-                  : null,
+              suffixIcon: vm.destinationController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 18),
+                      onPressed: () {
+                        vm.destinationController.clear();
+                        vm.onTextChanged('');
+                        setState(() {});
+                      },
+                    )
+                  : (vm.isDestinationMode
+                      ? const Icon(Icons.edit, size: 14, color: Colors.red)
+                      : null),
             ),
             style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
           ),

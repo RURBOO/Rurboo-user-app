@@ -196,8 +196,8 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
             Align(
               alignment: Alignment.bottomCenter,
               child: Container(
-                height: MediaQuery.of(context).size.height * 0.45,
-                padding: const EdgeInsets.all(18),
+                height: MediaQuery.of(context).size.height * 0.38, // Reduced from 0.45
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12), // Compact padding
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -205,30 +205,30 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
                 child: Column(
                   children: [
                     Container(
-                      width: 60,
-                      height: 5,
+                      width: 50, // Smaller handle
+                      height: 4,
                       decoration: BoxDecoration(
                         color: Colors.grey[300],
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
 
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 12), // Reduced spacing
 
                     Text(
                       lang.getText('searching_driver'),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        fontSize: 17,
+                        fontSize: 16, // Reduced from 17
                         fontWeight: FontWeight.w600,
                       ),
                     ),
 
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 10), // Reduced spacing
 
                     SizedBox(
-                      height: 160,
-                      width: 160,
+                      height: 130, // Reduced from 160
+                      width: 130,
                       child: RippleAnimation(
                         child: const CircleAvatar(
                           radius: 26,
@@ -340,7 +340,7 @@ class _RippleAnimationState extends State<RippleAnimation>
         builder: (context, child) {
           return Stack(
             alignment: Alignment.center,
-            children: [_circle(80), _circle(110), _circle(140), widget.child],
+            children: [_circle(60), _circle(90), _circle(120), widget.child],
           );
         },
       ),

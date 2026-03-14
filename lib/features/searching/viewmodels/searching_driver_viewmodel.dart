@@ -36,8 +36,20 @@ class SearchingDriverViewModel extends ChangeNotifier {
           final data = snapshot.data() as Map<String, dynamic>;
           final status = data['status'];
           final driverId = data['driverId'];
+          final Timestamp? createdAt = data['createdAt'];
 
           debugPrint("USER RIDE LISTENER: Status='$status', Driver='$driverId'");
+          
+          // ── Zombie Ride Guard ──────────────────────────────────────────────
+          if (createdAt != null) {
+            final diffMins = DateTime.now().difference(createdAt.toDate()).inMinutes;
+            if (status == 'pending' && diffMins > 15) {
+              debugPrint("🧟 SearchingVM: Ride is stale ($diffMins min). Auto-cancelling.");
+              _handleTimeout();
+              return;
+            }
+          }
+          // ───────────────────────────────────────────────────────────────────
 
           if (status == 'accepted' && driverId != null) {
             _timeoutTimer?.cancel();
