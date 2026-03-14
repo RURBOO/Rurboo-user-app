@@ -11,7 +11,7 @@ class LocationPermissionScreen extends StatelessWidget {
     final lang = Provider.of<LanguageViewModel>(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),

@@ -177,12 +177,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           Text(
                             lang.getText('next'), // "Next"
                             style: const TextStyle(
-                              color: Colors.black,
+                              
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(width: 6),
-                          const Icon(Icons.arrow_right_alt, color: Colors.black),
+                          const Icon(Icons.arrow_right_alt),
                         ],
                       ),
                     ),

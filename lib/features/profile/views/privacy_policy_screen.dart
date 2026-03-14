@@ -9,15 +9,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageViewModel>(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      
       appBar: AppBar(
         title: Text(
           lang.getText('privacy_policy'),
-          style: const TextStyle(color: Colors.black),
+          style: const TextStyle(),
         ),
-        backgroundColor: Colors.white,
         elevation: 1,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
@@ -55,7 +54,6 @@ class PrivacyPolicyScreen extends StatelessWidget {
             style: const TextStyle(
               fontSize: 16,
               height: 1.5,
-              color: Colors.black87,
             ),
           ),
         ],

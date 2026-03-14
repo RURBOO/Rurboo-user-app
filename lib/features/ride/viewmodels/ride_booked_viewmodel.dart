@@ -311,7 +311,6 @@ class RideBookedViewModel extends ChangeNotifier {
           Polyline(
             polylineId: PolylineId(polyId),
             points: route.points,
-            color: Colors.black,
             width: 5,
           ),
         );

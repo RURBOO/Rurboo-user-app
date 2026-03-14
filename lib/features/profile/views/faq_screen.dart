@@ -11,10 +11,9 @@ class FAQScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text(lang.getText('faq'), style: const TextStyle(color: Colors.black)),
-        backgroundColor: Colors.white,
+        title: Text(lang.getText('faq'), style: const TextStyle()),
         elevation: 1,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
@@ -70,7 +69,7 @@ class _FAQItem extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Text(
               answer,
-              style: const TextStyle(color: Colors.black87, height: 1.4),
+              style: const TextStyle( height: 1.4),
             ),
           ),
         ],

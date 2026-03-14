@@ -71,10 +71,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     final lang = Provider.of<LanguageViewModel>(context);
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      
       appBar: AppBar(
         title: Text(lang.getText('feedback_suggestions')),
-        backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 1,
       ),

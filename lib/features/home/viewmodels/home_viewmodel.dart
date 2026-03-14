@@ -537,7 +537,6 @@ class HomeViewModel extends ChangeNotifier {
           polylineId: const PolylineId("route"),
           points: routeInfo.points,
           width: 5,
-          color: Colors.black,
         ),
       );
       pointsToFit = routeInfo.points;

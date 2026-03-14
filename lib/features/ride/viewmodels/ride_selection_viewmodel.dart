@@ -393,7 +393,6 @@ class RideSelectionViewModel extends ChangeNotifier {
         polylineId: const PolylineId("route_border"),
         points: points,
         width: 6,
-        color: Colors.black,
       ),
       Polyline(
         polylineId: const PolylineId("route_inner"),

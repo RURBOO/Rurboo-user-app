@@ -9,15 +9,14 @@ class RefundPolicyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageViewModel>(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      
       appBar: AppBar(
         title: Text(
           lang.getText('refund_policy_menu'),
-          style: const TextStyle(color: Colors.black),
+          style: const TextStyle(),
         ),
-        backgroundColor: Colors.white,
         elevation: 1,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
@@ -72,7 +71,6 @@ class _PolicySection extends StatelessWidget {
             style: const TextStyle(
               fontSize: 16,
               height: 1.5,
-              color: Colors.black87,
             ),
           ),
         ],

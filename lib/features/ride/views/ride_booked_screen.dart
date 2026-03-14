@@ -255,7 +255,6 @@ class _RideBookedContent extends StatelessWidget {
               right: 16,
               child: FloatingActionButton.small(
                 heroTag: 'safety_shield',
-                backgroundColor: Colors.white,
                 foregroundColor: Colors.indigo,
                 elevation: 4,
                 onPressed: () => _showSafetyShield(context, vm),
@@ -269,7 +268,6 @@ class _RideBookedContent extends StatelessWidget {
               right: 16,
               child: FloatingActionButton.small(
                 heroTag: 'share_btn',
-                backgroundColor: Colors.white,
                 foregroundColor: Colors.black,
                 elevation: 3,
                 child: const Icon(Icons.share, size: 20),
@@ -512,7 +510,7 @@ class _RideBookedContent extends StatelessWidget {
                                     icon: const Icon(Icons.call, color: AppColors.primary),
                                     onPressed: () => vm.callDriver(),
                                     style: IconButton.styleFrom(
-                                      backgroundColor: Colors.white,
+                                      
                                       padding: const EdgeInsets.all(10),
                                     ),
                                   ),
@@ -599,7 +597,6 @@ class _RideBookedContent extends StatelessWidget {
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 18,
-                                          color: Colors.black,
                                         ),
                                       ),
                                     ],
@@ -703,7 +700,7 @@ class _RideBookedContent extends StatelessWidget {
                     : vm.pickupAddress,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.black87, fontSize: 14),
+                  style: const TextStyle( fontSize: 14),
                 ),
                 const SizedBox(height: 20),
                 Text(
@@ -712,7 +709,7 @@ class _RideBookedContent extends StatelessWidget {
                     : vm.destinationAddress,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.black87, fontSize: 14),
+                  style: const TextStyle( fontSize: 14),
                 ),
               ],
             ),
@@ -784,7 +781,7 @@ class _RideBookedContent extends StatelessWidget {
                 onPressed: () => Navigator.pop(ctx),
                 child: Text(
                   Provider.of<LanguageViewModel>(context, listen: false).getText('dont_cancel'),
-                  style: const TextStyle(color: Colors.black),
+                  style: const TextStyle(),
                 ),
               ),
             ),

@@ -21,6 +21,8 @@ import '../../voice/services/voice_intent_parser.dart'; // Added
 import '../../voice/models/voice_agent_state.dart';
 import '../../../core/theme/app_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/theme/map_styles.dart';
+import '../../../core/theme/theme_provider.dart';
 
 class RideSelectionScreen extends StatefulWidget {
   final String pickupText;
@@ -318,7 +320,7 @@ class RideSelectionBody extends StatelessWidget {
                                 const SizedBox(width: 4),
                                 Text(
                                   "${vm.distanceKm.toStringAsFixed(1)} ${lang.getText('km')}",
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black54),
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                                 ),
                               ],
                             ),
@@ -457,8 +459,7 @@ class RideSelectionBody extends StatelessWidget {
                 const Icon(Icons.circle, color: Colors.green, size: 12),
                 Expanded(
                   child: Container(
-                    width: 2,
-                    color: Colors.black26,
+                    width: 226,
                     margin: const EdgeInsets.symmetric(vertical: 2),
                   ),
                 ),

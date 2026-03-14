@@ -505,7 +505,7 @@ class _ProfileScreenBody extends StatelessWidget {
       title: Text(
         lang.getText('voice_announcements_menu'),
         style: const TextStyle(
-          color: Colors.black87,
+          
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -539,7 +539,7 @@ class _ProfileScreenBody extends StatelessWidget {
       title: const Text(
         'Dark Mode / डार्क मोड',
         style: TextStyle(
-          color: Colors.black87,
+          
           fontWeight: FontWeight.w600,
         ),
       ),

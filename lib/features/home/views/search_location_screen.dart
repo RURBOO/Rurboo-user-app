@@ -71,7 +71,6 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
-        backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0.5,
       ),
@@ -119,7 +118,7 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
                 ? Center(
                     child: Text(
                       lang.getText('search_results_hint'),
-                      style: const TextStyle(color: Colors.black54),
+                      style: const TextStyle(),
                     ),
                   )
                 : ListView.builder(
@@ -163,7 +162,7 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5)],
       ),
@@ -196,7 +195,7 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
                       ? const Icon(Icons.edit, size: 14, color: Colors.green)
                       : null),
             ),
-            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
+            style: const TextStyle( fontWeight: FontWeight.w500),
           ),
 
           const Divider(height: 1),
@@ -228,7 +227,7 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
                       ? const Icon(Icons.edit, size: 14, color: Colors.red)
                       : null),
             ),
-            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
+            style: const TextStyle( fontWeight: FontWeight.w500),
           ),
         ],
       ),

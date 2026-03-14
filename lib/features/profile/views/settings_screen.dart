@@ -20,7 +20,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(lang.getText('uiSettings')),
-        backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 1,
       ),
@@ -39,7 +38,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.translate, color: Colors.black87),
+            leading: const Icon(Icons.translate),
             title: Text(lang.getText('uiAppLanguage')),
             trailing: const Icon(Icons.chevron_right, color: Colors.grey),
             onTap: () {

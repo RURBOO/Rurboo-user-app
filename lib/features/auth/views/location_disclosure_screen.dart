@@ -66,7 +66,6 @@ class LocationDisclosureScreen extends StatelessWidget {
               const Icon(
                 Icons.location_on_rounded,
                 size: 48,
-                color: Colors.black,
               ),
               const SizedBox(height: 24),
               Text(
@@ -80,7 +79,6 @@ class LocationDisclosureScreen extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 16,
                   height: 1.5,
-                  color: Colors.black87,
                 ),
               ),
 

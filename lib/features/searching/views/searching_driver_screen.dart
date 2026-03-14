@@ -253,7 +253,6 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
                         const Icon(
                           Icons.location_on_outlined,
                           size: 18,
-                          color: Colors.black54,
                         ),
                         const SizedBox(width: 6),
                         Flexible(
@@ -266,7 +265,6 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontSize: 13,
-                              color: Colors.black54,
                             ),
                           ),
                         ),
@@ -280,7 +278,7 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
                       child: ElevatedButton(
                         onPressed: () => vm.cancelRide(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
+                          
                           side: BorderSide(
                             color: Colors.red.shade400,
                             width: 2,

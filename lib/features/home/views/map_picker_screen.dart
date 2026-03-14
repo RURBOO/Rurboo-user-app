@@ -162,9 +162,9 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
             top: 50,
             left: 20,
             child: CircleAvatar(
-              backgroundColor: Colors.white,
+              
               child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                icon: const Icon(Icons.arrow_back),
                 onPressed: () => Navigator.pop(context),
               ),
             ),

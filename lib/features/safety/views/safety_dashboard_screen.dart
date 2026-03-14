@@ -30,7 +30,6 @@ class _SafetyDashboardBody extends StatelessWidget {
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         title: Text("${lang.getText('safety_center')} 🛡️", style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         foregroundColor: Colors.black,

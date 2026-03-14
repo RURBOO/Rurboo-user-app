@@ -243,7 +243,7 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageViewModel>(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      
       appBar: AppBar(
         title: Text(lang.getText('ride_summary')),
         centerTitle: true,
@@ -309,7 +309,6 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
                                 style: const TextStyle(
                                   fontSize: 32,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black,
                                 ),
                               ),
                               if (_discountAmount > 0)

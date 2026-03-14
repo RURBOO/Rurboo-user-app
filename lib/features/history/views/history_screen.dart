@@ -33,9 +33,8 @@ class _HistoryScreenBody extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           Provider.of<LanguageViewModel>(context).getText('ride_history'),
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.white,
         elevation: 1,
       ),
       body: Consumer<HistoryViewModel>(
@@ -126,14 +125,12 @@ class _HistoryScreenBody extends StatelessWidget {
                 Icon(
                   _getRideIcon(ride.rideType),
                   size: 18,
-                  color: Colors.black54,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   ride.rideType,
                   style: const TextStyle(
                     fontWeight: FontWeight.w500,
-                    color: Colors.black87,
                   ),
                 ),
                 const Spacer(),
@@ -175,7 +172,7 @@ class _HistoryScreenBody extends StatelessWidget {
             address,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 14, color: Colors.black87),
+            style: const TextStyle(fontSize: 14),
           ),
         ),
       ],
