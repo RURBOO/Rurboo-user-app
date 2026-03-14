@@ -250,6 +250,7 @@ class RideSelectionBody extends StatelessWidget {
               polylines: vm.polylines,
               zoomControlsEnabled: false,
               myLocationEnabled: false,
+              style: Provider.of<ThemeProvider>(context).isDarkMode ? MapStyles.darkMapStyle : null,
               // Add padding so logo/legal buttons appear above the minimized sheet (approx 35% height)
               padding: EdgeInsets.only(
                 top: 40, 

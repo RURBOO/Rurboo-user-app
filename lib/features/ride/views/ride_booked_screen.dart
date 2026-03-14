@@ -16,6 +16,8 @@ import '../../safety/services/sos_service.dart';
 
 import '../../voice/viewmodels/voice_agent_viewmodel.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/map_styles.dart';
+import '../../../core/theme/theme_provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class RideBookedScreen extends StatefulWidget {
@@ -224,6 +226,7 @@ class _RideBookedContent extends StatelessWidget {
               polylines: vm.polylines,
               myLocationEnabled: false,
               zoomControlsEnabled: false,
+              style: Provider.of<ThemeProvider>(context).isDarkMode ? MapStyles.darkMapStyle : null,
               padding: const EdgeInsets.only(bottom: 240, top: 60),
             ),
 

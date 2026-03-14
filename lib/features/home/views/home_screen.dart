@@ -296,6 +296,7 @@ class HomeBody extends StatelessWidget {
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
+            style: Provider.of<ThemeProvider>(context).isDarkMode ? MapStyles.darkMapStyle : null,
             padding: EdgeInsets.only(
               bottom: vm.destination == null ? 280 : 200,
             ),

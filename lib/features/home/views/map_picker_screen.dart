@@ -8,6 +8,8 @@ import '../../language/viewmodels/language_vm.dart';
 import '../repositories/search_repository.dart';
 import '../viewmodels/home_viewmodel.dart';
 import '../models/location_result.dart';
+import '../../../core/theme/map_styles.dart';
+import '../../../core/theme/theme_provider.dart';
 
 class MapPickerScreen extends StatefulWidget {
   final LatLng? initialLocation;
@@ -175,10 +177,10 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
             right: 0,
             child: Container(
               padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,

@@ -4,6 +4,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../language/viewmodels/language_vm.dart';
 
 import '../../navigation/views/main_navigator.dart';
+import '../../../core/theme/map_styles.dart';
+import '../../../core/theme/theme_provider.dart';
 import '../../ride/views/ride_booked_screen.dart';
 import '../viewmodels/searching_driver_viewmodel.dart';
 import '../../ride/models/ride_booking.dart';
@@ -191,6 +193,7 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
                 ),
               },
               zoomControlsEnabled: false,
+              style: Provider.of<ThemeProvider>(context).isDarkMode ? MapStyles.darkMapStyle : null,
             ),
 
             Align(
@@ -198,9 +201,9 @@ class _SearchingDriverBodyState extends State<_SearchingDriverBody>
               child: Container(
                 height: MediaQuery.of(context).size.height * 0.38, // Reduced from 0.45
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12), // Compact padding
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                 ),
                 child: Column(
                   children: [
