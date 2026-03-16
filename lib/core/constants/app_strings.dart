@@ -164,6 +164,14 @@ class AppStrings {
       'en': 'Current Location',
       'hi': 'वर्तमान स्थान',
     },
+    'use_current_location': {
+      'en': 'Use Current Location',
+      'hi': 'वर्तमान स्थान उपयोग करें',
+    },
+    'fetching_location': {
+      'en': 'Fetching your location...',
+      'hi': 'आपकी लोकेशन मिल रही है...',
+    },
     'recent_destinations': {
       'en': 'Recent Destinations',
       'hi': 'हाल की जगहें',

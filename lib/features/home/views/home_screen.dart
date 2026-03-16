@@ -456,7 +456,9 @@ class HomeBody extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               lang.getText('service_unavailable_desc'),
-              style: TextStyle(fontSize: 12,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.black87,
               ),
             ),
             const SizedBox(height: 12),

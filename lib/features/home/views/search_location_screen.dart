@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart' show LatLng;
 import 'package:provider/provider.dart';
 import 'package:rurboo/core/services/user_preferences.dart';
 import 'package:rurboo/features/language/viewmodels/language_vm.dart';
@@ -47,6 +50,7 @@ class _SearchLocationBody extends StatefulWidget {
 
 class _SearchLocationBodyState extends State<_SearchLocationBody> {
   List<LocationResult> _savedFavourites = [];
+  bool _isFetchingLocation = false;
 
   @override
   void initState() {
@@ -57,6 +61,72 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
   Future<void> _loadFavourites() async {
     final favs = await UserPreferences.getFavorites();
     if (mounted) setState(() => _savedFavourites = favs);
+  }
+
+  /// Fetch GPS position, reverse-geocode it, and return as pickup location.
+  Future<void> _fetchCurrentLocation(
+    BuildContext context,
+    SearchLocationViewModel vm,
+    LanguageViewModel lang,
+  ) async {
+    setState(() => _isFetchingLocation = true);
+    try {
+      // Check / request permission
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.deniedForever ||
+          permission == LocationPermission.denied) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(lang.getText('enable_gps'))),
+          );
+        }
+        return;
+      }
+
+      // Get device GPS position
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: LocationSettings(accuracy: LocationAccuracy.high),
+      );
+
+      // Reverse geocode to human-readable address
+      final placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      String address = lang.getText('current_location');
+      if (placemarks.isNotEmpty) {
+        final p = placemarks.first;
+        final parts = [p.subLocality, p.locality, p.administrativeArea]
+            .where((s) => s != null && s.isNotEmpty)
+            .toList();
+        if (parts.isNotEmpty) address = parts.join(', ');
+      }
+
+      final result = LocationResult(
+        address: address,
+        coordinates: LatLng(position.latitude, position.longitude),
+      );
+
+      if (context.mounted) {
+        Navigator.pop(context, {
+          'result': result,
+          'isDestination': vm.isDestinationMode,
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Current location fetch error: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(lang.getText('enable_gps'))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isFetchingLocation = false);
+    }
   }
 
   @override
@@ -76,7 +146,37 @@ class _SearchLocationBodyState extends State<_SearchLocationBody> {
       body: Column(
         children: [
           _searchBox(vm, lang),
-          
+
+          // ✅ "Use Current Location" — only shown when pickup field is active and empty
+          if (!vm.isDestinationMode && vm.pickupController.text.isEmpty)
+            _isFetchingLocation
+                ? ListTile(
+                    leading: const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    title: Text(lang.getText('fetching_location')),
+                  )
+                : ListTile(
+                    leading: const Icon(Icons.my_location, color: Colors.green),
+                    title: Text(
+                      lang.getText('use_current_location'),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green,
+                      ),
+                    ),
+                    subtitle: Text(
+                      lang.getText('current_location'),
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    onTap: () => _fetchCurrentLocation(context, vm, lang),
+                  ),
+
+          if (!vm.isDestinationMode && vm.pickupController.text.isEmpty)
+            const Divider(height: 1),
+
           // "Choose on Map" Option
           ListTile(
             leading: const Icon(Icons.map, color: Colors.blue),

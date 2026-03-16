@@ -61,42 +61,49 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
                 context,
                 listen: false,
               );
+
+              // ✅ FIX: Register a callback that fires ONLY after the real OSRM
+              // route distance and re-calculated fares are available.
+              // Previously, the announcement was triggered inside init().then(),
+              // which used the stale straight-line (geodesic) distance from
+              // widget.distanceKm. Now we wait for the actual road distance.
+              vm.onRouteLoaded = () async {
+                if (!context.mounted || vm.rideOptions.isEmpty) return;
+
+                final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
+                final lang = Provider.of<LanguageViewModel>(context, listen: false);
+
+                // Translate dynamic arguments first
+                final translatedLocations = await lang.translate([widget.pickupText, widget.destinationText]);
+                final pickupTranslated = translatedLocations.isNotEmpty ? translatedLocations[0] : widget.pickupText;
+                final destinationTranslated = translatedLocations.length > 1 ? translatedLocations[1] : widget.destinationText;
+
+                // Build vehicle list using the updated rideOptions (with real fares)
+                List<Map<String, dynamic>> vehicles = [];
+                for (var ride in vm.rideOptions) {
+                  final transNames = await lang.translate([ride.name]);
+                  vehicles.add({
+                    'name': transNames.isNotEmpty ? transNames[0] : ride.name,
+                    'fare': ride.fare.toInt(),
+                    'id': ride.id,
+                  });
+                }
+
+                // ✅ Use vm.distanceKm (real OSRM road distance), NOT widget.distanceKm (geodesic)
+                voice.announceAllVehicleFares(
+                  pickup: pickupTranslated,
+                  destination: destinationTranslated,
+                  distanceKm: vm.distanceKm,
+                  vehicles: vehicles,
+                );
+              };
+
               vm.init(
                 pickupLoc: widget.pickupLoc,
                 destLoc: widget.destinationLoc,
                 distance: widget.distanceKm,
-              ).then((_) async {
-                 // Announce ALL vehicle fares comprehensively
-                 if (context.mounted && vm.rideOptions.isNotEmpty) {
-                    final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
-                    final lang = Provider.of<LanguageViewModel>(context, listen: false);
-                    
-                    // Translate dynamic arguments first
-                    final translatedLocations = await lang.translate([widget.pickupText, widget.destinationText]);
-                    final pickupTranslated = translatedLocations.isNotEmpty ? translatedLocations[0] : widget.pickupText;
-                    final destinationTranslated = translatedLocations.length > 1 ? translatedLocations[1] : widget.destinationText;
+              );
 
-                    // Build vehicle list for announcement
-                    List<Map<String, dynamic>> vehicles = [];
-                    for(var ride in vm.rideOptions) {
-                        final transNames = await lang.translate([ride.name]);
-                        vehicles.add({
-                          'name': transNames.isNotEmpty ? transNames[0] : ride.name,
-                          'fare': ride.fare.toInt(),
-                          'id': ride.id,
-                        });
-                    }
-                    
-                    // Announce pickup, destination, distance, and all vehicle fares
-                    voice.announceAllVehicleFares(
-                      pickup: pickupTranslated,
-                      destination: destinationTranslated,
-                      distanceKm: widget.distanceKm,
-                      vehicles: vehicles,
-                    );
-                 }
-              });
-              
               // Voice Listener
               _voiceVM = Provider.of<VoiceAgentViewModel>(context, listen: false);
               _voiceVM!.addListener(_onVoiceUpdate);

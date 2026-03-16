@@ -41,6 +41,10 @@ class RideSelectionViewModel extends ChangeNotifier {
   bool isOutstationRide = false;
   List<RideOption> rideOptions = [];
 
+  /// Called once when the real OSRM route (and re-calculated fares) are ready.
+  /// Register this from the screen to trigger the voice announcement at the right time.
+  Function()? onRouteLoaded;
+
   bool _isBooking = false;
   bool get isBooking => _isBooking;
   
@@ -196,6 +200,11 @@ class RideSelectionViewModel extends ChangeNotifier {
       // Re-calculate fares and ETAs based on the actual Google Maps data
       await _fetchFaresAsync();
       notifyListeners();
+      
+      // ✅ Notify the screen that the REAL route distance + fares are ready.
+      // The voice announcement MUST be triggered from here, not from init().then(),
+      // so it always speaks the correct (OSRM) distance and fares.
+      onRouteLoaded?.call();
     }
   }
 
