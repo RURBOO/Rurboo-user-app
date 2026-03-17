@@ -81,29 +81,33 @@ class SearchRepository {
   Future<LocationResult?> getPlaceDetails(String placeId, {String language = 'en'}) async {
     try {
       final apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'];
+      // 🚀 COST OPTIMIZATION: Geocoding API with place_id instead of Place Details API
+      // Geocoding = $0.005/1000 vs Place Details = $0.017/1000 — saves 70% per place selection!
+      // Both APIs return identical coordinates + formatted_address for a place_id.
       final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey&language=$language',
+        'https://maps.googleapis.com/maps/api/geocode/json?place_id=$placeId&key=$apiKey&language=$language',
       );
 
       final response = await http.get(url, headers: _headers);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
-        if (data['status'] == 'OK') {
-          final result = data['result'];
+        // Geocoding API returns results[] array (vs Place Details result{} object)
+        if (data['status'] == 'OK' && (data['results'] as List).isNotEmpty) {
+          final result = data['results'][0];
           final location = result['geometry']['location'];
           return LocationResult(
             placeId: placeId,
-            address: result['formatted_address'] ?? result['name'],
+            address: result['formatted_address'],
             coordinates: LatLng(location['lat'], location['lng']),
           );
         } else {
-             debugPrint('❌ Details API Error: ${data['status']} - ${data['error_message']}');
+          debugPrint('❌ Geocoding API Error: ${data['status']} - ${data['error_message']}');
         }
       }
       return null;
     } catch (e) {
-      debugPrint('❌ Details Exception: $e');
+      debugPrint('❌ Geocoding Details Exception: $e');
       return null;
     }
   }
