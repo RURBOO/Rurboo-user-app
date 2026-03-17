@@ -192,9 +192,9 @@ class RideBookedViewModel extends ChangeNotifier {
                _checkForAutoShare();
             }
           } else if ((stage == RideStage.arriving || stage == RideStage.inProgress) && driverLocation != null) {
-            // Throttled periodic ETA/Route updates
-            // Optimized: 60s interval to minimize Maps API cost (was 5s — very expensive at scale)
-            if (DateTime.now().difference(_lastEtaFetch).inSeconds > 60) {
+            // 🚀 COST OPTIMIZATION: 120s interval for ETA updates (was 60s — 2x cheaper)
+            // User still sees driver moving in real-time via marker. Only ETA text refreshes here.
+            if (DateTime.now().difference(_lastEtaFetch).inSeconds > 120) {
                debugPrint("📍 UserApp: Periodic route/ETA update. Stage: $stage");
                _lastEtaFetch = DateTime.now();
                if (stage == RideStage.arriving) {
