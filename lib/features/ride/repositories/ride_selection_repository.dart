@@ -9,22 +9,11 @@ import '../../home/services/polyline_service.dart';
 class RideSelectionRepository {
   final PolylineService polyService = PolylineService();
 
-  // 🚀 COST OPTIMIZATION: Cache ride rates for 24 hours (rates almost never change)
-  static Map<String, dynamic>? _cachedRates;
-  static DateTime? _cacheTime;
-
   Future<RouteInfo?> getRouteDetails(LatLng start, LatLng end) async {
     return await polyService.getRouteData(start, end);
   }
 
   Future<Map<String, dynamic>> fetchRideRates() async {
-    // Return from cache if populated and < 24 hours old
-    if (_cachedRates != null && _cacheTime != null &&
-        DateTime.now().difference(_cacheTime!).inHours < 24) {
-      if (kDebugMode) print("✅ Rates served from cache (no Firestore read)");
-      return _cachedRates!;
-    }
-
     try {
       final doc = await FirebaseFirestore.instance
           .collection('config')
@@ -32,9 +21,7 @@ class RideSelectionRepository {
           .get();
 
       if (doc.exists && doc.data() != null) {
-        _cachedRates = doc.data()!;
-        _cacheTime = DateTime.now();
-        return _cachedRates!;
+        return doc.data()!;
       }
     } catch (e) {
       if (kDebugMode) {
