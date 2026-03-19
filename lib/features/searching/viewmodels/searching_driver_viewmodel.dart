@@ -91,6 +91,9 @@ class SearchingDriverViewModel extends ChangeNotifier {
   }
 
   Future<void> cancelRide(BuildContext context) async {
+    if (!context.mounted) return;
+    final lang = Provider.of<LanguageViewModel>(context, listen: false);
+
     // Show reason dialog first
     final reasons = [
       lang.getText('cancel_reason_1'),
@@ -100,9 +103,6 @@ class SearchingDriverViewModel extends ChangeNotifier {
       lang.getText('cancel_reason_5'),
     ];
     String? selectedReason;
-
-    if (!context.mounted) return;
-    final lang = Provider.of<LanguageViewModel>(context, listen: false);
 
     final confirmed = await showDialog<bool>(
       context: context,
