@@ -521,23 +521,28 @@ class _RideBookedContent extends StatelessWidget {
                            margin: const EdgeInsets.only(bottom: 16), // Reduced
                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), // Reduced
                            decoration: BoxDecoration(
-                             color: AppColors.surfaceDark,
-                             borderRadius: BorderRadius.circular(10),
+                             color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[100],
+                             borderRadius: BorderRadius.circular(12),
+                             border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800]! : Colors.grey[200]!),
                            ),
                            child: Row(
                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                              children: [
                                Text(
                                  Provider.of<LanguageViewModel>(context).getText('otp'),
-                                 style: const TextStyle(color: Colors.white70, fontSize: 13),
+                                 style: TextStyle(
+                                   color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black54, 
+                                   fontSize: 14,
+                                   fontWeight: FontWeight.w500,
+                                 ),
                                ),
                                Text(
                                  vm.otp!,
-                                 style: const TextStyle(
-                                   color: Colors.white,
-                                   fontSize: 20, // Reduced from 24
+                                 style: TextStyle(
+                                   color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+                                   fontSize: 22,
                                    fontWeight: FontWeight.bold,
-                                   letterSpacing: 3,
+                                   letterSpacing: 4,
                                  ),
                                ),
                              ],
