@@ -318,7 +318,9 @@ class RideBookedViewModel extends ChangeNotifier {
         if (route.durationMins < 1) {
           eta = "0"; // Special value for 'Arriving now' or 'Nearly there'
         } else {
-          eta = route.durationMins.toStringAsFixed(0);
+          double mins = route.durationMins;
+          if (route.distanceKm < 50) mins *= 2;
+          eta = mins.toStringAsFixed(0);
         }
         
         _fitCamera(route.points);

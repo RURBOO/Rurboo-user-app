@@ -126,7 +126,9 @@ class RideSelectionViewModel extends ChangeNotifier {
 
     // 🚀 Force One-Sided Distance (Geodesic)
     _distanceKm = distance; 
-    _durationMins = distance * 2.5; // Est. 2.5 mins/km (approx 24km/h)
+    double baseDuration = distance * 2.5; // Est. 2.5 mins/km (approx 24km/h)
+    if (_distanceKm < 50) baseDuration *= 2; 
+    _durationMins = baseDuration;
 
     // Instantly draw a straight line to not block UI rendering
     routePoints = [pickup.coordinates!, destination.coordinates!];
@@ -187,7 +189,9 @@ class RideSelectionViewModel extends ChangeNotifier {
     if (routeInfo != null && routeInfo.points.isNotEmpty) {
       routePoints = routeInfo.points;
       _distanceKm = routeInfo.distanceKm;
-      _durationMins = routeInfo.durationMins;
+      double mins = routeInfo.durationMins;
+      if (_distanceKm < 50) mins *= 2;
+      _durationMins = mins;
       
       debugPrint("🚀🚀🚀 Real-time Route loaded (Distance: $_distanceKm, Duration: $_durationMins). Refreshing fares...");
       

@@ -93,11 +93,11 @@ class SearchingDriverViewModel extends ChangeNotifier {
   Future<void> cancelRide(BuildContext context) async {
     // Show reason dialog first
     final reasons = [
-      'Change of plans',
-      'Driver is too far',
-      'Found another ride',
-      'Booked by mistake',
-      'Other',
+      lang.getText('cancel_reason_1'),
+      lang.getText('cancel_reason_2'),
+      lang.getText('cancel_reason_3'),
+      lang.getText('cancel_reason_4'),
+      lang.getText('cancel_reason_5'),
     ];
     String? selectedReason;
 
@@ -115,9 +115,9 @@ class SearchingDriverViewModel extends ChangeNotifier {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'Please select a reason for cancellation:',
-                    style: TextStyle(fontSize: 13),
+                  Text(
+                    lang.getText('cancel_reason_select'),
+                    style: const TextStyle(fontSize: 13),
                   ),
                   const SizedBox(height: 12),
                   RadioGroup<String>(

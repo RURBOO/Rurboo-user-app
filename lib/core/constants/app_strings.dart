@@ -463,6 +463,12 @@ class AppStrings {
     'yes_cancel': {'en': 'Yes, Cancel Ride', 'hi': 'हाँ, सवारी रद्द करें'},
     'dont_cancel': {'en': 'Don\'t Cancel', 'hi': 'रद्द न करें'},
     'no_internet_cancel': {'en': 'No Internet! Cannot cancel ride.', 'hi': 'इंटरनेट नहीं! सवारी रद्द नहीं की जा सकती।'},
+    'cancel_reason_1': {'en': 'Change of plans', 'hi': 'योजना में बदलाव'},
+    'cancel_reason_2': {'en': 'Driver is too far', 'hi': 'ड्राइवर बहुत दूर है'},
+    'cancel_reason_3': {'en': 'Found another ride', 'hi': 'दूसरी सवारी मिल गई'},
+    'cancel_reason_4': {'en': 'Booked by mistake', 'hi': 'गलती से बुक हो गया'},
+    'cancel_reason_5': {'en': 'Other', 'hi': 'अन्य'},
+    'cancel_reason_select': {'en': 'Please select a reason for cancellation:', 'hi': 'कृपया रद्दीकरण का कारण चुनें:'},
     
     // --- Ride Status ---
     'status_arriving': {'en': 'Driver is arriving', 'hi': 'ड्राइवर आ रहा है'},
