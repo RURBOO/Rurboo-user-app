@@ -40,6 +40,8 @@ import 'features/splash/views/splash_screen.dart';
 import 'core/navigation/app_router.dart';
 import 'features/ride/views/ride_selection_screen.dart';
 import 'features/ride/views/ride_booked_screen.dart';
+import 'features/ride/viewmodels/ride_selection_viewmodel.dart';
+import 'features/ride/repositories/ride_selection_repository.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -171,12 +173,15 @@ class _MyAppState extends State<MyApp> {
           case AppRoutes.rideSelection:
             final args = settings.arguments as Map<String, dynamic>;
             return MaterialPageRoute(
-              builder: (context) => RideSelectionScreen(
-                pickupText: args['pickupText'],
-                destinationText: args['destinationText'],
-                pickupLoc: args['pickupLoc'],
-                destinationLoc: args['destinationLoc'],
-                distanceKm: args['distanceKm'],
+              builder: (context) => ChangeNotifierProvider(
+                create: (_) => RideSelectionViewModel(repo: RideSelectionRepository()),
+                child: RideSelectionScreen(
+                  pickupText: args['pickupText'],
+                  destinationText: args['destinationText'],
+                  pickupLoc: args['pickupLoc'],
+                  destinationLoc: args['destinationLoc'],
+                  distanceKm: args['distanceKm'],
+                ),
               ),
             );
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geolocator/geolocator.dart';
 
 
 import '../../../core/services/user_preferences.dart';
@@ -30,6 +31,7 @@ class RideSelectionViewModel extends ChangeNotifier {
 
   double _distanceKm = 0.0;
   double _durationMins = 0.0;
+  double _fareDistanceKm = 0.0; // Added for displacement-based pricing
 
   Set<Marker> markers = {};
   Set<Polyline> polylines = {};
@@ -123,6 +125,16 @@ class RideSelectionViewModel extends ChangeNotifier {
        return; // Stop further execution
     }
     // -----------------------------
+
+    // 🚀 Calculate Straight-Line Displacement for Fare
+    final double displacement = Geolocator.distanceBetween(
+      pickupLoc.coordinates!.latitude,
+      pickupLoc.coordinates!.longitude,
+      destLoc.coordinates!.latitude,
+      destLoc.coordinates!.longitude,
+    ) / 1000;
+    _fareDistanceKm = displacement;
+    debugPrint("📏 DISPLACEMENT (for Fare): $_fareDistanceKm km");
 
     // 🚀 Force One-Sided Distance (Geodesic)
     _distanceKm = distance; 
@@ -233,18 +245,18 @@ class RideSelectionViewModel extends ChangeNotifier {
 
         // Match the Cloud Function logic locally:
         // Base fare covers first 2km. Charges apply ONLY after 2km.
-        double chargeableDistance = (_distanceKm - 2.0).clamp(0.0, double.infinity);
+        double chargeableDistance = (_fareDistanceKm - 2.0).clamp(0.0, double.infinity);
         secureFare = baseFare + (chargeableDistance * perKmRate);
       } else {
          // Generic Fallbacks if offline or missing
-         double chargeableDist = (_distanceKm - 2.0).clamp(0.0, double.infinity);
+         double chargeableDist = (_fareDistanceKm - 2.0).clamp(0.0, double.infinity);
          switch (key) {
-           case 'bike': secureFare = 20 + (chargeableDist * 5); break;
-           case 'auto': secureFare = 30 + (chargeableDist * 10); break;
-           case 'car': secureFare = 50 + (chargeableDist * 15); break;
-           case 'erickshaw': secureFare = 20 + (chargeableDist * 8); break;
-           case 'bigcar': secureFare = 80 + (chargeableDist * 20); break;
-           case 'carriertruck': secureFare = 150 + (chargeableDist * 40); break;
+          case 'bike': secureFare = 25 + (chargeableDist * 6); break;
+          case 'auto': secureFare = 50 + (chargeableDist * 10); break;
+          case 'car': secureFare = 80 + (chargeableDist * 18); break;
+          case 'erickshaw': secureFare = 40 + (chargeableDist * 8); break;
+          case 'bigcar': secureFare = 100 + (chargeableDist * 20); break;
+          case 'carriertruck': secureFare = 200 + (chargeableDist * 25); break;
          }
       }
 

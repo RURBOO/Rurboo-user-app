@@ -10,7 +10,6 @@ import '../../language/viewmodels/language_vm.dart';
 
 import '../../home/models/location_result.dart';
 import '../viewmodels/ride_selection_viewmodel.dart';
-import '../repositories/ride_selection_repository.dart';
 import '../models/ride_options.dart';
 import '../../searching/views/searching_driver_screen.dart';
 import 'dart:math';
@@ -49,80 +48,64 @@ class _RideSelectionScreenState extends State<RideSelectionScreen> {
   VoiceAgentViewModel? _voiceVM; // Keep ref for dispose
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
+      voice.addListener(_onVoiceUpdate);
+      
+      final vm = Provider.of<RideSelectionViewModel>(context, listen: false);
+      if (!_isInit) {
+        _isInit = true;
+        vm.onRouteLoaded = () async {
+          if (!context.mounted || vm.rideOptions.isEmpty) return;
+
+          final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
+          final lang = Provider.of<LanguageViewModel>(context, listen: false);
+
+          final translatedLocations = await lang.translate([widget.pickupText, widget.destinationText]);
+          final pickupTranslated = translatedLocations.isNotEmpty ? translatedLocations[0] : widget.pickupText;
+          final destinationTranslated = translatedLocations.length > 1 ? translatedLocations[1] : widget.destinationText;
+
+          List<Map<String, dynamic>> vehicles = [];
+          for (var ride in vm.rideOptions) {
+            final transNames = await lang.translate([ride.name]);
+            vehicles.add({
+              'name': transNames.isNotEmpty ? transNames[0] : ride.name,
+              'fare': ride.fare.toInt(),
+              'id': ride.id,
+            });
+          }
+
+          voice.announceAllVehicleFares(
+            pickup: pickupTranslated,
+            destination: destinationTranslated,
+            distanceKm: vm.distanceKm,
+            vehicles: vehicles,
+          );
+        };
+
+        vm.init(
+          pickupLoc: widget.pickupLoc,
+          destLoc: widget.destinationLoc,
+          distance: widget.distanceKm,
+        );
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => RideSelectionViewModel(repo: RideSelectionRepository()),
-      child: Builder(
-        builder: (context) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!_isInit) {
-              _isInit = true;
-              final vm = Provider.of<RideSelectionViewModel>(
-                context,
-                listen: false,
-              );
-
-              // ✅ FIX: Register a callback that fires ONLY after the real OSRM
-              // route distance and re-calculated fares are available.
-              // Previously, the announcement was triggered inside init().then(),
-              // which used the stale straight-line (geodesic) distance from
-              // widget.distanceKm. Now we wait for the actual road distance.
-              vm.onRouteLoaded = () async {
-                if (!context.mounted || vm.rideOptions.isEmpty) return;
-
-                final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
-                final lang = Provider.of<LanguageViewModel>(context, listen: false);
-
-                // Translate dynamic arguments first
-                final translatedLocations = await lang.translate([widget.pickupText, widget.destinationText]);
-                final pickupTranslated = translatedLocations.isNotEmpty ? translatedLocations[0] : widget.pickupText;
-                final destinationTranslated = translatedLocations.length > 1 ? translatedLocations[1] : widget.destinationText;
-
-                // Build vehicle list using the updated rideOptions (with real fares)
-                List<Map<String, dynamic>> vehicles = [];
-                for (var ride in vm.rideOptions) {
-                  final transNames = await lang.translate([ride.name]);
-                  vehicles.add({
-                    'name': transNames.isNotEmpty ? transNames[0] : ride.name,
-                    'fare': ride.fare.toInt(),
-                    'id': ride.id,
-                  });
-                }
-
-                // ✅ Use vm.distanceKm (real OSRM road distance), NOT widget.distanceKm (geodesic)
-                voice.announceAllVehicleFares(
-                  pickup: pickupTranslated,
-                  destination: destinationTranslated,
-                  distanceKm: vm.distanceKm,
-                  vehicles: vehicles,
-                );
-              };
-
-              vm.init(
-                pickupLoc: widget.pickupLoc,
-                destLoc: widget.destinationLoc,
-                distance: widget.distanceKm,
-              );
-
-              // Voice Listener
-              _voiceVM = Provider.of<VoiceAgentViewModel>(context, listen: false);
-              _voiceVM!.addListener(_onVoiceUpdate);
-            }
-          });
-
-          return const RideSelectionBody();
-        },
-      ),
-    );
+    return const RideSelectionBody();
   }
 
   void _onVoiceUpdate() {
-     if (!mounted) return;
-     final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
-     final vm = Provider.of<RideSelectionViewModel>(context, listen: false);
-     final lang = Provider.of<LanguageViewModel>(context, listen: false);
+    if (!mounted) return;
+    final voice = Provider.of<VoiceAgentViewModel>(context, listen: false);
+    final lang = Provider.of<LanguageViewModel>(context, listen: false);
+    final vm = Provider.of<RideSelectionViewModel>(context, listen: false);
      
-     // 1. Vehicle Logic: Selection OR Negation
      if (voice.lastIntent?.type == IntentType.booking) {
         final intent = voice.lastIntent!;
         
@@ -525,42 +508,35 @@ class RideSelectionBody extends StatelessWidget {
     return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-/*
-          // Schedule Button
-          if (!vm.isOutstationRide && !vm.isBooking)
+          if (vm.selectedRide?.id == 'car' || vm.selectedRide?.id == 'bigcar' || vm.selectedRide?.id == 'carriertruck')
             Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: InkWell(
-                onTap: () => _pickDateTime(context, vm),
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.calendar_today_outlined, 
-                        color: vm.scheduledTime != null ? AppColors.primary : Colors.grey[600], size: 18),
-                      const SizedBox(width: 8),
-                      Text(
-                        vm.scheduledTime == null 
-                          ? lang.getText('schedule_later')
-                          : "${lang.getText('schedule_later')}: ${_formatDate(vm.scheduledTime!)}",
-                        style: TextStyle(color: vm.scheduledTime != null ? AppColors.primary : Colors.grey[700],
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, color: Colors.orange, size: 18),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        lang.getText('toll_disclaimer'),
+                        style: const TextStyle(
+                          fontSize: 11, 
+                          color: Colors.orange, 
                           fontWeight: FontWeight.w600,
-                          fontSize: 13,
+                          height: 1.3,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
-*/
 
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),

@@ -234,6 +234,10 @@ class AppStrings {
       'en': 'Cancel Request',
       'hi': 'अनुरोध रद्द करें',
     },
+    'toll_disclaimer': {
+      'en': 'Toll tax is not included in this fare. If encountered, it must be paid separately. Please verify toll charges yourself.',
+      'hi': 'आपका टोल टैक्स इसमें ऐड नहीं है वो खुद से अलग से पे करना होगा अगर कहीं टोल आया होगा तो तो एक बार टोल का किराया की खुद से जांच कर लें',
+    },
     
     // --- Ride Booked ---
     'ride_booked': {

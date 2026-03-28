@@ -16,6 +16,8 @@ import '../../../core/services/user_preferences.dart';
 import '../../voice/models/voice_agent_state.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/theme/map_styles.dart';
+import '../../ride/viewmodels/ride_selection_viewmodel.dart';
+import '../../ride/repositories/ride_selection_repository.dart';
 
 class HomeScreen extends StatefulWidget {
   final GlobalKey? navBarKey;
@@ -553,14 +555,17 @@ class HomeBody extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => RideSelectionScreen(
-                      pickupText: vm.pickupAddress == 'current_location' 
-                          ? lang.getText('current_location') 
-                          : (vm.pickupAddress ?? ""),
-                      destinationText: vm.destinationAddress ?? "",
-                      pickupLoc: vm.pickup!,
-                      destinationLoc: vm.destination!,
-                      distanceKm: distanceInKm,
+                    builder: (_) => ChangeNotifierProvider(
+                      create: (_) => RideSelectionViewModel(repo: RideSelectionRepository()),
+                      child: RideSelectionScreen(
+                        pickupText: vm.pickupAddress == 'current_location' 
+                            ? lang.getText('current_location') 
+                            : (vm.pickupAddress ?? ""),
+                        destinationText: vm.destinationAddress ?? "",
+                        pickupLoc: vm.pickup!,
+                        destinationLoc: vm.destination!,
+                        distanceKm: distanceInKm,
+                      ),
                     ),
                   ),
                 );

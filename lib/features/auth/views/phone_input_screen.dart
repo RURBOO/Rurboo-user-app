@@ -56,7 +56,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
     try {
       await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: '+91$phone',
-        timeout: const Duration(seconds: 30), // Reduced from default 60s → 30s for faster OTP screen
+        timeout: const Duration(seconds: 60), // Increased to 60s for better reliability on slow networks
         verificationCompleted: (PhoneAuthCredential credential) async {
           try {
             final UserCredential userCred = await FirebaseAuth.instance.signInWithCredential(credential);
